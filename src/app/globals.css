@@ -1,0 +1,257 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * CodeMentor design tokens — bright, energetic and competitive.
+ * Light = crisp white/cool canvas, deep navy ink, electric-blue primary, a full set of vivid
+ *         accent hues for topics, difficulty and rewards.
+ * Dark  = deep navy night mode with the same hues lifted for contrast.
+ * Roles:
+ *   accent  — primary actions, selection, links (electric blue)
+ *   concept — violet: lessons, ideas, "how it works"
+ *   hint    — amber: hints and things to review
+ *   clay    — orange: XP, ranks, personal bests (the "competition" colour)
+ *   success / danger — results, always with an icon or a word
+ *   pink, teal, sky — extra hues for topics, charts and tiles
+ */
+:root {
+  --bg: #f4f7fc;
+  --surface: #ffffff;
+  --sunken: #eef2f9;
+  --ink: #172b4d;
+  --ink-2: #44546f;
+  --ink-3: #626f86;
+  --line: #e1e7f0;
+  --line-strong: #c9d2e0;
+
+  --accent: #2e62ff;
+  --accent-ink: #1f4fe0;
+  --accent-soft: #e6eeff;
+  --on-accent: #ffffff;
+  --concept: #7a3cf0;
+  --concept-soft: #f1eaff;
+  --hint: #b45d00;
+  --hint-soft: #fff1dc;
+  --clay: #f2600c;
+  --clay-soft: #ffeadb;
+  --danger: #d92d3b;
+  --danger-soft: #ffe8ea;
+  --success: #12945a;
+  --success-soft: #e0f6eb;
+  --pink: #db2777;
+  --pink-soft: #fde7f1;
+  --teal: #0b9a9a;
+  --teal-soft: #dcf5f4;
+  --sky: #0891d1;
+  --sky-soft: #e0f3fc;
+
+  --m-low: #e5484d;
+  --m-mid: #f59e0b;
+  --m-good: #3b82f6;
+  --m-high: #12945a;
+
+  --code-bg: #0f1a33;
+  --code-ink: #e6edf9;
+  --code-dim: #8796b8;
+  --code-faint: #56658a;
+  --code-line: #1f2c4d;
+  --code-hl: #1d3266;
+
+  --hero-from: #2e62ff;
+  --hero-via: #6d3cf0;
+  --hero-to: #c026d3;
+
+  --sh-card: 0 1px 2px rgb(23 43 77 / 0.05), 0 8px 24px -14px rgb(23 43 77 / 0.18);
+  --sh-pop: 0 2px 6px rgb(23 43 77 / 0.06), 0 22px 44px -20px rgb(46 98 255 / 0.35);
+  --grain-opacity: 0;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #0a1020;
+  --surface: #111a2e;
+  --sunken: #17223a;
+  --ink: #eaf0fb;
+  --ink-2: #b4c0d9;
+  --ink-3: #8a98b6;
+  --line: #22304d;
+  --line-strong: #2f4066;
+
+  --accent: #5b86ff;
+  --accent-ink: #8aa8ff;
+  --accent-soft: #17264d;
+  --on-accent: #ffffff;
+  --concept: #a57bff;
+  --concept-soft: #24194a;
+  --hint: #ffb547;
+  --hint-soft: #3a2a10;
+  --clay: #ff8a3d;
+  --clay-soft: #3d2210;
+  --danger: #ff6b74;
+  --danger-soft: #3d1820;
+  --success: #3ccf8e;
+  --success-soft: #0f3324;
+  --pink: #ff5ca8;
+  --pink-soft: #3d1530;
+  --teal: #2fd0cc;
+  --teal-soft: #0d3333;
+  --sky: #38bdf8;
+  --sky-soft: #0c2c40;
+
+  --m-low: #ff6b74;
+  --m-mid: #ffb547;
+  --m-good: #5b86ff;
+  --m-high: #3ccf8e;
+
+  --code-bg: #070d1c;
+  --code-line: #1a2643;
+  --code-hl: #1b2f5e;
+
+  --hero-from: #2e62ff;
+  --hero-via: #6d3cf0;
+  --hero-to: #b02bd0;
+
+  --sh-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 30px -20px rgb(0 0 0 / 0.7);
+  --sh-pop: 0 2px 6px rgb(0 0 0 / 0.35), 0 24px 48px -22px rgb(91 134 255 / 0.35);
+  --grain-opacity: 0;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-clay: var(--clay);
+  --color-clay-soft: var(--clay-soft);
+  --color-code-dim: var(--code-dim);
+  --color-code-faint: var(--code-faint);
+  --color-pink: var(--pink);
+  --color-pink-soft: var(--pink-soft);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-sky: var(--sky);
+  --color-sky-soft: var(--sky-soft);
+  --color-concept: var(--concept);
+  --color-concept-soft: var(--concept-soft);
+  --color-hint: var(--hint);
+  --color-hint-soft: var(--hint-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-code-bg: var(--code-bg);
+  --color-code-ink: var(--code-ink);
+  --color-code-line: var(--code-line);
+  --color-code-hl: var(--code-hl);
+
+  --font-sans: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-code), ui-monospace, "Cascadia Code", monospace;
+}
+
+@theme {
+  --radius-card: 1.125rem;
+  --radius-panel: 1.5rem;
+  --shadow-card: var(--sh-card);
+  --shadow-pop: var(--sh-pop);
+  --ease-calm: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-rise: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop: pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pop {
+    0% { transform: scale(0.96); opacity: 0; }
+    60% { transform: scale(1.02); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+}
+
+html {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible focus for keyboard users everywhere. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Larger text preference (Settings → "Larger text"). */
+[data-text="large"] {
+  font-size: 112.5%;
+}
+
+/* Subtle grid backdrop used on the landing hero. */
+/* Soft film grain gives flat surfaces a paper-like finish (same as Kisan Drishti). */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Signature gradient for hero cards, rank rings and CTAs. */
+.bg-hero {
+  background-image: linear-gradient(120deg, var(--hero-from) 0%, var(--hero-via) 55%, var(--hero-to) 100%);
+}
+.text-hero {
+  background-image: linear-gradient(100deg, var(--hero-from), var(--hero-via) 60%, var(--hero-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* Soft dotted texture used inside gradient panels. */
+.bg-dots {
+  background-image: radial-gradient(rgb(255 255 255 / 0.18) 1px, transparent 1.2px);
+  background-size: 16px 16px;
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--line) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--line) 70%, transparent) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(ellipse at 30% 20%, black 30%, transparent 75%);
+}
+
+/* Learners must see the exact characters they type: no "<=" → "≤" or "<<" → "≪" ligatures in code. */
+code, pre, kbd, samp, .font-mono {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}

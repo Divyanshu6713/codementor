@@ -1,0 +1,99 @@
+/*
+ * The guest course: a fixed C++ roadmap of modules and lessons that anyone can open without an
+ * account. Every lesson follows the same shape (learn → understand → example → practise → run →
+ * improve → continue) so students always know where they are.
+ *
+ * Content is code: reviewed in git, type-checked, and every exercise's reference solution is
+ * compiled and run against all of its tests by `tests/course-content.test.ts` (real g++), and every
+ * example's stated output is checked the same way. Rich text uses the safe markdown subset rendered
+ * by `components/Markdown.tsx` — never raw HTML.
+ */
+import type { TestCaseDef, VisualId } from "../types";
+
+export interface CourseModule {
+  id: string;
+  number: number;
+  title: string;
+  summary: string;
+  /** Lesson ids in teaching order. Planned lessons are listed by title only. */
+  lessons: string[];
+  planned?: string[];
+}
+
+export interface ConceptSection {
+  title: string;
+  body: string;
+  /** Optional interactive widget from components/lesson/Visuals. */
+  visual?: VisualId;
+  /** Optional step-through trace from content/traces. */
+  traceId?: string;
+}
+
+export interface WorkedExample {
+  title: string;
+  intro: string;
+  code: string;
+  /** Standard input the example is run with (empty when it reads nothing). */
+  input?: string;
+  /** Exactly what the program prints — verified by the content test. */
+  output: string;
+  /** Short notes on the important lines (line numbers are 1-based). */
+  notes: { line: number; text: string }[];
+}
+
+export interface QuickCheck {
+  prompt: string;
+  code?: string;
+  options: { id: string; text: string; feedback: string }[];
+  correct: string;
+  explanation: string;
+}
+
+export interface Exercise {
+  title: string;
+  /** What to build, in plain language. Markdown. */
+  prompt: string;
+  starterCode: string;
+  /**
+   * sample  → shown in the lesson and run by "Check".
+   * hidden  → run by "Check"; only pass/fail and the kind of case reach the browser (the student can
+   *           choose to see one failing case after a wrong check).
+   */
+  tests: TestCaseDef[];
+  /** tokens: whitespace-insensitive. lines: line by line, ignoring trailing spaces. */
+  compare: "tokens" | "lines";
+  /**
+   * Progressive hints:
+   * 1 a guiding question · 2 the relevant concept · 3 where to look · 4 the approach.
+   * (Level 5 — the worked solution — is served separately and only when explicitly requested.)
+   */
+  hints: [string, string, string, string];
+  /** Reference solution. Server-only: never part of the page payload. */
+  solution: string;
+  /** Walkthrough shown with the worked solution. */
+  solutionNotes: string;
+}
+
+export interface CourseLesson {
+  id: string;
+  moduleId: string;
+  title: string;
+  minutes: number;
+  /** A. What you will learn. */
+  goals: string[];
+  intro: string;
+  /** B. Understand the concept. */
+  sections: ConceptSection[];
+  /** B. Common misunderstandings. */
+  mistakes: { title: string; body: string }[];
+  /** C. Try an example. */
+  example: WorkedExample;
+  /** Optional one-question check before the exercise. */
+  quickCheck?: QuickCheck;
+  /** D–F. Practise, run, improve. */
+  exercise: Exercise;
+  /** Curated "explain it another way" — used when no AI provider is enabled. */
+  explainAgain: string;
+  /** G. Key takeaways. */
+  summary: string[];
+}
