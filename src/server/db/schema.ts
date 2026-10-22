@@ -39,6 +39,11 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ROLES }).notNull(),
   displayName: text("display_name").notNull(),
+  /**
+   * Guest students start learning with one click: a server-side account with no password and no
+   * personal data, kept by its session cookie. They can claim it later with a username + password.
+   */
+  isGuest: boolean("is_guest").notNull().default(false),
   createdAt: createdAt(),
 });
 
@@ -535,6 +540,24 @@ export const aiInteractions = pgTable("ai_interactions", {
 });
 
 /**
+ * Progress through the step-by-step C++ lesson path (content in src/content/course). A lesson is
+ * passed only when the deterministic judge accepts the student's exercise. Hint level and whether
+ * the worked solution was opened before passing decide how much XP the pass earns.
+ */
+export const courseProgress = pgTable("course_progress", {
+  studentId: uuid("student_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  lessonId: text("lesson_id").notNull(),
+  /** Highest hint level opened (0–4). */
+  hintLevel: integer("hint_level").notNull().default(0),
+  solutionViewedAt: timestamp("solution_viewed_at", { withTimezone: true }),
+  passedAt: timestamp("passed_at", { withTimezone: true }),
+  /** Hint level / solution state frozen at the moment of passing (XP is computed from these). */
+  passedHintLevel: integer("passed_hint_level"),
+  passedAfterSolution: boolean("passed_after_solution"),
+  updatedAt: updatedAt(),
+}, (t) => [primaryKey({ columns: [t.studentId, t.lessonId] })]);
+
+/**
  * The AI spending ledger: one row per billed model response (including retries). The monthly
  * budget is enforced against the sum of `cost_usd` here. No prompt or reply content.
  */
@@ -569,3 +592,101 @@ export const auditLog = pgTable("audit_log", {
   details: jsonb("details").notNull().default(sql`'{}'::jsonb`),
   createdAt: createdAt(),
 });
+
+// ── Python Mastery ──────────────────────────────────────────────────────────────────────────
+// Content lives in src/content/python (ids are stable strings). Everything below is per-learner
+// evidence; progress, mastery, streaks and time are always computed from these rows.
+
+export const PY_MODES = ["learn", "practice", "revision", "exam", "interview", "challenge", "project"] as const;
+
+/** One answer to a Python question, or one judged Check of a Python exercise (kind "code"). */
+export const pyAttempts = pgTable("py_attempts", {
+  id: id(),
+  studentId: uuid("student_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  /** Question id (`lesson/q`, `module/exam/q`) or exercise key for kind "code". */
+  itemId: text("item_id").notNull(),
+  lessonId: text("lesson_id"),
+  moduleId: text("module_id"),
+  kind: text("kind").notNull(),
+  mode: text("mode", { enum: PY_MODES }).notNull(),
+  correct: boolean("correct").notNull(),
+  /** The learner looked at the answer instead of answering (counts as not correct). */
+  revealed: boolean("revealed").notNull().default(false),
+  hintUsed: boolean("hint_used").notNull().default(false),
+  difficulty: integer("difficulty").notNull(),
+  /** Short copy of the answer for the learner's own history (never code, which isn't stored). */
+  answer: text("answer"),
+  assessmentId: uuid("assessment_id"),
+  createdAt: createdAt(),
+}, (t) => [index("py_attempts_student_idx").on(t.studentId, t.createdAt), index("py_attempts_lesson_idx").on(t.studentId, t.lessonId)]);
+
+/** Exercise state: hints opened, worked solution viewed, first judged pass (XP is computed from these). */
+export const pyExerciseProgress = pgTable("py_exercise_progress", {
+  studentId: uuid("student_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  exerciseKey: text("exercise_key").notNull(),
+  hintLevel: integer("hint_level").notNull().default(0),
+  solutionViewedAt: timestamp("solution_viewed_at", { withTimezone: true }),
+  passedAt: timestamp("passed_at", { withTimezone: true }),
+  passedHintLevel: integer("passed_hint_level"),
+  passedAfterSolution: boolean("passed_after_solution"),
+  checks: integer("checks").notNull().default(0),
+  /** Challenge mode: when the timer was started, and the fastest judged pass (ms). */
+  timerStartedAt: timestamp("timer_started_at", { withTimezone: true }),
+  bestMs: integer("best_ms"),
+  updatedAt: updatedAt(),
+}, (t) => [primaryKey({ columns: [t.studentId, t.exerciseKey] })]);
+
+/** Spaced revision per lesson (Leitner boxes 1..6 → 1, 3, 7, 14, 30, 60 days). */
+export const pyReviews = pgTable("py_reviews", {
+  studentId: uuid("student_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  lessonId: text("lesson_id").notNull(),
+  box: integer("box").notNull().default(1),
+  dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+  lastResult: boolean("last_result"),
+  updatedAt: updatedAt(),
+}, (t) => [primaryKey({ columns: [t.studentId, t.lessonId] })]);
+
+export const PY_ASSESSMENT_KINDS = ["module", "level", "final", "mixed", "interview"] as const;
+
+/** A module exam, level checkpoint, final, mixed-topic test or mock interview. */
+export const pyAssessments = pgTable("py_assessments", {
+  id: id(),
+  studentId: uuid("student_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  kind: text("kind", { enum: PY_ASSESSMENT_KINDS }).notNull(),
+  /** Module id, level number, or "all". */
+  scopeId: text("scope_id").notNull(),
+  questionIds: jsonb("question_ids").$type<string[]>().notNull(),
+  /** Mock interviews include one coding problem. */
+  exerciseKey: text("exercise_key"),
+  timeLimitS: integer("time_limit_s"),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  score: integer("score"),
+  total: integer("total"),
+  passed: boolean("passed"),
+  details: jsonb("details").$type<Record<string, unknown>>(),
+}, (t) => [index("py_assessments_student_idx").on(t.studentId, t.startedAt)]);
+
+/** Learner settings for the Python path, and lessons opened early by explicit choice. */
+export const pySettings = pgTable("py_settings", {
+  studentId: uuid("student_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  /** true = lessons unlock in order (with an explicit "open anyway"); false = everything open. */
+  guided: boolean("guided").notNull().default(true),
+  unlocked: jsonb("unlocked").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+  updatedAt: updatedAt(),
+});
+
+/** Active learning time per day (heartbeats from Python pages while the learner is active). */
+export const pyActivity = pgTable("py_activity", {
+  studentId: uuid("student_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  day: text("day").notNull(),
+  seconds: integer("seconds").notNull().default(0),
+}, (t) => [primaryKey({ columns: [t.studentId, t.day] })]);
+
+/** Saved code (exercise drafts and workspace files), so work resumes on any device. */
+export const pyCodeSaves = pgTable("py_code_saves", {
+  studentId: uuid("student_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  key: text("key").notNull(),
+  code: text("code").notNull(),
+  updatedAt: updatedAt(),
+}, (t) => [primaryKey({ columns: [t.studentId, t.key] })]);

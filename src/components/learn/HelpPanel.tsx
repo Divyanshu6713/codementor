@@ -23,20 +23,20 @@ const MAX_HINT = 4;
  * same buttons give personalised answers within a daily limit.
  */
 export function HelpPanel({ exerciseTitle }: { exerciseTitle: string }) {
-  const { lessonId, code, status, hintLevel, noteHint, failedChecks, answer, setAnswer, setRemaining } = useLesson();
+  const { lessonId, code, mentor, hintLevel, noteHint, noteSolution, solutionViewed, failedChecks, answer, setAnswer, setRemaining } = useLesson();
   const [busy, setBusy] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const [solution, setSolution] = useState<{ solution: string; notes: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const ai = status?.tutor.aiEnabled ?? false;
+  const ai = mentor.aiEnabled;
   const nextHint = Math.min(hintLevel + 1, MAX_HINT);
-  const solutionOffered = hintLevel >= MAX_HINT || failedChecks >= 3;
+  const solutionOffered = hintLevel >= MAX_HINT || failedChecks >= 3 || solutionViewed;
 
   async function ask(mode: "concept" | "hint" | "error" | "review" | "ask", label: string, extra: { hintLevel?: number; question?: string } = {}) {
     setBusy(mode);
     setError(null);
     try {
-      const res = await api<TutorAnswer>("/api/guest/tutor", {
+      const res = await api<TutorAnswer>("/api/mentor", {
         body: { lessonId, mode, hintLevel: extra.hintLevel ?? null, code: mode === "concept" ? null : code, question: extra.question ?? null },
         timeoutMs: 120_000,
       });
@@ -53,12 +53,12 @@ export function HelpPanel({ exerciseTitle }: { exerciseTitle: string }) {
   }
 
   async function showSolution() {
-    if (!window.confirm("See the worked solution?\n\nYou'll learn more by trying the hints first. The exercise still counts as complete only when your own code passes the check.")) return;
+    if (!window.confirm("See the worked solution?\n\nYou'll learn more by trying the hints first. The exercise still counts as complete only when your own code passes the check — and a pass after seeing the solution earns less XP.")) return;
     setBusy("solution");
     setError(null);
     try {
-      setSolution(await api<{ solution: string; notes: string }>("/api/guest/solution", { body: { lessonId } }));
-      noteHint(5);
+      setSolution(await api<{ solution: string; notes: string }>("/api/lessons/solution", { body: { lessonId } }));
+      noteSolution();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Couldn't load the solution.");
     } finally {
@@ -69,12 +69,12 @@ export function HelpPanel({ exerciseTitle }: { exerciseTitle: string }) {
   const spin = (m: string) => (busy === m ? <Loader2 size={15} className="animate-spin" aria-hidden /> : null);
 
   return (
-    <section aria-label="Help" className="rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-card">
+    <section aria-label="Mentor" className="rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-bold"><Sparkles size={18} className="text-concept" aria-hidden /> Help</h2>
-        {status && (ai
-          ? <Badge tone="concept">AI tutor on{status.tutor.remaining !== null ? ` · ${status.tutor.remaining} of ${status.tutor.dailyLimit} left today` : ""}</Badge>
-          : <Badge>Built-in help</Badge>)}
+        <h2 className="flex items-center gap-2 font-bold"><Sparkles size={18} className="text-concept" aria-hidden /> Your mentor</h2>
+        {ai
+          ? <Badge tone="concept">AI mentor on{mentor.remaining !== null ? ` · ${mentor.remaining} of ${mentor.dailyLimit} left today` : ""}</Badge>
+          : <Badge>Built-in help</Badge>}
       </div>
       <p className="mt-1 text-xs text-ink-3">Stuck on <em>{exerciseTitle}</em>? Start with a hint — each one gives a little more.</p>
 
@@ -101,7 +101,7 @@ export function HelpPanel({ exerciseTitle }: { exerciseTitle: string }) {
           }}
         >
           <label htmlFor="ask-q" className="sr-only">Ask a question</label>
-          <input id="ask-q" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={1000} placeholder={ai ? "Ask a question…" : "Ask a question (AI is off)"}
+          <input id="ask-q" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={1000} placeholder={ai ? "Ask your mentor a question…" : "Ask a question (AI is off)"}
             className="h-9 min-w-0 flex-1 rounded-[0.75rem] border border-line bg-surface px-3 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25" />
           <Button size="sm" type="submit" disabled={busy !== null || !question.trim()} aria-label="Send question">{spin("ask") ?? <Send size={15} aria-hidden />}</Button>
         </form>
@@ -114,7 +114,7 @@ export function HelpPanel({ exerciseTitle }: { exerciseTitle: string }) {
           <div className="rounded-xl border border-line bg-sunken/50 p-3">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <p className="text-sm font-semibold">{answer.label}</p>
-              <Badge tone={answer.source === "ai" ? "concept" : "neutral"}>{answer.source === "ai" ? "AI tutor" : "Built-in"}</Badge>
+              <Badge tone={answer.source === "ai" ? "concept" : "neutral"}>{answer.source === "ai" ? "AI mentor" : "Built-in"}</Badge>
             </div>
             {answer.notice && <p className="mb-2 text-xs text-ink-3">{answer.notice}</p>}
             <Markdown text={answer.text} className="space-y-2 text-sm leading-relaxed text-ink-2" />

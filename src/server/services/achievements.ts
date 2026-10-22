@@ -2,7 +2,8 @@
  * Achievements reward meaningful learning behaviour, computed only from stored records.
  * No streak pressure, no random rewards.
  */
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray, isNotNull } from "drizzle-orm";
+import { COURSE_MODULES } from "@/content/course";
 import { schema, type Tx } from "@/server/db/client";
 import { CONCEPTS, questionById } from "@/content";
 import { isMastered } from "@/server/learning/mastery";
@@ -20,7 +21,22 @@ export async function checkAchievements(db: Tx, studentId: string): Promise<stri
     if (!have.has(code) && (await cond())) earned.push(code);
   };
 
+  const path = await db.select({ lessonId: schema.courseProgress.lessonId, passedHintLevel: schema.courseProgress.passedHintLevel, passedAfterSolution: schema.courseProgress.passedAfterSolution })
+    .from(schema.courseProgress).where(and(eq(schema.courseProgress.studentId, studentId), isNotNull(schema.courseProgress.passedAt)));
+  const passedLessons = new Set(path.map((p) => p.lessonId));
+  const moduleDone = (id: string) => {
+    const m = COURSE_MODULES.find((x) => x.id === id);
+    return Boolean(m?.lessons.length && m.lessons.every((l) => passedLessons.has(l)));
+  };
+  await check("FIRST_LESSON", () => passedLessons.size > 0);
+  await check("MODULE_FOUNDATIONS", () => moduleDone("foundations"));
+  await check("MODULE_LOGIC", () => moduleDone("logic"));
+  await check("MODULE_LOOPS", () => moduleDone("loops"));
+  await check("LESSON_SOLO_5", () => path.filter((p) => (p.passedHintLevel ?? 0) <= 1 && !p.passedAfterSolution).length >= 5);
+
   await check("FIRST_PROGRAM", async () => {
+    // A passed lesson exercise is a compiled, judged program too.
+    if (passedLessons.size > 0) return true;
     const [{ n }] = await db.select({ n: count() }).from(schema.judgeResults)
       .innerJoin(schema.codeSubmissions, eq(schema.codeSubmissions.id, schema.judgeResults.submissionId))
       .where(and(eq(schema.codeSubmissions.studentId, studentId), eq(schema.judgeResults.compileStatus, "success")));

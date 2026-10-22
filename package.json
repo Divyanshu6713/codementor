@@ -8,7 +8,7 @@
     "dev:web": "next dev --port 3400",
     "sandbox": "tsx worker/sandbox/server.ts",
     "build": "next build",
-    "start": "next start --port 3400",
+    "start": "next start",
     "lint": "eslint src tests worker scripts",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
@@ -16,7 +16,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "content:validate": "tsx scripts/validate-content.ts",
-    "admin:create": "tsx scripts/create-admin.ts"
+    "admin:create": "tsx scripts/create-admin.ts",
+    "start:local": "next start --port 3400",
+    "cleanup:guests": "tsx scripts/cleanup-guests.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
@@ -47,5 +49,8 @@
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=20.9"
   }
 }

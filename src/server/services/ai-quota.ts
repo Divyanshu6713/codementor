@@ -79,3 +79,10 @@ export async function remainingAIRequests(guestId: string): Promise<number> {
   const row = await db.query.aiQuota.findFirst({ where: and(eq(schema.aiQuota.key, key), eq(schema.aiQuota.day, quotaDay())) });
   return Math.max(0, config.ai.dailyRequestLimit - (row?.count ?? 0));
 }
+
+/** Claims one automatic (engine-initiated) AI call for a student; false = use curated content. */
+export async function claimAutoAI(studentId: string): Promise<boolean> {
+  const key = quotaKey("g", `auto:${studentId}`);
+  if (!key) return false;
+  return tryIncrement(key, quotaDay(), config.ai.autoDailyLimit);
+}

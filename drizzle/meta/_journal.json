@@ -22,6 +22,20 @@
       "when": 1791509309813,
       "tag": "0002_ai_budget_and_quota",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791511292648,
+      "tag": "0003_guest_accounts_and_lesson_path",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791528635676,
+      "tag": "0004_python_mastery",
+      "breakpoints": true
     }
   ]
 }

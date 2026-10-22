@@ -8,7 +8,7 @@
 import { config } from "@/server/config";
 import { AppError } from "@/server/errors";
 import { logger } from "@/server/logger";
-import type { ExecutionRequest, ExecutionResponse, RunResult, WorkerHealth } from "./protocol";
+import type { ExecLanguage, ExecutionRequest, ExecutionResponse, RunResult, WorkerHealth } from "./protocol";
 
 export class ExecutionUnavailableError extends AppError {
   constructor(message = "Code execution environment not configured.") {
@@ -23,6 +23,8 @@ export interface ExecutionStatus {
   /** True when the isolation is a local-development backend (shown as a banner). */
   devOnly: boolean;
   message: string | null;
+  /** Languages the executor can run (with toolchain versions). */
+  languages?: Partial<Record<ExecLanguage, string>>;
 }
 
 export interface ExecutionProvider {
@@ -34,7 +36,7 @@ export interface ExecutionProvider {
 const notConfigured: ExecutionProvider = {
   id: "none",
   async status() {
-    return { available: false, provider: "none", isolation: null, devOnly: false, message: "Code execution environment not configured." };
+    return { available: false, provider: "none", isolation: null, devOnly: false, message: "Code execution environment not configured.", languages: {} };
   },
   async execute() {
     throw new ExecutionUnavailableError();
@@ -52,7 +54,9 @@ function sandboxWorker(): ExecutionProvider {
       try {
         const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(2000), cache: "no-store" });
         const h = (await res.json()) as WorkerHealth;
-        value = { available: h.ok, provider: `sandbox-worker:${h.backend}`, isolation: h.isolation, devOnly: !h.production, message: null };
+        // Workers from before Python support don't report languages: they run C++ only.
+        const languages = h.languages ?? (h.compiler ? { cpp: h.compiler } : {});
+        value = { available: h.ok, provider: `sandbox-worker:${h.backend}`, isolation: h.isolation, devOnly: !h.production, message: null, languages };
       } catch {
         value = { available: false, provider: "sandbox-worker", isolation: null, devOnly: false, message: "The code runner isn't reachable right now. (Is the sandbox worker running?)" };
       }
@@ -84,7 +88,11 @@ function sandboxWorker(): ExecutionProvider {
   };
 }
 
-/** Adapter for a Piston-compatible API (https://github.com/engineer-man/piston). */
+/**
+ * Adapter for a Piston-compatible API (https://github.com/engineer-man/piston). For Python it runs
+ * main.py directly — without CodeMentor's harness, so no seed files, no step-by-step trace and only
+ * Piston's own isolation. Adapter only: not verified here.
+ */
 function piston(): ExecutionProvider {
   const base = config.execution.pistonUrl.replace(/\/$/, "");
   const isolation = "Piston service (isolation provided by the Piston deployment).";
@@ -92,10 +100,12 @@ function piston(): ExecutionProvider {
     id: "piston",
     async status() {
       if (!base) return { available: false, provider: "piston", isolation: null, devOnly: false, message: "Code execution environment not configured (PISTON_URL missing)." };
-      return { available: true, provider: "piston", isolation, devOnly: false, message: null };
+      return { available: true, provider: "piston", isolation, devOnly: false, message: null, languages: { cpp: config.execution.pistonCppVersion, python: config.execution.pistonPythonVersion } };
     },
     async execute(req) {
       if (!base) throw new ExecutionUnavailableError();
+      if (req.mode === "trace" || req.files?.length) throw new AppError("Step-by-step traces and data files need CodeMentor's own code runner.", 400, "unsupported");
+      const python = req.language === "python";
       const started = Date.now();
       const tests: RunResult[] = [];
       let compile: ExecutionResponse["compile"] = { status: "success", output: "" };
@@ -104,7 +114,8 @@ function piston(): ExecutionProvider {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            language: "c++", version: config.execution.pistonCppVersion, files: [{ name: "main.cpp", content: req.source }], stdin: t.input,
+            language: python ? "python" : "c++", version: python ? config.execution.pistonPythonVersion : config.execution.pistonCppVersion,
+            files: [{ name: python ? "main.py" : "main.cpp", content: req.source }], stdin: t.input,
             run_timeout: req.limits?.timeMs ?? 2000, compile_timeout: 10_000, run_memory_limit: (req.limits?.memoryMb ?? 256) * 1024 * 1024,
           }),
           signal: AbortSignal.timeout(60_000),
@@ -193,16 +204,25 @@ export function applySafetyGate(s: ExecutionStatus, production = config.isProduc
   return s;
 }
 
-export async function executionStatus(): Promise<ExecutionStatus> {
-  const s = await provider().status();
-  return override ? s : applySafetyGate(s);
+/**
+ * What the UI shows for a language: the gate above, then whether the executor can run that language
+ * at all (a worker without Python says so instead of failing on every run).
+ */
+export async function executionStatus(language: ExecLanguage = "cpp"): Promise<ExecutionStatus> {
+  const raw = await provider().status();
+  const s = override ? raw : applySafetyGate(raw);
+  if (s.available && s.languages && !s.languages[language]) {
+    return { ...s, available: false, message: language === "python" ? "The code runner doesn't have Python installed yet, so Python code can't run here." : "The code runner can't run C++ right now." };
+  }
+  return s;
 }
 
 export async function execute(req: ExecutionRequest): Promise<ExecutionResponse> {
-  if (config.isProduction && !override) {
-    const s = await executionStatus();
+  if ((config.isProduction || req.language !== "cpp") && !override) {
+    const s = await executionStatus(req.language);
     if (!s.available) throw new ExecutionUnavailableError(s.message ?? undefined);
   }
+  if ((req.files?.length ?? 0) > 6 || req.files?.some((f) => Buffer.byteLength(f.content, "utf8") > 32 * 1024)) throw new AppError("Too many or too large data files.");
   if (Buffer.byteLength(req.source, "utf8") > config.execution.maxSourceBytes) throw new AppError("This program is too long to run (64 KB limit).");
   if (req.tests.some((t) => Buffer.byteLength(t.input, "utf8") > config.execution.maxStdinBytes)) throw new AppError("The input is too long (16 KB limit).");
   return admitted(() => provider().execute(req));

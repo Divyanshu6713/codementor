@@ -6,20 +6,25 @@ import { completedLessons, nextDecision, skillMap } from "@/server/services/lear
 import { LESSONS, conceptById } from "@/content";
 import { Badge, Card, MasteryBar, PageHeader, pct } from "@/components/ui";
 import { StartSessionButton } from "@/components/app/StartSessionButton";
+import { LessonPath } from "@/components/app/LessonPath";
+import { getCourseLesson } from "@/content/course";
+import { pathProgress } from "@/server/services/lesson-path";
 
 export const metadata: Metadata = { title: "Learn" };
 
 export default async function LearnPage() {
   const user = await requirePageUser(["STUDENT"]);
   const db = await getDb();
-  const [decision, done, map] = await Promise.all([nextDecision(db, user.id), completedLessons(db, user.id), skillMap(db, user.id)]);
+  const [decision, done, map, path] = await Promise.all([nextDecision(db, user.id), completedLessons(db, user.id), skillMap(db, user.id), pathProgress(db, user.id)]);
   const concepts = map.flatMap((t) => t.concepts.map((c) => ({ ...c, track: t.title, trackStatus: t.status })));
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Learn" subtitle="Your path through C++. The recommended step comes first; you can also open any lesson that exists." />
+      <PageHeader title="Learn" subtitle="Step-by-step lessons from zero, plus adaptive lessons that react to your answers. Open anything — nothing is locked." />
+      <LessonPath modules={path.modules} next={path.next} nextTitle={path.next ? getCourseLesson(path.next)!.title : null} passedCount={path.passedCount} total={path.total} />
+      <h2 className="pt-2 text-2xl font-extrabold tracking-[-0.02em]">Adaptive lessons</h2>
       <Card className="p-6" as="section" aria-labelledby="rec">
-        <Badge tone="accent">Recommended</Badge>
+        <Badge tone="accent">Recommended for you</Badge>
         <h2 id="rec" className="mt-2 text-xl font-bold">{decision.title}</h2>
         <ul className="mt-2 space-y-1 text-sm text-ink-2">{decision.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
         <div className="mt-4">

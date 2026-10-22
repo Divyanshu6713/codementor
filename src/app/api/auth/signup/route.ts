@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createSession, createUser } from "@/server/auth/auth";
 import { homeFor, setSessionCookie } from "@/server/auth/current";
-import { clientIp, rateLimit, readJson, toErrorResponse } from "@/server/http";
+import { rateLimit, readJson, toErrorResponse, trustedClientIp } from "@/server/http";
 
 const Body = z.object({
   username: z.string().trim().min(3, "At least 3 characters").max(32).regex(/^[a-zA-Z0-9_.-]+$/, "Letters, numbers, dots, dashes and underscores only"),
@@ -12,7 +12,9 @@ const Body = z.object({
 
 export async function POST(req: Request) {
   try {
-    rateLimit(`signup:${clientIp(req)}`, 5, 2);
+    const ip = trustedClientIp(req);
+    if (ip) rateLimit(`signup:ip:${ip}`, 20, 5);
+    rateLimit("signup:all", 300, 60);
     const body = await readJson(req, Body);
     const user = await createUser(body);
     const { token, expiresAt } = await createSession(user.id);

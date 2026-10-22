@@ -11,7 +11,7 @@ function subscribeText(cb: () => void) {
   return () => obs.disconnect();
 }
 
-export function SettingsPanel({ prefs, parents }: { prefs: { askConfidence: boolean; tutorRetentionDays: number }; parents: { id: string; displayName: string }[] }) {
+export function SettingsPanel({ prefs, parents, isGuest = false }: { prefs: { askConfidence: boolean; tutorRetentionDays: number }; parents: { id: string; displayName: string }[]; isGuest?: boolean }) {
   const router = useRouter();
   const [ask, setAsk] = useState(prefs.askConfidence);
   const [retention, setRetention] = useState(prefs.tutorRetentionDays);
@@ -97,9 +97,9 @@ export function SettingsPanel({ prefs, parents }: { prefs: { askConfidence: bool
               router.push(r.redirect);
             } catch (e2) { setErr((e2 as Error).message); }
           }}>
-            <Field label="Password" htmlFor="del-pw"><input id="del-pw" type="password" value={pw} onChange={(e) => setPw(e.target.value)} className={inputClass} autoComplete="current-password" /></Field>
+            {!isGuest && <Field label="Password" htmlFor="del-pw"><input id="del-pw" type="password" value={pw} onChange={(e) => setPw(e.target.value)} className={inputClass} autoComplete="current-password" /></Field>}
             <Field label='Type "DELETE"' htmlFor="del-confirm"><input id="del-confirm" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={inputClass} /></Field>
-            <Button type="submit" variant="danger" disabled={confirm !== "DELETE" || !pw}>Delete forever</Button>
+            <Button type="submit" variant="danger" disabled={confirm !== "DELETE" || (!isGuest && !pw)}>Delete forever</Button>
           </form>
         </details>
       </Card>

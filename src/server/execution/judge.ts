@@ -6,7 +6,7 @@
  * kind of case (normal / boundary / edge) that failed.
  */
 import { execute } from "./providers";
-import type { RunResult } from "./protocol";
+import type { ExecLanguage, RunResult } from "./protocol";
 
 export interface JudgeTest {
   id: string;
@@ -74,8 +74,11 @@ export function outputsMatch(expected: string, actual: string, mode: "tokens" | 
 
 const VERDICT_PRIORITY: Verdict[] = ["time_limit", "memory_limit", "output_limit", "runtime_error", "wrong_answer"];
 
-export async function judgeSubmission(source: string, tests: JudgeTest[], compare: "tokens" | "lines"): Promise<JudgeOutcome> {
-  const res = await execute({ language: "cpp", source, tests: tests.map((t, i) => ({ id: `t${i}`, input: t.input })) });
+export async function judgeSubmission(
+  source: string, tests: JudgeTest[], compare: "tokens" | "lines",
+  opts: { language?: ExecLanguage; files?: { name: string; content: string }[] } = {},
+): Promise<JudgeOutcome> {
+  const res = await execute({ language: opts.language ?? "cpp", source, files: opts.files, tests: tests.map((t, i) => ({ id: `t${i}`, input: t.input })) });
   const base = {
     compileOutput: res.compile.output, testsTotal: tests.length, executor: res.executor, isolation: res.isolation, durationMs: res.durationMs,
   };

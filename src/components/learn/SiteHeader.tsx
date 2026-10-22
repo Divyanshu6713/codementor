@@ -9,7 +9,7 @@ export function SiteHeader({ wide = false }: { wide?: boolean }) {
       <div className={`mx-auto flex items-center justify-between gap-3 px-4 py-3 sm:px-6 ${wide ? "max-w-[1440px]" : "max-w-5xl"}`}>
         <Logo />
         <nav aria-label="Site" className="flex items-center gap-1">
-          <Link href="/learn" className="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-sunken hover:text-ink">Course map</Link>
+          <Link href="/start" className="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-sunken hover:text-ink">Start learning</Link>
           <ThemeToggle />
         </nav>
       </div>

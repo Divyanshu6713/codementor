@@ -9,6 +9,8 @@
 import { and, eq } from "drizzle-orm";
 import { schema, type Tx } from "@/server/db/client";
 import { dailyChallengeFor } from "@/content/problems";
+import { COURSE_MODULES } from "@/content/course";
+import { pyState } from "@/server/python/state";
 
 export const LEVELS = [
   { name: "Beginner", xp: 0 },
@@ -29,7 +31,30 @@ export const XP_RULES = {
   practiceCompleted: 10,
   /** Solving the Daily Challenge on its day (any help level). */
   dailyChallenge: 25,
+  /**
+   * Passing a step-by-step lesson's exercise (judged by the compiler), by how much help was used
+   * before passing: at most one hint → 25, two → 20, three or four → 15, after the worked solution → 5.
+   */
+  lessonPassed: (hintLevel: number, afterSolution: boolean) => (afterSolution ? 5 : hintLevel <= 1 ? 25 : hintLevel === 2 ? 20 : 15),
+  /** Finishing every lesson in a module. */
+  moduleCompleted: 50,
 } as const;
+
+export interface PathRow { lessonId: string; passedAt: Date | null; passedHintLevel: number | null; passedAfterSolution: boolean | null }
+
+/** XP events from the step-by-step lesson path: one per passed exercise, plus a bonus per finished module. */
+export function pathXpEvents(rows: PathRow[]): { at: Date; xp: number; lessonId: string | null; moduleId: string | null }[] {
+  const passed = new Map(rows.filter((r) => r.passedAt).map((r) => [r.lessonId, r]));
+  const events = [...passed.values()].map((r) => ({
+    at: r.passedAt!, xp: XP_RULES.lessonPassed(r.passedHintLevel ?? 0, Boolean(r.passedAfterSolution)), lessonId: r.lessonId as string | null, moduleId: null as string | null,
+  }));
+  for (const m of COURSE_MODULES) {
+    if (!m.lessons.length || !m.lessons.every((id) => passed.has(id))) continue;
+    const at = new Date(Math.max(...m.lessons.map((id) => passed.get(id)!.passedAt!.getTime())));
+    events.push({ at, xp: XP_RULES.moduleCompleted, lessonId: null, moduleId: m.id });
+  }
+  return events;
+}
 
 export function xpForOutcome(o: { correct: boolean; credit: number; difficulty: number; solutionRevealed: boolean; context: string }) {
   if (!o.correct || o.solutionRevealed || o.context === "diagnostic") return 0;
@@ -76,7 +101,7 @@ export function dailySolves<T extends { questionId: string; correct: boolean; so
 export async function progression(db: Tx, studentId: string, now = new Date()) {
   const weekAgo = new Date(now.getTime() - 7 * 86_400_000);
   const twoWeeksAgo = new Date(now.getTime() - 14 * 86_400_000);
-  const [outcomes, fixed, resolved, sessions] = await Promise.all([
+  const [outcomes, fixed, resolved, sessions, pathEvents, py] = await Promise.all([
     db.select({
       correct: schema.itemOutcomes.correct, independent: schema.itemOutcomes.independent, credit: schema.itemOutcomes.credit,
       difficulty: schema.itemOutcomes.difficulty, solutionRevealed: schema.itemOutcomes.solutionRevealed, context: schema.itemOutcomes.context,
@@ -87,6 +112,10 @@ export async function progression(db: Tx, studentId: string, now = new Date()) {
       .where(and(eq(schema.sessionEvents.studentId, studentId), eq(schema.sessionEvents.type, "misconception_resolved"))),
     db.select({ id: schema.learningSessions.id, kind: schema.learningSessions.kind, endedAt: schema.learningSessions.endedAt, startedAt: schema.learningSessions.startedAt })
       .from(schema.learningSessions).where(and(eq(schema.learningSessions.studentId, studentId), eq(schema.learningSessions.status, "completed"))),
+    db.select({ lessonId: schema.courseProgress.lessonId, passedAt: schema.courseProgress.passedAt, passedHintLevel: schema.courseProgress.passedHintLevel, passedAfterSolution: schema.courseProgress.passedAfterSolution })
+      .from(schema.courseProgress).where(eq(schema.courseProgress.studentId, studentId)),
+    // The Python path adds to the same XP total (one learner profile across languages).
+    pyState(db, studentId, now),
   ]);
 
   // Every XP event with its timestamp, so totals and weekly windows come from the same list.
@@ -99,6 +128,8 @@ export async function progression(db: Tx, studentId: string, now = new Date()) {
       at: s.endedAt ?? s.startedAt, sessionId: s.id,
       xp: s.kind === "lesson" ? XP_RULES.lessonCompleted : s.kind === "revision" ? XP_RULES.revisionCompleted : s.kind === "practice" ? XP_RULES.practiceCompleted : 0,
     })),
+    ...pathXpEvents(pathEvents).map((e) => ({ at: e.at, xp: e.xp, sessionId: null })),
+    ...py.xpEvents.map((e) => ({ at: e.at, xp: e.xp, sessionId: null })),
   ];
   const total = events.reduce((s, e) => s + e.xp, 0);
   const thisWeek = events.filter((e) => e.at >= weekAgo).reduce((s, e) => s + e.xp, 0);

@@ -13,3 +13,15 @@ export function describeExit(code: number): string {
   };
   return known[code] ?? `The program exited with code ${code}. A program should end with return 0.`;
 }
+
+/**
+ * Python programs that end with an uncaught exception exit with code 1 and a traceback on stderr;
+ * the detail is the traceback's last line ("ZeroDivisionError: division by zero").
+ */
+export function describePythonExit(code: number, stderr: string): string {
+  const last = stderr.trim().split(/\r?\n/).filter((l) => l.trim()).pop() ?? "";
+  if (code === 1 && /^[A-Za-z_][\w.]*(Error|Exception|Exit|Interrupt|Warning)\b/.test(last)) return last.slice(0, 300);
+  if (code === 1 && /^[A-Za-z_][\w.]*:/.test(last)) return last.slice(0, 300);
+  if (code === 0xc00000fd || code === 139) return "Python crashed: stack overflow (recursion far too deep).";
+  return `The program stopped with exit code ${code}${code === 1 ? "" : " (sys.exit)"}.`;
+}

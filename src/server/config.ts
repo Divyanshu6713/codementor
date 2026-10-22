@@ -30,6 +30,10 @@ export const config = {
   autoMigrate: process.env.AUTO_MIGRATE !== "false",
   dataDir: process.env.CODEMENTOR_DATA_DIR || path.join(process.cwd(), ".data"),
   sessionDays: int("SESSION_DAYS", 14),
+  /** Guests have no password, so their session cookie is their account: keep it longer. */
+  guestSessionDays: int("GUEST_SESSION_DAYS", 180),
+  /** New guest accounts allowed per hour across the whole app (abuse brake). */
+  guestCreationsPerHour: int("GUEST_CREATIONS_PER_HOUR", 600),
   /** Only trust X-Forwarded-For / X-Real-IP when a proxy you control (e.g. Vercel) sets them. */
   trustProxy: process.env.TRUST_PROXY === "true" || process.env.VERCEL === "1",
   ai: {
@@ -54,6 +58,11 @@ export const config = {
     },
     /** Student-triggered AI requests per guest per UTC day. */
     dailyRequestLimit: int("AI_DAILY_REQUEST_LIMIT", 10),
+    /**
+     * Automatic AI calls the adaptive engine makes for a student (phrasing hints, explaining a judged
+     * mistake) per day. Beyond it the curated text is used — the student never sees an error.
+     */
+    autoDailyLimit: int("AI_AUTO_DAILY_LIMIT", 40),
     /** Per network address per UTC day — a backstop against cookie clearing, sized for shared campus networks. */
     ipDailyLimit: int("AI_IP_DAILY_LIMIT", 300),
     /** All student AI requests per day across the whole app. */
@@ -80,6 +89,7 @@ export const config = {
     sandboxToken: process.env.SANDBOX_TOKEN || "",
     pistonUrl: process.env.PISTON_URL || "",
     pistonCppVersion: process.env.PISTON_CPP_VERSION || "*",
+    pistonPythonVersion: process.env.PISTON_PYTHON_VERSION || "3.12.0",
     /** Requests the web app lets through to the executor at once (per web instance). */
     maxConcurrent: int("EXECUTION_MAX_CONCURRENT", 4),
     maxQueued: int("EXECUTION_MAX_QUEUED", 20),

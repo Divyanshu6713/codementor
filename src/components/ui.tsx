@@ -4,21 +4,23 @@ import type { ComponentProps, ReactNode } from "react";
 
 /* ── Buttons ─────────────────────────────────────────────────────────── */
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "hint" | "inverse";
+type Variant = "primary" | "brand" | "secondary" | "ghost" | "danger" | "hint" | "inverse";
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-accent text-on-accent hover:brightness-110 shadow-card",
-  secondary: "bg-surface text-ink border border-line hover:bg-sunken",
+  /** Electric-lime CTA with dark text — identical in light and dark mode. */
+  brand: "bg-brand text-on-brand hover:brightness-105 hover:shadow-[0_0_0_4px_color-mix(in_srgb,var(--brand)_30%,transparent)]",
+  secondary: "bg-surface text-ink border border-line-strong hover:border-ink hover:bg-sunken",
   ghost: "text-ink-2 hover:bg-sunken hover:text-ink",
   danger: "bg-danger text-on-accent hover:opacity-90",
   hint: "bg-hint-soft text-hint border border-hint/30 hover:bg-hint/15",
-  /** For gradient/colour panels: white button with brand-blue text. */
-  inverse: "bg-white text-[#1f3fbf] hover:bg-white/90 shadow-card",
+  /** For gradient/colour panels: white button with near-black text. */
+  inverse: "bg-white text-[#0e0e10] hover:bg-white/90 shadow-card",
 };
-const SIZES = { sm: "h-8 px-3 text-sm gap-1.5", md: "h-10 px-4 text-sm gap-2", lg: "h-12 px-6 text-base gap-2" };
+const SIZES = { sm: "h-9 px-4 text-sm gap-1.5", md: "h-11 px-5 text-sm gap-2", lg: "h-13 px-7 text-base gap-2" };
 
 export function buttonClass(variant: Variant = "primary", size: keyof typeof SIZES = "md", extra?: string) {
   return clsx(
-    "inline-flex select-none items-center justify-center rounded-[0.75rem] font-semibold transition-[background-color,color,box-shadow,transform,filter] duration-200 ease-[var(--ease-calm)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap",
+    "inline-flex cursor-pointer select-none items-center justify-center rounded-full font-semibold tracking-[-0.01em] transition-[background-color,color,box-shadow,transform,filter,border-color] duration-200 ease-[var(--ease-calm)] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap",
     VARIANTS[variant], SIZES[size], extra,
   );
 }
@@ -37,8 +39,8 @@ export function Card({ className, children, as: Tag = "div", interactive, ...res
   return (
     <Tag
       className={clsx(
-        "rounded-[var(--radius-card)] border border-line/80 bg-surface shadow-card",
-        interactive && "transition-[transform,box-shadow,border-color] duration-300 ease-[var(--ease-calm)] hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-pop",
+        "rounded-[var(--radius-card)] border border-line bg-surface shadow-card",
+        interactive && "transition-[transform,box-shadow,border-color] duration-300 ease-[var(--ease-calm)] hover:-translate-y-1 hover:border-accent/60 hover:shadow-pop",
         className,
       )}
       {...rest}
@@ -52,8 +54,8 @@ export function PageHeader({ title, subtitle, actions, eyebrow }: { title: React
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        {eyebrow && <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-ink-3">{eyebrow}</p>}
-        <h1 className="text-2xl font-bold tracking-[-0.025em] sm:text-[2rem] sm:leading-10">{title}</h1>
+        {eyebrow && <p className="mb-2 inline-flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-ink-3"><span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden />{eyebrow}</p>}
+        <h1 className="text-[1.75rem] font-bold leading-tight sm:text-[2.5rem] sm:leading-[1.1]">{title}</h1>
         {subtitle && <p className="mt-1.5 max-w-2xl text-ink-2">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -172,4 +174,4 @@ export function Field({ label, htmlFor, hint, error, children }: { label: string
   );
 }
 
-export const inputClass = "h-11 w-full rounded-[0.75rem] border border-line bg-surface px-3 text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25";
+export const inputClass = "h-11 w-full rounded-[0.85rem] border border-line-strong bg-surface px-3.5 text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30";

@@ -17,6 +17,9 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Hostinger's Node.js hosting always builds in standalone mode (it overrides this setting);
+  // NEXT_STANDALONE=true reproduces that locally and is what the VPS guide uses.
+  ...(process.env.NEXT_STANDALONE === "true" ? { output: "standalone" as const } : {}),
   serverExternalPackages: ["@electric-sql/pglite", "pg"],
   outputFileTracingIncludes: { "/**": ["./drizzle/**/*"] },
   poweredByHeader: false,
@@ -29,6 +32,7 @@ const nextConfig: NextConfig = {
         { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         { key: "X-Frame-Options", value: "DENY" },
         { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ...(isDev ? [] : [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }]),
       ],
     }];
   },

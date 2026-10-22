@@ -31,7 +31,7 @@ const RULES: Rule[] = [
       : { title: `\`${m[1]}\` is used but was never declared`, body: `The compiler has never seen a variable or function called \`${m[1]}\` at this point. Check the spelling (C++ is case-sensitive: \`total\` and \`Total\` are different), and that it is declared *before* this line and inside the same braces { } where you use it.` },
   },
   {
-    test: /expected ';' before/,
+    test: /expected (?:',' or )?';' (?:before|at end)/,
     explain: () => ({ title: "A semicolon is missing", body: "A statement isn't finished with `;`. The compiler usually notices on the **next** line, so look at the end of the line *above* the one it points to." }),
   },
   {

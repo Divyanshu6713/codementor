@@ -27,7 +27,7 @@ function inline(text: string, keyBase: string): ReactNode[] {
 
 type Block =
   | { k: "p"; text: string }
-  | { k: "code"; text: string }
+  | { k: "code"; text: string; lang: string }
   | { k: "ul" | "ol"; items: string[] }
   | { k: "quote"; text: string }
   | { k: "table"; rows: string[][] };
@@ -40,11 +40,12 @@ function parse(src: string): Block[] {
     const line = lines[i];
     if (!line.trim()) { i++; continue; }
     if (line.trim().startsWith("```")) {
+      const lang = line.trim().slice(3).trim().toLowerCase();
       const body: string[] = [];
       i++;
       while (i < lines.length && !lines[i].trim().startsWith("```")) body.push(lines[i++]);
       i++;
-      blocks.push({ k: "code", text: body.join("\n") });
+      blocks.push({ k: "code", text: body.join("\n"), lang });
       continue;
     }
     if (/^\s*\|/.test(line)) {
@@ -83,7 +84,8 @@ function parse(src: string): Block[] {
   return blocks;
 }
 
-export function Markdown({ text, className }: { text: string; className?: string }) {
+/** `codeLanguage` colours unlabelled ``` blocks; a fence label (```python, ```cpp, ```text) wins. */
+export function Markdown({ text, className, codeLanguage = "cpp" }: { text: string; className?: string; codeLanguage?: "cpp" | "python" }) {
   const blocks = parse(text);
   return (
     <div className={className ?? "space-y-3 leading-relaxed text-ink-2"}>
@@ -91,7 +93,11 @@ export function Markdown({ text, className }: { text: string; className?: string
         const key = `b${i}`;
         switch (b.k) {
           case "p": return <p key={key}>{inline(b.text, key)}</p>;
-          case "code": return <CodeBlock key={key} code={b.text} />;
+          case "code": {
+            const language = b.lang === "python" || b.lang === "py" ? "python" : b.lang === "cpp" || b.lang === "c++" ? "cpp" : b.lang ? "text" : codeLanguage;
+            // Unlabelled blocks in Python lessons are program output or terminal text: no line numbers.
+            return <CodeBlock key={key} code={b.text} language={codeLanguage === "python" && !b.lang ? "text" : language} numbered={!(codeLanguage === "python" && !b.lang)} />;
+          }
           case "ul": return <ul key={key} className="ml-5 list-disc space-y-1.5 marker:text-ink-3">{b.items.map((it, j) => <li key={j}>{inline(it, `${key}-${j}`)}</li>)}</ul>;
           case "ol": return <ol key={key} className="ml-5 list-decimal space-y-1.5 marker:font-semibold marker:text-ink-3">{b.items.map((it, j) => <li key={j}>{inline(it, `${key}-${j}`)}</li>)}</ol>;
           case "quote": return <blockquote key={key} className="rounded-r-lg border-l-4 border-concept bg-concept-soft/60 px-4 py-2 text-ink">{inline(b.text, key)}</blockquote>;

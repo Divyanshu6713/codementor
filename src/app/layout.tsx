@@ -1,19 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { DM_Sans, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const ui = Plus_Jakarta_Sans({ variable: "--font-ui", subsets: ["latin"] });
+const ui = DM_Sans({ variable: "--font-ui", subsets: ["latin"] });
+const head = Space_Grotesk({ variable: "--font-head", subsets: ["latin"], weight: ["500", "600", "700"] });
 const code = JetBrains_Mono({ variable: "--font-code", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "CodeMentor — learn C++ one concept at a time", template: "%s · CodeMentor" },
-  description: "Learn C++ from zero without signing up: plain-language lessons, worked examples, exercises checked by a real compiler, and hints that teach instead of giving answers.",
+  title: { default: "CodeMentor — learn to code like you mean it", template: "%s · CodeMentor" },
+  description: "Learn C++ and Python by doing: adaptive lessons, code checked by a real compiler and sandbox, hints that teach instead of giving answers, daily challenges and an arena. No sign-up needed.",
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f7fc" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a1020" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f4ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0b" },
   ],
 };
 
@@ -22,7 +23,7 @@ const themeScript = `(function(){try{var t=localStorage.getItem("cmk-theme");if(
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${ui.variable} ${code.variable} h-full`} suppressHydrationWarning>
+    <html lang="en" className={`${ui.variable} ${head.variable} ${code.variable} h-full`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

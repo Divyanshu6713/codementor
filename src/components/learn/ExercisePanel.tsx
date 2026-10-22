@@ -1,14 +1,13 @@
 "use client";
 
 import clsx from "clsx";
-import { CheckCircle2, CircleAlert, CircleX, Eye, Loader2, Play, RotateCcw, ShieldCheck } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleX, Eye, Loader2, PartyPopper, Play, RotateCcw, ShieldCheck, Sparkles, Trophy } from "lucide-react";
 import { useState } from "react";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { Markdown } from "@/components/Markdown";
 import { Badge, Button, Callout } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
-import { useProgress } from "@/lib/guest-progress";
-import { useLesson } from "./LessonState";
+import { useLesson, type PassReward } from "./LessonState";
 
 interface Feedback {
   title: string;
@@ -32,6 +31,7 @@ interface CheckResult {
   tests: { label: string; hidden: boolean; category: string; passed: boolean; status: string; input?: string; expected?: string; actual?: string; detail: string | null }[];
   revealedHidden: { label: string; input: string; expected: string; actual: string } | null;
   feedback: Feedback[];
+  reward: PassReward | null;
 }
 
 type Result = { kind: "run"; data: RunResult } | { kind: "check"; data: CheckResult } | { kind: "error"; message: string };
@@ -46,19 +46,16 @@ export interface ExerciseView {
 const show = (s: string) => (s === "" ? "(nothing)" : s);
 
 export function ExercisePanel({ exercise }: { exercise: ExerciseView }) {
-  const { lessonId, code, setCode, starterCode, status, statusError, noteCheck, exerciseVersion } = useLesson();
-  const progress = useProgress();
-  const saved = progress.lessons[lessonId];
+  const { lessonId, code, setCode, starterCode, execution, noteCheck, reward, passed } = useLesson();
   const [input, setInput] = useState(exercise.samples[0]?.input ?? "");
   const [busy, setBusy] = useState<"run" | "check" | "reveal" | null>(null);
   const [result, setResult] = useState<Result | null>(null);
-  const canRun = status?.execution.available ?? false;
-  const draftOutdated = Boolean(saved?.draft && saved.draftVersion && saved.draftVersion !== exerciseVersion);
+  const canRun = execution.available;
 
   async function run() {
     setBusy("run");
     try {
-      setResult({ kind: "run", data: await api<RunResult>("/api/guest/run", { body: { source: code, input } }) });
+      setResult({ kind: "run", data: await api<RunResult>("/api/code/run", { body: { source: code, input } }) });
     } catch (e) {
       setResult({ kind: "error", message: e instanceof ApiError ? e.message : "Something went wrong." });
     } finally {
@@ -69,9 +66,9 @@ export function ExercisePanel({ exercise }: { exercise: ExerciseView }) {
   async function check(showFailingHidden = false) {
     setBusy(showFailingHidden ? "reveal" : "check");
     try {
-      const data = await api<CheckResult>("/api/guest/check", { body: { lessonId, source: code, showFailingHidden } });
+      const data = await api<CheckResult>("/api/lessons/check", { body: { lessonId, source: code, showFailingHidden } });
       setResult({ kind: "check", data });
-      if (!showFailingHidden) noteCheck(data.passed);
+      if (!showFailingHidden) noteCheck(data.passed, data.reward);
     } catch (e) {
       setResult({ kind: "error", message: e instanceof ApiError ? e.message : "Something went wrong." });
     } finally {
@@ -108,19 +105,18 @@ export function ExercisePanel({ exercise }: { exercise: ExerciseView }) {
         </div>
       )}
 
-      {statusError && <Callout tone="danger" title="Couldn't reach CodeMentor">{statusError} You can keep reading and writing code; your code is saved in this browser.</Callout>}
-      {status && !status.execution.available && (
+      {!execution.available && (
         <Callout tone="hint" icon={<CircleAlert size={18} />} title="Running code isn't available right now">
-          {status.execution.message ?? "The code runner is offline."} You can still read the lesson, write your code (it&apos;s saved in this browser) and use hints.
+          {execution.message ?? "The code runner is offline."} Nothing will be simulated. You can still read the lesson, write your code (it&apos;s kept in this browser) and use hints.
         </Callout>
       )}
-      {draftOutdated && <Callout tone="hint" title="This exercise changed since you last worked on it">Your saved code is still here, but the task may be different now. Use <strong>Reset</strong> to start from the new starter code.</Callout>}
+      {passed && !reward && <Callout tone="success" icon={<CheckCircle2 size={18} />} title="You've already passed this exercise">Practise again any time — the XP for it is already yours.</Callout>}
 
       <div>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-semibold">Your code</p>
           <div className="flex items-center gap-2 text-xs text-ink-3">
-            {saved?.draft && <span aria-live="polite">Saved in this browser</span>}
+            {code !== starterCode && <span>Kept in this browser</span>}
             <Button size="sm" variant="ghost" onClick={reset} aria-label="Reset to starter code"><RotateCcw size={14} aria-hidden /> Reset</Button>
           </div>
         </div>
@@ -142,12 +138,13 @@ export function ExercisePanel({ exercise }: { exercise: ExerciseView }) {
           </Button>
         </div>
       </div>
-      {status?.execution.devOnly && status.execution.available && <p className="text-xs text-ink-3">Running on the local development sandbox.</p>}
+      {execution.devOnly && execution.available && <p className="text-xs text-ink-3">Running on the local development sandbox.</p>}
 
       <div aria-live="polite" aria-busy={busy !== null}>
         {result?.kind === "error" && <Callout tone="danger" title="That didn't work">{result.message}</Callout>}
         {result?.kind === "run" && <RunOutput r={result.data} />}
         {result?.kind === "check" && <CheckOutput r={result.data} busy={busy === "reveal"} onReveal={() => check(true)} />}
+        {result?.kind === "check" && result.data.passed && reward && <Celebration reward={reward} />}
       </div>
     </div>
   );
@@ -217,7 +214,7 @@ function CheckOutput({ r, busy, onReveal }: { r: CheckResult; busy: boolean; onR
       {r.passed ? (
         <div className="rounded-xl border border-success/30 bg-success-soft px-4 py-3">
           <p className="flex items-center gap-2 font-semibold text-success"><CheckCircle2 size={18} aria-hidden /> Exercise complete — all {r.testsTotal} tests passed</p>
-          <p className="mt-1 text-sm text-ink-2">Lesson marked complete in this browser. Scroll down to continue.</p>
+          <p className="mt-1 text-sm text-ink-2">Lesson complete. Scroll down for the next step.</p>
         </div>
       ) : (
         <p className="flex items-center gap-2 font-semibold text-danger"><CircleX size={18} aria-hidden /> {r.testsPassed} of {r.testsTotal} tests passed</p>
@@ -267,6 +264,22 @@ function Mini({ label, text }: { label: string; text: string }) {
     <div className="min-w-0">
       <p className="text-xs text-ink-3">{label}</p>
       <pre className="mt-0.5 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg bg-sunken px-2 py-1 font-mono text-[12.5px]">{show(text.trimEnd())}</pre>
+    </div>
+  );
+}
+
+/** A short, earned celebration: XP for the first pass, module completion, new achievements. */
+function Celebration({ reward }: { reward: PassReward }) {
+  return (
+    <div className="animate-rise mt-3 overflow-hidden rounded-[var(--radius-card)] bg-hero p-5 text-white shadow-pop" role="status">
+      <p className="flex items-center gap-2 text-lg font-extrabold"><Sparkles size={20} aria-hidden /> +{reward.xp} XP</p>
+      {reward.moduleCompleted && (
+        <p className="mt-2 flex items-center gap-2 font-semibold"><PartyPopper size={18} aria-hidden /> Module complete: {reward.moduleCompleted.title}! +{reward.moduleCompleted.xp} XP bonus</p>
+      )}
+      {reward.achievements.map((a) => (
+        <p key={a.code} className="mt-2 flex items-center gap-2 font-semibold"><Trophy size={17} aria-hidden /> Achievement unlocked: {a.title}</p>
+      ))}
+      <p className="mt-2 text-sm text-white/85">{reward.xp >= 25 ? "Solved with little or no help — that's the most XP a lesson gives." : "Next time, try one fewer hint for more XP."}</p>
     </div>
   );
 }

@@ -1,0 +1,26 @@
+# /etc/systemd/system/codementor-web.service — the Next.js app (production build, never `next dev`).
+[Unit]
+Description=CodeMentor web app
+After=network-online.target postgresql.service docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=codementor
+Group=codementor
+WorkingDirectory=/srv/codementor/app/.next/standalone
+EnvironmentFile=/etc/codementor/web.env
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=3
+# Resource limits and hardening
+MemoryMax=1500M
+TasksMax=256
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=-/srv/codementor/app/.next/standalone/.next/cache
+
+[Install]
+WantedBy=multi-user.target

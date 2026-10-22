@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/server/db/client";
 import { execute } from "@/server/execution/providers";
 import { AppError } from "@/server/errors";
+import { explainCompilerOutput, runFeedback } from "@/server/learning/feedback";
 import type { SessionState } from "./session-types";
 
 export async function runCode(studentId: string, args: { source: string; input: string; sessionId?: string | null; itemKey?: string | null }) {
@@ -22,9 +23,14 @@ export async function runCode(studentId: string, args: { source: string; input: 
   await db.insert(schema.codeSubmissions).values({
     studentId, sessionId: args.sessionId ?? null, questionVersionId, kind: args.sessionId ? "run" : "playground", language: "cpp", source: args.source,
   });
+  // Plain-language explanations alongside the real compiler/runtime output.
+  const feedback = res.compile.status !== "success"
+    ? explainCompilerOutput(res.compile.output, res.compile.status === "rejected" ? "rejected" : "error")
+    : run ? [runFeedback(run.status, run.detail)].filter((f) => f !== null) : [];
   return {
     compile: res.compile,
-    run: run ? { status: run.status, stdout: run.stdout, stderr: run.stderr.slice(0, 4000), detail: run.detail, timeMs: run.timeMs } : null,
+    run: run ? { status: run.status, stdout: run.stdout.slice(0, 16_000), stderr: run.stderr.slice(0, 4000), detail: run.detail, timeMs: run.timeMs } : null,
+    feedback,
     executor: res.executor,
     isolation: res.isolation,
   };

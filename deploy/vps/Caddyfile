@@ -1,0 +1,13 @@
+# /etc/caddy/Caddyfile — HTTPS (automatic Let's Encrypt) in front of the web app.
+# The sandbox worker (127.0.0.1:3410) and PostgreSQL (127.0.0.1:5432) are NOT exposed.
+codementor.example.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+	request_body {
+		max_size 1MB
+	}
+	log {
+		output file /var/log/caddy/codementor.log
+		format json
+	}
+}

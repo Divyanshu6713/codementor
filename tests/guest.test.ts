@@ -1,22 +1,26 @@
 /**
- * The guest learning journey's server logic: judged checks that never leak hidden tests, the
- * help panel's curated/AI paths and every fallback, signed guest identity, browser progress
- * parsing/migration, curated error explanations, and the production execution gate.
+ * Guest accounts and the step-by-step lesson path: one-click guest accounts (no password, can't be
+ * logged into, can be claimed), judged checks that never leak hidden tests, XP that depends on how
+ * much help was used, module completion + achievements, the mentor's curated/AI paths and every
+ * fallback, curated error explanations, and the production execution gate.
  * Uses the real g++ sandbox where noted (Windows dev backend); AI providers are fixtures.
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { getCourseLesson } from "@/content/course";
+import { eq } from "drizzle-orm";
+import { COURSE_MODULES, getCourseLesson } from "@/content/course";
 import { config } from "@/server/config";
+import { schema, type DB } from "@/server/db/client";
+import { claimGuestAccount, createGuestUser, verifyCredentials } from "@/server/auth/auth";
 import { setAIProviderForTesting } from "@/server/ai";
 import { curatedProvider } from "@/server/ai/curated";
 import type { AIProvider, LessonTutorRequest } from "@/server/ai/types";
 import { AIBudgetExhaustedError, resetMeteringForTesting } from "@/server/ai/metering";
 import { applySafetyGate, setExecutionProviderForTesting } from "@/server/execution/providers";
-import { newGuestToken, verifyGuestToken } from "@/server/guest/identity";
 import { explainCompilerOutput, firstErrorLine } from "@/server/learning/feedback";
-import { guestCheck, guestRun, guestSolution } from "@/server/services/guest";
-import { guestTutor } from "@/server/services/guest-tutor";
-import { parseProgress, recommendedLesson, PROGRESS_SCHEMA } from "@/lib/guest-progress";
+import { checkExercise, runOnce, workedSolution } from "@/server/services/lesson-exercises";
+import { noteHint, noteSolutionViewed, pathProgress, recordPass } from "@/server/services/lesson-path";
+import { mentorHelp } from "@/server/services/mentor";
+import { progression } from "@/server/services/progression";
 import { canExecute, freshDb, noExecution, useLocalSandbox } from "./helpers";
 
 const savedAi = structuredClone(config.ai);
@@ -26,183 +30,182 @@ const wrongEvenOdd = `#include <iostream>
 using namespace std;
 int main() { int n; cin >> n; if (n % 2 == 1) cout << "Odd"; else cout << "Even"; return 0; }`;
 
+let db: DB;
+let close: () => Promise<void>;
+beforeAll(async () => {
+  ({ db, close } = await freshDb());
+});
+afterAll(async () => close());
+
+describe("guest accounts", () => {
+  it("start with one click: a student with no password who skips onboarding", async () => {
+    const g = await createGuestUser("beginner");
+    expect(g).toMatchObject({ role: "STUDENT", isGuest: true });
+    expect(g.username).toMatch(/^guest_/);
+    const profile = await db.query.studentProfiles.findFirst({ where: eq(schema.studentProfiles.userId, g.id) });
+    expect(profile?.onboardedAt).toBeTruthy();
+    expect(profile?.experience).toBe("none");
+  });
+
+  it("can never be signed into with a password", async () => {
+    const g = await createGuestUser("placement");
+    await expect(verifyCredentials(g.username, "!guest-no-password")).rejects.toThrow(/incorrect/);
+    await expect(verifyCredentials(g.username, "")).rejects.toThrow(/incorrect/);
+  });
+
+  it("can be claimed with a username and password, keeping progress", async () => {
+    const g = await createGuestUser("beginner");
+    await recordPass(g.id, "what-is-programming");
+    const claimed = await claimGuestAccount(g.id, { username: `asha_${Date.now()}`, password: "correct-horse-9", displayName: "Asha" });
+    expect(claimed.isGuest).toBe(false);
+    expect((await verifyCredentials(claimed.username, "correct-horse-9")).id).toBe(g.id);
+    expect((await pathProgress(db, g.id)).passedCount).toBe(1);
+    await expect(claimGuestAccount(g.id, { username: "other_name", password: "correct-horse-9", displayName: "x" })).rejects.toThrow(/already has a username/);
+  });
+});
+
+describe("lesson path progress and XP", () => {
+  it("awards XP once per lesson, less with more help, and never for a repeat pass", async () => {
+    const g = await createGuestUser("beginner");
+    expect((await recordPass(g.id, "what-is-programming")).xp).toBe(25);
+    expect((await recordPass(g.id, "what-is-programming")).firstPass).toBe(false);
+    await noteHint(g.id, "how-programs-work", 3);
+    expect((await recordPass(g.id, "how-programs-work")).xp).toBe(15);
+    await noteHint(g.id, "program-structure", 1);
+    await noteSolutionViewed(g.id, "program-structure");
+    expect((await recordPass(g.id, "program-structure")).xp).toBe(5);
+    const p = await progression(db, g.id);
+    expect(p.xp).toBe(45);
+  });
+
+  it("celebrates a finished module with bonus XP and an achievement", async () => {
+    const g = await createGuestUser("beginner");
+    const mod = COURSE_MODULES.find((m) => m.id === "loops")!;
+    let last = null;
+    for (const id of mod.lessons) last = await recordPass(g.id, id);
+    expect(last!.moduleCompleted).toEqual({ title: "Loops", xp: 50 });
+    expect(last!.achievements.map((a) => a.code)).toContain("MODULE_LOOPS");
+    const firsts = await db.select().from(schema.studentAchievements).where(eq(schema.studentAchievements.studentId, g.id));
+    expect(firsts.map((a) => a.code)).toEqual(expect.arrayContaining(["FIRST_LESSON", "FIRST_PROGRAM", "MODULE_LOOPS", "LESSON_SOLO_5"]));
+    expect((await progression(db, g.id)).xp).toBe(mod.lessons.length * 25 + 50);
+  });
+});
+
 describe.runIf(canExecute)("checking exercises (real compiler)", () => {
   beforeAll(async () => useLocalSandbox(), 120_000);
   afterAll(() => setExecutionProviderForTesting(null));
 
-  it("passes a correct solution and marks it complete", async () => {
-    const l = getCourseLesson("if-else")!;
-    const r = await guestCheck("if-else", l.exercise.solution, false);
+  it("passes a correct solution", async () => {
+    const r = await checkExercise("if-else", getCourseLesson("if-else")!.exercise.solution, false);
     expect(r.passed).toBe(true);
     expect(r.testsPassed).toBe(r.testsTotal);
   });
 
   it("never returns hidden test data unless one failing case is explicitly requested", async () => {
-    const r = await guestCheck("if-else", wrongEvenOdd, false);
+    const r = await checkExercise("if-else", wrongEvenOdd, false);
     expect(r.passed).toBe(false);
     const hidden = r.tests.filter((t) => t.hidden);
     expect(hidden.length).toBeGreaterThan(0);
     for (const t of hidden) expect([t.input, t.expected, t.actual]).toEqual([undefined, undefined, undefined]);
     expect(r.revealedHidden).toBeNull();
     expect(JSON.stringify(r)).not.toContain("-3");
-
-    const shown = await guestCheck("if-else", wrongEvenOdd, true);
+    const shown = await checkExercise("if-else", wrongEvenOdd, true);
     expect(shown.revealedHidden).toEqual({ label: "negative odd", input: "-3\n", expected: "Odd", actual: "Even" });
   });
 
   it("explains incorrect syntax in plain language", async () => {
-    const r = await guestRun("#include <iostream>\nusing namespace std;\nint main() {\n    int a = 10;\n    cout << b;\n}", "");
+    const r = await runOnce("#include <iostream>\nusing namespace std;\nint main() {\n    int a = 10;\n    cout << b;\n}", "");
     expect(r.compile.status).toBe("error");
     expect(r.feedback[0].title).toMatch(/`b` is used but was never declared/);
     expect(r.feedback[0].line).toBe(5);
   });
 
-  it("stops an infinite loop and says why", async () => {
-    const r = await guestRun("int main() { while (true) {} }", "");
-    expect(r.run?.status).toBe("time_limit");
-    expect(r.feedback[0].title).toMatch(/too long/);
-  });
-
-  it("stops excessive memory use", async () => {
-    const r = await guestRun("#include <vector>\nint main() { std::vector<int> v; for (;;) v.push_back(1); }", "");
-    expect(["memory_limit", "runtime_error"]).toContain(r.run?.status);
-  });
-
-  it("cuts off very large output", async () => {
-    const r = await guestRun("#include <iostream>\nint main() { for (;;) std::cout << \"spam spam spam\\n\"; }", "");
-    expect(r.run?.status).toBe("output_limit");
-    expect(r.run!.stdout.length).toBeLessThanOrEqual(16_000);
+  it("stops an infinite loop, runaway memory and huge output", async () => {
+    expect((await runOnce("int main() { while (true) {} }", "")).run?.status).toBe("time_limit");
+    expect(["memory_limit", "runtime_error"]).toContain((await runOnce("#include <vector>\nint main() { std::vector<int> v; for (;;) v.push_back(1); }", "")).run?.status);
+    const big = await runOnce("#include <iostream>\nint main() { for (;;) std::cout << \"spam spam spam\\n\"; }", "");
+    expect(big.run?.status).toBe("output_limit");
   });
 
   it("copes with input the program didn't expect", async () => {
-    const r = await guestCheck("input-output", getCourseLesson("input-output")!.exercise.solution, false);
-    expect(r.passed).toBe(true);
-    const odd = await guestRun(getCourseLesson("input-output")!.exercise.solution, "hello world");
+    const odd = await runOnce(getCourseLesson("input-output")!.exercise.solution, "hello world");
     expect(odd.run?.status).toBe("ok");
   });
 
-  it("serves the worked solution only through its own explicit request", () => {
-    expect(guestSolution("variables").solution).toContain("int temp = a;");
+  it("the mentor explains a playground error from a real compile", async () => {
+    const r = await mentorHelp({ studentId: null, ip: null, lessonId: null, mode: "error", hintLevel: null, code: "int main() { int x = 1 }", question: null });
+    expect(r.source).toBe("curated");
+    expect(r.text).toMatch(/semicolon is missing/);
+  });
+
+  it("serves the worked solution only through its own request", () => {
+    expect(workedSolution("variables").solution).toContain("int temp = a;");
   });
 });
 
-describe("help panel (tutor) paths", () => {
-  let close: () => Promise<void>;
+describe("mentor panel paths", () => {
+  let studentId: string;
   beforeAll(async () => {
-    ({ close } = await freshDb());
     noExecution();
+    studentId = (await createGuestUser("beginner")).id;
   });
-  afterAll(async () => {
-    setExecutionProviderForTesting(null);
-    await close();
-  });
+  afterAll(() => setExecutionProviderForTesting(null));
   afterEach(() => {
     setAIProviderForTesting(null);
     restoreAi();
     resetMeteringForTesting();
   });
 
-  const base = { guestId: "guest-1", ip: null, lessonId: "variables", hintLevel: 1, code: "int main(){}", question: null };
+  const base = { ip: null, lessonId: "variables", hintLevel: 1, code: "int main(){}", question: null };
   const fixture = (lessonTutor: AIProvider["lessonTutor"]): AIProvider => ({ ...curatedProvider, id: "claude", conversational: true, lessonTutor });
 
-  it("works with no AI configured: curated hints, concept and honest 'ask' answer", async () => {
-    const hint = await guestTutor({ ...base, mode: "hint", hintLevel: 2 });
+  it("works with no AI configured: curated hints, concept and an honest 'ask' answer", async () => {
+    const hint = await mentorHelp({ ...base, studentId, mode: "hint", hintLevel: 2 });
     expect(hint).toMatchObject({ source: "curated", text: getCourseLesson("variables")!.exercise.hints[1] });
-    const concept = await guestTutor({ ...base, mode: "concept" });
-    expect(concept.text).toContain(getCourseLesson("variables")!.explainAgain.slice(0, 40));
-    const ask = await guestTutor({ ...base, mode: "ask", question: "what is a variable?" });
-    expect(ask.source).toBe("curated");
-    expect(ask.text).toMatch(/isn't answering free-form questions/);
+    expect((await mentorHelp({ ...base, studentId, mode: "concept" })).text).toContain(getCourseLesson("variables")!.explainAgain.slice(0, 40));
+    expect((await mentorHelp({ ...base, studentId, mode: "ask", question: "what is a variable?" })).text).toMatch(/isn't answering free-form questions/);
   });
 
-  it("says plainly when code can't be run, instead of inventing a result", async () => {
-    const r = await guestTutor({ ...base, mode: "error" });
-    expect(r.text).toMatch(/can't be run on this server/);
+  it("says plainly when code can't be run instead of inventing a result", async () => {
+    expect((await mentorHelp({ ...base, studentId, mode: "error" })).text).toMatch(/can't be run on this server/);
   });
 
-  it("uses the AI when enabled, and counts it against the daily quota", async () => {
+  it("uses the AI when enabled and counts it against the student's daily quota", async () => {
     config.ai.dailyRequestLimit = 2;
     let seen: LessonTutorRequest | null = null;
     setAIProviderForTesting(fixture(async (req) => { seen = req; return { source: "ai", value: { text: "You created `a`, but you print `b`. Where was `b` declared?" } }; }));
-    const r = await guestTutor({ ...base, mode: "hint", guestId: "quota-guest" });
-    expect(r).toMatchObject({ source: "ai", remaining: 1 });
+    const id = (await createGuestUser("beginner")).id;
+    expect(await mentorHelp({ ...base, studentId: id, mode: "hint" })).toMatchObject({ source: "ai", remaining: 1 });
     expect(seen!.lesson.curatedHint).toBe(getCourseLesson("variables")!.exercise.hints[0]);
-    expect(seen!.answerSummary).toContain("temp");
   });
 
   it("falls back to curated help with a notice when the quota is used up", async () => {
     config.ai.dailyRequestLimit = 1;
     setAIProviderForTesting(fixture(async () => ({ source: "ai", value: { text: "Look at line 3." } })));
-    expect((await guestTutor({ ...base, mode: "hint", guestId: "q2" })).source).toBe("ai");
-    const second = await guestTutor({ ...base, mode: "hint", guestId: "q2" });
+    const id = (await createGuestUser("beginner")).id;
+    expect((await mentorHelp({ ...base, studentId: id, mode: "hint" })).source).toBe("ai");
+    const second = await mentorHelp({ ...base, studentId: id, mode: "hint" });
     expect(second).toMatchObject({ source: "curated", remaining: 0 });
     expect(second.notice).toMatch(/used today's AI help/);
   });
 
-  it("falls back and refunds the request when the provider is unavailable or the budget is spent", async () => {
+  it("falls back and refunds when the provider is unavailable or the budget is spent", async () => {
     config.ai.dailyRequestLimit = 1;
+    const id = (await createGuestUser("beginner")).id;
     setAIProviderForTesting(fixture(async () => { throw new AIBudgetExhaustedError(); }));
-    const r = await guestTutor({ ...base, mode: "hint", guestId: "q3" });
-    expect(r.source).toBe("curated");
+    const r = await mentorHelp({ ...base, studentId: id, mode: "hint" });
+    expect(r).toMatchObject({ source: "curated", remaining: 1 });
     expect(r.notice).toMatch(/month's budget/);
-    expect(r.remaining).toBe(1);
     setAIProviderForTesting(fixture(async () => { throw new Error("socket hang up"); }));
-    const r2 = await guestTutor({ ...base, mode: "hint", guestId: "q3" });
-    expect(r2.source).toBe("curated");
-    expect(r2.notice).toMatch(/isn't available right now/);
+    expect((await mentorHelp({ ...base, studentId: id, mode: "hint" })).notice).toMatch(/isn't available right now/);
   });
 
   it("rejects AI answers that give away the solution or claim untested success", async () => {
     const sol = getCourseLesson("variables")!.exercise.solution;
     setAIProviderForTesting(fixture(async () => ({ source: "ai", value: { text: `Just write:\n${sol}` } })));
-    expect((await guestTutor({ ...base, mode: "hint", guestId: "q4" })).source).toBe("curated");
+    expect((await mentorHelp({ ...base, studentId, mode: "hint" })).source).toBe("curated");
     setAIProviderForTesting(fixture(async () => ({ source: "ai", value: { text: "Your code compiles fine and all tests pass!" } })));
-    expect((await guestTutor({ ...base, mode: "review", guestId: "q4" })).source).toBe("curated");
-  });
-
-  it("needs a guest cookie before spending AI requests", async () => {
-    setAIProviderForTesting(fixture(async () => ({ source: "ai", value: { text: "x" } })));
-    const r = await guestTutor({ ...base, mode: "hint", guestId: null });
-    expect(r.source).toBe("curated");
-    expect(r.notice).toMatch(/cookies/);
-  });
-});
-
-describe("guest identity", () => {
-  it("issues signed ids and rejects forged or altered ones", () => {
-    const t = newGuestToken()!;
-    expect(verifyGuestToken(t.token)).toBe(t.id);
-    expect(verifyGuestToken(t.token.slice(0, -1) + (t.token.endsWith("A") ? "B" : "A"))).toBeNull();
-    expect(verifyGuestToken(`v1.${"a".repeat(22)}.${"b".repeat(32)}`)).toBeNull();
-    expect(verifyGuestToken("garbage")).toBeNull();
-    expect(verifyGuestToken(undefined)).toBeNull();
-  });
-});
-
-describe("browser progress storage", () => {
-  const order = ["a", "b", "c"];
-  it("treats missing data as a fresh start", () => {
-    expect(parseProgress(null)).toMatchObject({ reset: false, progress: { lessons: {}, currentLessonId: null } });
-  });
-  it("resets corrupt or unknown-version data instead of trusting it", () => {
-    expect(parseProgress("{not json").reset).toBe(true);
-    expect(parseProgress(JSON.stringify({ v: 99, lessons: {} })).reset).toBe(true);
-  });
-  it("keeps valid fields and drops malformed ones", () => {
-    const raw = JSON.stringify({
-      v: PROGRESS_SCHEMA, currentLessonId: "b", recent: ["b", 7, "zzz"], updatedAt: 1,
-      lessons: { b: { completedAt: 5, draft: "int main(){}", draftVersion: "x", hintLevel: "lots" }, "BAD ID!": { completedAt: 1 } },
-    });
-    const { progress, reset } = parseProgress(raw);
-    expect(reset).toBe(false);
-    expect(Object.keys(progress.lessons)).toEqual(["b"]);
-    expect(progress.lessons.b).toMatchObject({ completedAt: 5, draft: "int main(){}", hintLevel: undefined });
-    expect(progress.recent).toEqual(["b"]);
-  });
-  it("recommends the next unfinished lesson", () => {
-    const p = parseProgress(JSON.stringify({ v: PROGRESS_SCHEMA, currentLessonId: "a", recent: [], updatedAt: 1, lessons: { a: { completedAt: 1 } } })).progress;
-    expect(recommendedLesson(order, p)).toBe("b");
-    expect(recommendedLesson(order, parseProgress(null).progress)).toBe("a");
+    expect((await mentorHelp({ ...base, studentId, mode: "review" })).source).toBe("curated");
   });
 });
 
@@ -217,8 +220,7 @@ describe("curated compiler explanations", () => {
     expect(explainCompilerOutput(out)[0].title).toMatch(re);
   });
   it("falls back to general guidance and the first error line", () => {
-    const items = explainCompilerOutput("main.cpp:7:3: error: something unusual");
-    expect(items[0].line).toBe(7);
+    expect(explainCompilerOutput("main.cpp:7:3: error: something unusual")[0].line).toBe(7);
     expect(firstErrorLine("main.cpp:12:1: error: x")).toBe(12);
   });
 });
@@ -233,18 +235,14 @@ describe("production execution gate", () => {
 
   it("keeps code execution off in production until an administrator enables it", () => {
     config.execution.publicEnabled = false;
-    const s = applySafetyGate(prodWorker, true);
-    expect(s.available).toBe(false);
-    expect(s.message).toMatch(/switched off/);
+    expect(applySafetyGate(prodWorker, true)).toMatchObject({ available: false, message: expect.stringMatching(/switched off/) });
     config.execution.publicEnabled = true;
     expect(applySafetyGate(prodWorker, true).available).toBe(true);
   });
 
   it("never uses a development-only sandbox in production, even when enabled", () => {
     config.execution.publicEnabled = true;
-    const s = applySafetyGate(devWorker, true);
-    expect(s.available).toBe(false);
-    expect(s.message).toMatch(/development-only/);
+    expect(applySafetyGate(devWorker, true)).toMatchObject({ available: false, message: expect.stringMatching(/development-only/) });
   });
 
   it("is not gated in development", () => {

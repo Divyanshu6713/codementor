@@ -10,11 +10,11 @@ const Monaco = dynamic(() => import("@monaco-editor/react").then((m) => m.Editor
 });
 
 /**
- * Monaco (C++ highlighting) with a plain-textarea fallback: used automatically if Monaco can't load
+ * Monaco (C++ or Python highlighting) with a plain-textarea fallback: used automatically if Monaco can't load
  * in time (offline / slow connection), or chosen by the student ("Simple editor").
  */
-export function CodeEditor({ value, onChange, height = 340, label = "Code editor", readOnly = false }: {
-  value: string; onChange: (v: string) => void; height?: number; label?: string; readOnly?: boolean;
+export function CodeEditor({ value, onChange, height = 340, label = "Code editor", readOnly = false, language = "cpp", fileName }: {
+  value: string; onChange: (v: string) => void; height?: number; label?: string; readOnly?: boolean; language?: "cpp" | "python"; fileName?: string;
 }) {
   const [simple, setSimple] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -34,7 +34,7 @@ export function CodeEditor({ value, onChange, height = 340, label = "Code editor
   return (
     <div className="overflow-hidden rounded-xl border border-code-line bg-code-bg">
       <div className="flex items-center justify-between border-b border-code-line px-3 py-1.5 text-xs text-code-dim">
-        <span className="font-mono">main.cpp</span>
+        <span className="font-mono">{fileName ?? (language === "python" ? "main.py" : "main.cpp")}</span>
         <div className="flex items-center gap-3">
           {!simple && mounted && <span className="hidden items-center gap-1 sm:flex" title="Tab inserts spaces in the editor. Press Ctrl+M to make Tab move focus instead."><Keyboard size={13} aria-hidden /> Ctrl+M: Tab moves focus</span>}
           <button type="button" className="rounded px-1.5 py-0.5 font-semibold hover:bg-code-line hover:text-code-ink" onClick={() => setSimple((s) => !s)}>
@@ -67,7 +67,7 @@ export function CodeEditor({ value, onChange, height = 340, label = "Code editor
         ) : (
           <Monaco
             height="100%"
-            defaultLanguage="cpp"
+            defaultLanguage={language}
             value={value}
             // Code panels are warm-dark in both app themes; the editor uses the same palette.
             theme="cmk-night"

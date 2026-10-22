@@ -1,0 +1,23 @@
+# /etc/systemd/system/codementor-sandbox.service — the code runner. It controls Docker, so it runs as
+# a separate user that holds NO app secrets (no DATABASE_URL, no AI keys) — only SANDBOX_TOKEN.
+[Unit]
+Description=CodeMentor sandbox worker
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=cmsandbox
+Group=cmsandbox
+SupplementaryGroups=docker
+WorkingDirectory=/srv/codementor/app
+EnvironmentFile=/etc/codementor/sandbox.env
+ExecStart=/usr/bin/node --import tsx worker/sandbox/server.ts
+Restart=on-failure
+RestartSec=3
+MemoryMax=512M
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

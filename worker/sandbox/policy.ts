@@ -105,3 +105,22 @@ export function checkSource(source: string): PolicyResult {
   if (!/\bmain\s*\(/.test(code)) return { ok: false, message: "Your program needs an `int main()` function.", line: null };
   return { ok: true };
 }
+
+/**
+ * Python programs are checked at run time by the harness (worker/sandbox/python/harness.py) and,
+ * above all, by the OS isolation around it — a dynamic language can't be made safe by scanning its
+ * source. This only enforces sizes and well-formed seed-file names.
+ */
+export function checkPythonSource(source: string, files: { name: string; content: string }[] = []): PolicyResult {
+  if (Buffer.byteLength(source, "utf8") > MAX_SOURCE_BYTES) return { ok: false, message: "This program is too long to run here (64 KB limit).", line: null };
+  if (/\u0000/.test(source)) return { ok: false, message: "The program contains an invalid character.", line: null };
+  if (files.length > 6) return { ok: false, message: "Too many files (6 at most).", line: null };
+  for (const f of files) {
+    // A plain name, or one sub-folder level (`shapes/__init__.py`) so packages can be taught.
+    if (!/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,40}(\/[A-Za-z0-9_][A-Za-z0-9_.-]{0,40})?$/.test(f.name) || ["main.py", "harness.py"].includes(f.name.toLowerCase()) || f.name.includes("..")) {
+      return { ok: false, message: `"${f.name}" isn't a valid file name.`, line: null };
+    }
+    if (Buffer.byteLength(f.content, "utf8") > 32 * 1024) return { ok: false, message: `"${f.name}" is too large (32 KB limit).`, line: null };
+  }
+  return { ok: true };
+}

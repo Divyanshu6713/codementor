@@ -7,6 +7,7 @@ import { FOR_LOOPS_LESSON } from "./lessons/for-loops";
 import { COMPARISON_LESSON } from "./lessons/comparison-ops";
 import { TRACES } from "./traces";
 import type { AchievementDef, ConceptDef, LessonDef, MisconceptionDef, QuestionDef } from "./types";
+import { PY_ACHIEVEMENTS } from "./python/achievements";
 
 export const ACHIEVEMENTS: AchievementDef[] = [
   { code: "FIRST_PROGRAM", title: "First Program", description: "Compiled and ran your first C++ program." },
@@ -19,6 +20,12 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { code: "EXPLAINER", title: "Explainer", description: "Explained a concept back in your own words." },
   { code: "CONCEPT_MASTERED", title: "Concept Mastered", description: "Reached mastery on every skill in a concept." },
   { code: "CAME_BACK", title: "Came Back to Revise", description: "Completed a revision session." },
+  { code: "FIRST_LESSON", title: "First Steps", description: "Passed the exercise of your first step-by-step lesson." },
+  { code: "MODULE_FOUNDATIONS", title: "Foundations Built", description: "Completed every lesson in Module 1: Programming foundations." },
+  { code: "MODULE_LOGIC", title: "Decision Maker", description: "Completed every lesson in Module 2: Logic and decision making." },
+  { code: "MODULE_LOOPS", title: "Loop Master", description: "Completed every lesson in Module 3: Loops." },
+  { code: "LESSON_SOLO_5", title: "No Hints Needed", description: "Passed 5 lesson exercises without opening more than one hint." },
+  ...PY_ACHIEVEMENTS,
 ];
 
 export const QUESTIONS: QuestionDef[] = [...DIAGNOSTIC_QUESTIONS, ...FOR_LOOP_QUESTIONS, ...COMPARISON_QUESTIONS];

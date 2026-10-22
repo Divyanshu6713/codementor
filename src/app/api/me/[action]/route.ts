@@ -9,7 +9,7 @@ import { setLeaderboardOptIn } from "@/server/services/arena";
 type Ctx = { params: Promise<{ action: string }> };
 
 const Prefs = z.object({ tutorRetentionDays: z.union([z.literal(0), z.literal(7), z.literal(30)]).optional(), askConfidence: z.boolean().optional() });
-const Delete = z.object({ password: z.string().min(1).max(128), confirm: z.literal("DELETE") });
+const Delete = z.object({ password: z.string().max(128).default(""), confirm: z.literal("DELETE") });
 
 /** GET /api/me/export — download all of your data as JSON. */
 export const GET = withUser(async (_req, user, ctx: Ctx) => {

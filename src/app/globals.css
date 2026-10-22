@@ -3,12 +3,13 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /*
- * CodeMentor design tokens — bright, energetic and competitive.
- * Light = crisp white/cool canvas, deep navy ink, electric-blue primary, a full set of vivid
- *         accent hues for topics, difficulty and rewards.
- * Dark  = deep navy night mode with the same hues lifted for contrast.
+ * CodeMentor design tokens — "coding club after dark": bold, high-contrast, a little loud.
+ * Dark  = near-black canvas, warm off-white ink, electric-lime brand, violet/indigo/teal hero.
+ * Light = warm paper canvas, near-black ink; lime stays the brand colour for highlights and
+ *         marks, while text-carrying accent drops to a deep lime that passes 4.5:1 on white.
  * Roles:
- *   accent  — primary actions, selection, links (electric blue)
+ *   brand   — electric lime: highlights, marks, marquee, primary CTAs (always with dark text)
+ *   accent  — primary actions, selection, links (lime in dark mode, deep lime in light mode)
  *   concept — violet: lessons, ideas, "how it works"
  *   hint    — amber: hints and things to review
  *   clay    — orange: XP, ranks, personal bests (the "competition" colour)
@@ -16,25 +17,27 @@
  *   pink, teal, sky — extra hues for topics, charts and tiles
  */
 :root {
-  --bg: #f4f7fc;
+  --bg: #f5f4ee;
   --surface: #ffffff;
-  --sunken: #eef2f9;
-  --ink: #172b4d;
-  --ink-2: #44546f;
-  --ink-3: #626f86;
-  --line: #e1e7f0;
-  --line-strong: #c9d2e0;
+  --sunken: #ecebe4;
+  --ink: #0e0e10;
+  --ink-2: #3f3f46;
+  --ink-3: #5f5f68;
+  --line: #e2e0d6;
+  --line-strong: #c8c5b8;
 
-  --accent: #2e62ff;
-  --accent-ink: #1f4fe0;
-  --accent-soft: #e6eeff;
+  --brand: #c6f24e;
+  --on-brand: #0e0e10;
+  --accent: #4a7a00;
+  --accent-ink: #3d6600;
+  --accent-soft: #eef8d2;
   --on-accent: #ffffff;
-  --concept: #7a3cf0;
-  --concept-soft: #f1eaff;
-  --hint: #b45d00;
-  --hint-soft: #fff1dc;
-  --clay: #f2600c;
-  --clay-soft: #ffeadb;
+  --concept: #6d28d9;
+  --concept-soft: #efe7ff;
+  --hint: #a15600;
+  --hint-soft: #fff0d6;
+  --clay: #d24a0c;
+  --clay-soft: #ffe8d9;
   --danger: #d92d3b;
   --danger-soft: #ffe8ea;
   --success: #12945a;
@@ -51,38 +54,40 @@
   --m-good: #3b82f6;
   --m-high: #12945a;
 
-  --code-bg: #0f1a33;
-  --code-ink: #e6edf9;
-  --code-dim: #8796b8;
-  --code-faint: #56658a;
-  --code-line: #1f2c4d;
-  --code-hl: #1d3266;
+  --code-bg: #121214;
+  --code-ink: #ecece6;
+  --code-dim: #9a9a92;
+  --code-faint: #66665f;
+  --code-line: #26262a;
+  --code-hl: #2a3312;
 
-  --hero-from: #2e62ff;
-  --hero-via: #6d3cf0;
-  --hero-to: #c026d3;
+  --hero-from: #7c3aed;
+  --hero-via: #4f46e5;
+  --hero-to: #0e7490;
 
-  --sh-card: 0 1px 2px rgb(23 43 77 / 0.05), 0 8px 24px -14px rgb(23 43 77 / 0.18);
-  --sh-pop: 0 2px 6px rgb(23 43 77 / 0.06), 0 22px 44px -20px rgb(46 98 255 / 0.35);
+  --sh-card: 0 1px 2px rgb(14 14 16 / 0.05), 0 10px 26px -16px rgb(14 14 16 / 0.22);
+  --sh-pop: 0 2px 6px rgb(14 14 16 / 0.06), 0 26px 50px -24px rgb(14 14 16 / 0.35);
   --grain-opacity: 0;
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --bg: #0a1020;
-  --surface: #111a2e;
-  --sunken: #17223a;
-  --ink: #eaf0fb;
-  --ink-2: #b4c0d9;
-  --ink-3: #8a98b6;
-  --line: #22304d;
-  --line-strong: #2f4066;
+  --bg: #0a0a0b;
+  --surface: #131315;
+  --sunken: #1b1b1e;
+  --ink: #f4f4ee;
+  --ink-2: #bdbdb5;
+  --ink-3: #8e8e87;
+  --line: #26262a;
+  --line-strong: #38383e;
 
-  --accent: #5b86ff;
-  --accent-ink: #8aa8ff;
-  --accent-soft: #17264d;
-  --on-accent: #ffffff;
-  --concept: #a57bff;
+  --brand: #c6f24e;
+  --on-brand: #0e0e10;
+  --accent: #c6f24e;
+  --accent-ink: #d8f88a;
+  --accent-soft: #1f2810;
+  --on-accent: #0e0e10;
+  --concept: #a78bfa;
   --concept-soft: #24194a;
   --hint: #ffb547;
   --hint-soft: #3a2a10;
@@ -104,16 +109,16 @@
   --m-good: #5b86ff;
   --m-high: #3ccf8e;
 
-  --code-bg: #070d1c;
-  --code-line: #1a2643;
-  --code-hl: #1b2f5e;
+  --code-bg: #0d0d0f;
+  --code-line: #222226;
+  --code-hl: #252e10;
 
-  --hero-from: #2e62ff;
-  --hero-via: #6d3cf0;
-  --hero-to: #b02bd0;
+  --hero-from: #7c3aed;
+  --hero-via: #4f46e5;
+  --hero-to: #0e7490;
 
-  --sh-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 30px -20px rgb(0 0 0 / 0.7);
-  --sh-pop: 0 2px 6px rgb(0 0 0 / 0.35), 0 24px 48px -22px rgb(91 134 255 / 0.35);
+  --sh-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 30px -20px rgb(0 0 0 / 0.8);
+  --sh-pop: 0 2px 6px rgb(0 0 0 / 0.4), 0 28px 60px -28px rgb(198 242 78 / 0.18);
   --grain-opacity: 0;
   color-scheme: dark;
 }
@@ -153,14 +158,17 @@
   --color-code-ink: var(--code-ink);
   --color-code-line: var(--code-line);
   --color-code-hl: var(--code-hl);
+  --color-brand: var(--brand);
+  --color-on-brand: var(--on-brand);
 
   --font-sans: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-head), var(--font-ui), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-code), ui-monospace, "Cascadia Code", monospace;
 }
 
 @theme {
-  --radius-card: 1.125rem;
-  --radius-panel: 1.5rem;
+  --radius-card: 1.25rem;
+  --radius-panel: 1.75rem;
   --shadow-card: var(--sh-card);
   --shadow-pop: var(--sh-pop);
   --ease-calm: cubic-bezier(0.22, 1, 0.36, 1);
@@ -187,6 +195,65 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Headings use the display face everywhere (app pages included), tight and confident. */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+/* Lime "highlighter" behind a word. */
+.hl {
+  background: var(--brand);
+  color: var(--on-brand);
+  padding: 0 0.18em;
+  border-radius: 0.18em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Outlined display text (big footer wordmark, decorative numbers). */
+.text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--ink) 38%, transparent);
+}
+
+/* Infinite marquee: two identical tracks; pauses on hover/focus; static with reduced motion. */
+.marquee {
+  display: flex;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+.marquee-track {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2.5rem;
+  padding-right: 2.5rem;
+  animation: marquee 38s linear infinite;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+/* Always-dark panel (same in both themes) for high-contrast feature blocks. */
+.panel-night {
+  background: #0e0e10;
+  color: #f4f4ee;
+  --panel-line: rgb(244 244 238 / 0.14);
+}
+[data-theme="dark"] .panel-night {
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+/* Soft lime glow used behind hero and CTA panels. */
+.glow-brand {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--brand) 32%, transparent), transparent);
+}
+
 /* Visible focus for keyboard users everywhere. */
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -195,7 +262,8 @@ body {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  background: var(--brand);
+  color: var(--on-brand);
 }
 
 @media (prefers-reduced-motion: reduce) {

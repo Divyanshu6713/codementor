@@ -32,7 +32,7 @@ const MAX_QUEUE = Math.max(0, Number(process.env.SANDBOX_MAX_QUEUE || 16));
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 const RequestSchema = z.object({
-  language: z.literal("cpp"),
+  language: z.enum(["cpp", "python"]),
   source: z.string().min(1).max(EXECUTION_LIMITS.maxSourceBytes),
   tests: z.array(z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/), input: z.string().max(EXECUTION_LIMITS.maxInputBytes) }))
     .min(1).max(EXECUTION_LIMITS.maxTests),
@@ -40,7 +40,9 @@ const RequestSchema = z.object({
     timeMs: z.number().int().min(100).max(EXECUTION_LIMITS.maxTimeMs).optional(),
     memoryMb: z.number().int().min(16).max(EXECUTION_LIMITS.maxMemoryMb).optional(),
   }).optional(),
-});
+  files: z.array(z.object({ name: z.string().max(60), content: z.string().max(EXECUTION_LIMITS.maxFileBytes) })).max(EXECUTION_LIMITS.maxFiles).optional(),
+  mode: z.enum(["run", "trace"]).optional(),
+}).refine((r) => r.language === "python" || (!r.files?.length && (r.mode ?? "run") === "run"), { message: "files and trace are Python-only" });
 
 function chooseBackend(): SandboxBackend {
   const wanted = process.env.SANDBOX_BACKEND || (process.platform === "win32" ? "windows-job" : "docker");
@@ -99,12 +101,16 @@ export async function main() {
   const server = http.createServer(async (req, res) => {
     try {
       if (req.method === "GET" && req.url === "/health") {
-        const health: WorkerHealth = { ok: true, backend: backend.id, isolation: backend.isolation, production: backend.production, compiler: backend.compiler ? path.basename(backend.compiler) : null };
+        const health: WorkerHealth = {
+          ok: true, backend: backend.id, isolation: backend.isolation, production: backend.production,
+          compiler: backend.compiler ? path.basename(backend.compiler) : null,
+          languages: { cpp: backend.compiler ? path.basename(backend.compiler) : undefined, ...(backend.python ? { python: backend.python } : {}) },
+        };
         return send(res, 200, health);
       }
       if (req.method !== "POST" || req.url !== "/v1/execute") return send(res, 404, { error: "not_found" });
       if (!authorized(req)) return send(res, 401, { error: "unauthorized" });
-      const raw = await readBody(req, EXECUTION_LIMITS.maxSourceBytes + EXECUTION_LIMITS.maxTests * EXECUTION_LIMITS.maxInputBytes + 8192);
+      const raw = await readBody(req, EXECUTION_LIMITS.maxSourceBytes + EXECUTION_LIMITS.maxTests * EXECUTION_LIMITS.maxInputBytes + EXECUTION_LIMITS.maxFiles * EXECUTION_LIMITS.maxFileBytes * 2 + 8192);
       if (raw === null) return send(res, 413, { error: "too_large" });
       let parsed;
       try {
@@ -114,15 +120,59 @@ export async function main() {
       }
       const result = await withSlot(() => executeRequest(backend, parsed));
       if (result === "busy") return send(res, 503, { error: "busy" });
-      console.log(JSON.stringify({ t: new Date().toISOString(), event: "sandbox.execute", compile: result.compile.status, tests: result.tests.map((t) => t.status), ms: result.durationMs }));
+      console.log(JSON.stringify({ t: new Date().toISOString(), event: "sandbox.execute", language: parsed.language, compile: result.compile.status, tests: result.tests.map((t) => t.status), ms: result.durationMs }));
       return send(res, 200, result);
     } catch (err) {
       console.error(JSON.stringify({ t: new Date().toISOString(), event: "sandbox.error", message: (err as Error).message }));
       return send(res, 500, { error: "internal" });
     }
   });
-  server.listen(PORT, HOST, () => {
-    console.log(`CodeMentor sandbox worker on http://${HOST}:${PORT} — backend: ${backend.id}${backend.production ? "" : " (DEV ONLY)"}`);
+  await listenOrStandBy(server, () => {
+    console.log(`CodeMentor sandbox worker on http://${HOST}:${PORT} — backend: ${backend.id}${backend.production ? "" : " (DEV ONLY)"} — C++: ${backend.compiler ? "yes" : "no"}, Python: ${backend.python ?? "no"}`);
+  });
+}
+
+/** True when a CodeMentor sandbox worker (not some other program) is answering on our port. */
+async function healthyWorkerOnPort(): Promise<boolean> {
+  try {
+    const res = await fetch(`http://${HOST}:${PORT}/health`, { signal: AbortSignal.timeout(2000) });
+    const body = (await res.json()) as Partial<WorkerHealth>;
+    return res.ok && body.ok === true && typeof body.backend === "string";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * `npm run dev` already starts a worker, so a second start (e.g. the separate sandbox launch
+ * config) must not crash. If a healthy worker owns the port, stand by and take over the port as
+ * soon as that worker stops. If something else owns it, fail with a clear message.
+ */
+function listenOrStandBy(server: http.Server, onListening: () => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let announced = false;
+    // Registered once: retried listen() calls must not stack extra "listening" handlers.
+    server.once("listening", () => {
+      if (announced) console.log("The other sandbox worker stopped — this one has taken over.");
+      onListening();
+      resolve();
+    });
+    const tryListen = () => {
+      server.once("error", async (err: NodeJS.ErrnoException) => {
+        if (err.code !== "EADDRINUSE") return reject(err);
+        if (!(await healthyWorkerOnPort())) {
+          return reject(new Error(`Port ${PORT} is in use by another program (not a CodeMentor sandbox worker). Free it or set SANDBOX_PORT.`));
+        }
+        if (!announced) {
+          console.log(`A sandbox worker is already running on http://${HOST}:${PORT} — using that one. This process will stand by and take over if it stops.`);
+          announced = true;
+          resolve();
+        }
+        setTimeout(tryListen, 5000);
+      });
+      server.listen(PORT, HOST);
+    };
+    tryListen();
   });
 }
 

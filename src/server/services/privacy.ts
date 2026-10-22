@@ -21,18 +21,31 @@ export async function exportData(userId: string) {
     db.select().from(schema.tutorMessages).where(eq(schema.tutorMessages.studentId, userId)),
     db.select({ createdAt: schema.codeSubmissions.createdAt, kind: schema.codeSubmissions.kind, source: schema.codeSubmissions.source }).from(schema.codeSubmissions).where(eq(schema.codeSubmissions.studentId, userId)),
   ]);
+  const [pyAttempts, pyExercises, pyReviews, pyAssessments, pySettings, pyActivity, pyCode] = await Promise.all([
+    db.select().from(schema.pyAttempts).where(eq(schema.pyAttempts.studentId, userId)),
+    db.select().from(schema.pyExerciseProgress).where(eq(schema.pyExerciseProgress.studentId, userId)),
+    db.select().from(schema.pyReviews).where(eq(schema.pyReviews.studentId, userId)),
+    db.select().from(schema.pyAssessments).where(eq(schema.pyAssessments.studentId, userId)),
+    db.select().from(schema.pySettings).where(eq(schema.pySettings.studentId, userId)),
+    db.select().from(schema.pyActivity).where(eq(schema.pyActivity.studentId, userId)),
+    db.select().from(schema.pyCodeSaves).where(eq(schema.pyCodeSaves.studentId, userId)),
+  ]);
   return {
     exportedAt: new Date().toISOString(), format: "codementor-export-v1",
+    python: { attempts: pyAttempts, exercises: pyExercises, revision: pyReviews, assessments: pyAssessments, settings: pySettings, activity: pyActivity, savedCode: pyCode },
     user, profile, skills, misconceptions, mistakes, sessions, itemOutcomes: outcomes, explanations, achievements,
     revision, tutorMessages: tutor, codeSubmissions: code,
   };
 }
 
-/** Permanently deletes the account and everything that cascades from it. Requires the password. */
+/**
+ * Permanently deletes the account and everything that cascades from it. Requires the password —
+ * except for guest accounts, which have none (their session is the only credential).
+ */
 export async function deleteAccount(userId: string, password: string) {
   const db = await getDb();
   const user = await db.query.users.findFirst({ where: eq(schema.users.id, userId) });
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) throw new AppError("That password isn't right.", 403, "forbidden");
+  if (!user || (!user.isGuest && !(await bcrypt.compare(password, user.passwordHash)))) throw new AppError("That password isn't right.", 403, "forbidden");
   await db.transaction(async (tx) => {
     await tx.delete(schema.parentStudentLinks).where(or(eq(schema.parentStudentLinks.parentId, userId), eq(schema.parentStudentLinks.studentId, userId)));
     await tx.delete(schema.users).where(eq(schema.users.id, userId));

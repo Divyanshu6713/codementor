@@ -12,6 +12,8 @@ import { openaiProvider } from "./openai";
 import { claimsUnverifiedExecution, revealsSolution, tooLong } from "./guardrails";
 import { priceFor } from "./pricing";
 import { PROMPT_VERSIONS } from "./prompts";
+import { claimAIRequest, claimAutoAI, refundAIRequest } from "@/server/services/ai-quota";
+import { RateLimitError } from "@/server/errors";
 import type {
   AIProvider, AIResult, ExplanationEvalRequest, HintRequest, MistakeRequest, QuestionGenRequest, SimplifyRequest, TutorRequest,
 } from "./types";
@@ -92,6 +94,8 @@ async function guarded<T>(opts: {
 }): Promise<AIResult<T> | null> {
   const p = getAIProvider();
   if (p.id === "curated") return opts.fallback();
+  // Paid calls the engine makes on a student's behalf have their own daily cap (tests inject fixtures).
+  if (!override && opts.studentId && !(await claimAutoAI(opts.studentId).catch(() => false))) return opts.fallback();
   const started = Date.now();
   try {
     const res = await opts.call(p);
@@ -158,6 +162,13 @@ export async function aiSimplify(studentId: string, req: SimplifyRequest) {
 export async function aiTutorReply(studentId: string, req: TutorRequest, leakCheck: { referenceSolution?: string | null; answerTexts?: string[] }) {
   const p = getAIProvider();
   const started = Date.now();
+  // Chat messages count against the student's daily AI requests (same quota as the mentor panel).
+  let ticket: { keys: string[]; day: string } | null = null;
+  if (p.id !== "curated" && !override) {
+    const claim = await claimAIRequest(studentId, null);
+    if (!claim.ok) throw new RateLimitError("You've used today's AI help. Hints and lessons still work — AI help resets tomorrow.");
+    ticket = claim.ticket;
+  }
   try {
     const res = await p.tutorReply(req);
     const evidence = req.questionContext?.evidence ?? null;
@@ -172,6 +183,7 @@ export async function aiTutorReply(studentId: string, req: TutorRequest, leakChe
     return res;
   } catch (err) {
     if (p.id !== "curated") await record(studentId, "tutor", p.id, started, "error");
+    if (ticket) await refundAIRequest(ticket).catch(() => undefined);
     throw err;
   }
 }

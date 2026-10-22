@@ -1,0 +1,19 @@
+# PostgreSQL for CodeMentor on the VPS, reachable only from the VPS itself (127.0.0.1).
+# Start: docker compose -f docker-compose.postgres.yml --env-file /etc/codementor/postgres.env up -d
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: codementor
+      POSTGRES_USER: codementor
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in /etc/codementor/postgres.env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - /srv/codementor/pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codementor -d codementor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

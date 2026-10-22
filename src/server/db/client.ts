@@ -40,7 +40,14 @@ async function openPglite(dataDir: string | null): Promise<{ db: DB; close: () =
 async function openPostgres(url: string): Promise<{ db: DB; close: () => Promise<void> }> {
   const { Pool } = await import("pg");
   const { drizzle } = await import("drizzle-orm/node-postgres");
-  const pool = new Pool({ connectionString: url, max: 10 });
+  const pool = new Pool({
+    connectionString: url,
+    max: Number(process.env.DATABASE_POOL_MAX || 10),
+    // Managed PostgreSQL usually needs TLS; DATABASE_SSL=require enables it (verify the server cert where possible).
+    ssl: process.env.DATABASE_SSL === "require" ? { rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false" } : undefined,
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 30_000,
+  });
   const db = drizzle(pool, { schema });
   if (config.autoMigrate) {
     const { migrate } = await import("drizzle-orm/node-postgres/migrator");
@@ -54,6 +61,11 @@ export async function getDb(): Promise<DB> {
   if (holder.db) return holder.db;
   if (!holder.ready) {
     holder.ready = (async () => {
+      if (!config.databaseUrl && config.isProduction && process.env.ALLOW_PGLITE_IN_PRODUCTION !== "true") {
+        // PGlite is an embedded, single-process database for development and tests. On managed
+        // hosting its files can vanish on redeploy, so production needs DATABASE_URL (PostgreSQL).
+        throw new Error("DATABASE_URL is not set. Production requires PostgreSQL (see docs/DEPLOYMENT-HOSTINGER.md). Set ALLOW_PGLITE_IN_PRODUCTION=true only for a private trial with CODEMENTOR_DATA_DIR on persistent storage.");
+      }
       const opened = config.databaseUrl
         ? await openPostgres(config.databaseUrl)
         : await openPglite(path.join(config.dataDir, "pglite"));

@@ -19,7 +19,8 @@ export function homeFor(role: Role) {
 /** For pages: redirect to login when signed out, or to the right area when the role doesn't fit. */
 export async function requirePageUser(roles?: Role[]): Promise<SessionUser> {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  // Students can start again in one click; other roles must sign in.
+  if (!user) redirect(roles?.length === 1 && roles[0] === "STUDENT" ? "/start" : "/login");
   if (roles && !roles.includes(user.role)) redirect(homeFor(user.role));
   return user;
 }

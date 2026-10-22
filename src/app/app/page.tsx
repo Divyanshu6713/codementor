@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import clsx from "clsx";
-import { ArrowRight, CalendarDays, Code2, Dumbbell, Lightbulb, Map, Medal, NotebookPen, RotateCcw, Swords, Trophy } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarDays, Code2, Dumbbell, FileCode2, Lightbulb, Map, Medal, NotebookPen, RotateCcw, Swords, Trophy } from "lucide-react";
+import { getPyLesson } from "@/content/python";
+import { pyState } from "@/server/python/state";
+import { getDb } from "@/server/db/client";
+import { pathProgress } from "@/server/services/lesson-path";
+import { getCourseLesson } from "@/content/course";
 import { requirePageUser } from "@/server/auth/current";
 import { dashboard } from "@/server/services/students";
 import { ButtonLink, Card, MasteryBar, pct } from "@/components/ui";
@@ -26,8 +31,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const user = await requirePageUser(["STUDENT"]);
   const sp = await searchParams;
   const length = (["quick", "normal", "deep"] as const).find((l) => l === sp.length) ?? "normal";
-  const d = await dashboard(user.id, length);
+  const [d, path, py] = await Promise.all([dashboard(user.id, length), getDb().then((db) => pathProgress(db, user.id)), getDb().then((db) => pyState(db, user.id))]);
+  const pyNext = py.next ? getPyLesson(py.next) : null;
   const decision = d.decision;
+  const nextLesson = path.next ? getCourseLesson(path.next) : null;
+  const nextModule = nextLesson ? path.modules.find((m) => m.lessons.some((l) => l.id === nextLesson.id)) : null;
 
   const primary = (() => {
     if (d.activeSession) return null;
@@ -59,6 +67,42 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <Trophy size={15} aria-hidden /> {d.progress.level.name} · <span className="tabular">{d.progress.xp} XP</span>
         </Link>
       </header>
+
+      <section aria-labelledby="paths-h" className="space-y-3">
+        <h2 id="paths-h" className="text-xs font-bold uppercase tracking-[0.14em] text-ink-3">Your learning paths</h2>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Link href="/app/learn" className="group flex items-center gap-4 rounded-[var(--radius-card)] border border-sky/30 bg-surface p-4 shadow-card transition-transform hover:-translate-y-0.5">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sky-soft font-mono text-sm font-extrabold text-sky">C++</span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-bold">C++ Mastery</span>
+              <span className="block text-xs text-ink-3">{path.passedCount}/{path.total} step-by-step lessons · {d.track.masteredSkills}/{d.track.totalSkills} skills mastered</span>
+              <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-sunken"><span className="block h-full rounded-full bg-sky" style={{ width: `${(path.passedCount / path.total) * 100}%` }} /></span>
+            </span>
+            <ArrowRight size={18} className="text-sky transition-transform group-hover:translate-x-0.5" aria-hidden />
+          </Link>
+          <Link href="/app/python" className="group flex items-center gap-4 rounded-[var(--radius-card)] border border-accent/30 bg-surface p-4 shadow-card transition-transform hover:-translate-y-0.5">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-accent-soft text-accent"><FileCode2 size={24} aria-hidden /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-bold">Python Mastery</span>
+              <span className="block text-xs text-ink-3">{py.totals.lessonsDone}/{py.totals.lessonsTotal} lessons · {py.totals.modulesDone}/{py.totals.modulesTotal} modules{pyNext ? ` · next: ${pyNext.title}` : ""}</span>
+              <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-sunken"><span className="block h-full rounded-full bg-accent" style={{ width: `${py.totals.percent * 100}%` }} /></span>
+            </span>
+            <ArrowRight size={18} className="text-accent transition-transform group-hover:translate-x-0.5" aria-hidden />
+          </Link>
+        </div>
+      </section>
+
+      {nextLesson && nextModule && (
+        <Link href={`/app/learn/${nextLesson.id}`} className="group flex flex-wrap items-center gap-4 rounded-[var(--radius-card)] border border-accent/25 bg-surface p-5 shadow-card transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-pop animate-rise">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-accent-soft text-accent"><BookOpen size={24} aria-hidden /></span>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent">Lesson path · {path.passedCount}/{path.total} done · Module {nextModule.number}: {nextModule.title}</p>
+            <p className="mt-0.5 text-lg font-extrabold">{path.passedCount ? "Continue" : "Start"} with “{nextLesson.title}”</p>
+            <div className="mt-2 h-1.5 max-w-md overflow-hidden rounded-full bg-sunken"><div className="h-full rounded-full bg-accent" style={{ width: `${(path.passedCount / path.total) * 100}%` }} /></div>
+          </div>
+          <span className="flex items-center gap-1 font-bold text-accent">Up to 25 XP <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" aria-hidden /></span>
+        </Link>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.55fr_1fr]">
         {/* The next recommended action is always the most obvious thing on the page. */}

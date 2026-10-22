@@ -1,7 +1,8 @@
 /**
- * The essential student journey, end to end in a real browser, with code compiled and run by the
- * real sandbox (dev backend). Plus: errors, infinite loops, hints and the worked solution, cleared
- * storage, slow and failing network, mobile layout, and admin access control.
+ * The essential student journey, end to end in a real browser against the dev server, with code
+ * compiled and run by the real sandbox (Windows dev backend): one-click guest start → lesson →
+ * run → compile error → check → XP → reload → dashboard → playground → keep progress (claim).
+ * Each test gets a fresh browser context, i.e. a brand-new visitor.
  */
 import { expect, test, type Page } from "@playwright/test";
 
@@ -24,178 +25,184 @@ int main() {
     return 0;
 }`;
 
-/** Switches the lesson editor to the plain textarea (Monaco is covered separately) and types code. */
-async function writeCode(page: Page, code: string) {
-  const simple = page.getByRole("button", { name: "Simple editor" });
+/** Types into the lesson/playground editor via its plain-text mode (Monaco is checked separately). */
+async function writeCode(page: Page, code: string, label: RegExp = /Code editor for/) {
+  const simple = page.getByRole("button", { name: "Simple editor" }).first();
   if (await simple.isVisible()) await simple.click();
-  const box = page.getByRole("textbox", { name: /Code editor for/ });
-  await box.fill(code);
+  await page.getByRole("textbox", { name: label }).fill(code);
 }
 
-test.beforeEach(async ({ page }) => {
-  // Start every test as a brand-new visitor.
+async function startAsGuest(page: Page) {
   await page.goto("/");
-  await page.evaluate(() => localStorage.clear());
-});
+  await page.getByRole("button", { name: /Start learning/ }).first().click();
+  await expect(page).toHaveURL(/\/app\/learn\/what-is-programming$/, { timeout: 30_000 });
+}
 
-test("the essential journey: start → read → write → run → check → complete → reload → continue", async ({ page }) => {
-  // 1–2. Open CodeMentor, Start Learning (no sign-up).
+test("journey: start in one click → lesson → run → check → XP → reload → dashboard", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1, name: "CodeMentor" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Continue Learning/ })).toHaveCount(0);
-  await page.getByRole("link", { name: /Start Learning/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /Learn C\+\+/ })).toBeVisible();
+  await page.screenshot({ path: "test-results/1-landing.png" });
+  await startAsGuest(page);
 
-  // 3–4. The first C++ basics lesson.
-  await expect(page).toHaveURL(/\/learn\/what-is-programming$/);
   await expect(page.getByRole("heading", { level: 1, name: "What is programming?" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "What you'll learn" })).toBeVisible();
-  await expect(page.getByText("A program is a list of instructions", { exact: false })).toBeVisible();
-  await page.screenshot({ path: "test-results/journey-1-lesson.png" });
+  await expect(page.getByText("up to 25 XP")).toBeVisible();
+  await page.screenshot({ path: "test-results/2-lesson.png" });
 
-  // 5. Open the coding exercise.
-  await page.getByRole("link", { name: "Practise", exact: true }).click();
-  await expect(page.getByRole("heading", { name: /Practise: Put the steps in order/ })).toBeVisible();
+  // Predict, then reveal the example output.
+  await page.getByRole("button", { name: "Reveal the output" }).click();
+  await expect(page.locator("pre", { hasText: "Pour into a cup" }).first()).toBeVisible();
 
-  // 6–9. Write C++, Run — first with a mistake, then correctly.
+  // Practise: a compile error first, then the right program.
   await writeCode(page, SYNTAX_ERROR);
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByText("Compile error — the program didn't run")).toBeVisible();
-  await expect(page.getByText("`b` is used but was never declared", { exact: false }).or(page.getByText("is used but was never declared"))).toBeVisible();
+  await expect(page.getByText(/is used but was never declared/).first()).toBeVisible();
 
   await writeCode(page, CORRECT);
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByText(/Ran successfully/)).toBeVisible();
-  await expect(page.locator("pre", { hasText: "Add tea leaves" }).last()).toBeVisible();
-
-  // 10–12. Check the answer, get feedback, complete the lesson.
   await page.getByRole("button", { name: "Check answer" }).click();
   await expect(page.getByText(/Exercise complete — all 1 tests passed/)).toBeVisible();
-  await expect(page.getByText("Lesson complete", { exact: true })).toBeVisible();
-  await page.screenshot({ path: "test-results/journey-2-complete.png", fullPage: false });
+  await expect(page.getByText("+25 XP", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Achievement unlocked: First Steps/)).toBeVisible();
+  await page.screenshot({ path: "test-results/3-passed.png" });
 
-  // 13–14. Progress is saved; reload.
+  // Progress survives a reload (server-side), and the draft comes back from this browser.
   await page.reload();
-  await expect(page.getByRole("navigation", { name: "Course map" }).getByRole("link", { name: /What is programming\?/ }).getByLabel("completed")).toBeVisible();
-  await expect(page.getByText("Lesson complete", { exact: true })).toBeVisible();
-  // The saved draft comes back too.
-  await page.getByRole("button", { name: "Simple editor" }).click();
-  await expect(page.getByRole("textbox", { name: /Code editor for/ })).toHaveValue(CORRECT);
+  await expect(page.getByText("Completed · +25 XP")).toBeVisible();
 
-  // 15. Continue from saved progress.
-  await page.goto("/");
-  const cont = page.getByRole("link", { name: /Continue Learning/ });
-  await expect(cont).toBeVisible();
-  await cont.click();
+  // Dashboard: XP and the next lesson.
+  await page.goto("/app");
+  await expect(page.getByRole("link", { name: /25 XP/ }).first()).toBeVisible();
+  await expect(page.getByText(/Lesson path · 1\/22 done/)).toBeVisible();
+  await page.getByRole("link", { name: /Continue with “How programs work”/ }).click();
   await expect(page.getByRole("heading", { level: 1, name: "How programs work" })).toBeVisible();
 });
 
+test("a wrong answer gets feedback, and one hidden test can be revealed on request", async ({ page }) => {
+  await startAsGuest(page);
+  await page.goto("/app/learn/if-else");
+  await writeCode(page, "#include <iostream>\nusing namespace std;\nint main() { int n; cin >> n; if (n % 2 == 1) cout << \"Odd\"; else cout << \"Even\"; }");
+  await page.getByRole("button", { name: "Check answer" }).click();
+  await expect(page.getByText("4 of 5 tests passed")).toBeVisible();
+  await page.getByRole("button", { name: "Show me one failing hidden test" }).click();
+  await expect(page.getByText("Hidden test: negative odd")).toBeVisible();
+});
+
 test("an infinite loop is stopped and explained", async ({ page }) => {
-  await page.goto("/learn/why-loops");
+  await startAsGuest(page);
+  await page.goto("/app/learn/why-loops");
   await writeCode(page, "#include <iostream>\nint main() {\n    for (int i = 1; i <= 10; i--) {}\n    return 0;\n}");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByText("The program ran too long and was stopped")).toBeVisible();
 });
 
-test("a wrong answer gets feedback, and one hidden test can be revealed on request", async ({ page }) => {
-  await page.goto("/learn/if-else");
-  await writeCode(page, "#include <iostream>\nusing namespace std;\nint main() { int n; cin >> n; if (n % 2 == 1) cout << \"Odd\"; else cout << \"Even\"; }");
-  await page.getByRole("button", { name: "Check answer" }).click();
-  await expect(page.getByText("4 of 5 tests passed")).toBeVisible();
-  await expect(page.getByText("1 hidden test failed")).toBeVisible();
-  await page.getByRole("button", { name: "Show me one failing hidden test" }).click();
-  await expect(page.getByText("Hidden test: negative odd")).toBeVisible();
-});
-
-test("hints come one level at a time; the worked solution needs an explicit request", async ({ page }) => {
-  await page.goto("/learn/variables");
-  const help = page.getByRole("region", { name: "Help" });
-  await expect(help.getByText("Built-in help")).toBeVisible();
-  await help.getByRole("button", { name: "Give me a hint" }).click();
-  await expect(help.getByText("Hint 1 of 4")).toBeVisible();
-  await expect(help.getByText("what happens to the value that was in", { exact: false })).toBeVisible();
-  await expect(help.getByRole("button", { name: /Show worked solution/ })).toHaveCount(0);
+test("mentor: hints one level at a time, worked solution only on request, less XP after it", async ({ page }) => {
+  await startAsGuest(page);
+  await page.goto("/app/learn/variables");
+  const mentor = page.getByRole("region", { name: "Mentor" });
+  await expect(mentor.getByText("Built-in help")).toBeVisible();
+  await mentor.getByRole("button", { name: "Give me a hint" }).click();
+  await expect(mentor.getByText("Hint 1 of 4")).toBeVisible();
+  await expect(mentor.getByRole("button", { name: /Show worked solution/ })).toHaveCount(0);
   for (const n of [2, 3, 4]) {
-    await help.getByRole("button", { name: new RegExp(`Next hint \\(${n} of 4\\)`) }).click();
-    await expect(help.getByText(`Hint ${n} of 4`)).toBeVisible();
+    await mentor.getByRole("button", { name: new RegExp(`Next hint \\(${n} of 4\\)`) }).click();
+    await expect(mentor.getByText(`Hint ${n} of 4`)).toBeVisible();
   }
   page.once("dialog", (d) => d.accept());
-  await help.getByRole("button", { name: /Show worked solution/ }).click();
-  await expect(help.getByText("Worked solution")).toBeVisible();
-  await expect(help.locator("code, pre").filter({ hasText: "int temp = a;" }).first()).toBeVisible();
+  await mentor.getByRole("button", { name: /Show worked solution/ }).click();
+  await expect(mentor.getByText("Worked solution", { exact: true })).toBeVisible();
+  // Passing after seeing the solution still counts, for less XP.
+  await writeCode(page, "#include <iostream>\nusing namespace std;\nint main() { int a, b; cin >> a >> b; int t = a; a = b; b = t; cout << \"a = \" << a << endl << \"b = \" << b << endl; }");
+  await page.getByRole("button", { name: "Check answer" }).click();
+  await expect(page.getByText("+5 XP", { exact: true })).toBeVisible();
 });
 
 test("explain-my-error works without any AI configured", async ({ page }) => {
-  await page.goto("/learn/variables");
+  await startAsGuest(page);
+  await page.goto("/app/learn/variables");
   await writeCode(page, SYNTAX_ERROR);
-  const help = page.getByRole("region", { name: "Help" });
-  await help.getByRole("button", { name: "Explain error" }).click();
-  await expect(help.getByText("About your error")).toBeVisible();
-  await expect(help.getByText(/is used but was never declared/)).toBeVisible();
-  await expect(help.getByText("Built-in", { exact: true })).toBeVisible();
+  const mentor = page.getByRole("region", { name: "Mentor" });
+  await mentor.getByRole("button", { name: "Explain error" }).click();
+  await expect(mentor.getByText(/is used but was never declared/)).toBeVisible();
 });
 
-test("cleared browser storage starts fresh without errors", async ({ page }) => {
-  await page.goto("/learn/what-is-programming");
+test("playground: load a lesson example, run it, break it, get an explanation", async ({ page }) => {
+  await startAsGuest(page);
+  await page.getByRole("link", { name: "Open this example in the Playground and change it" }).click();
+  await expect(page.getByRole("heading", { name: "Code Playground" })).toBeVisible();
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(page.getByText(/Ran successfully/)).toBeVisible();
+  await page.getByLabel("Load an example").selectOption("variables");
+  await writeCode(page, "#include <iostream>\nint main() {\n    int x = 1\n    return x;\n}", /Playground code/);
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(page.getByText("A semicolon is missing").first()).toBeVisible();
+  const mentor = page.getByRole("region", { name: "Mentor" });
+  await mentor.getByRole("button", { name: "Explain this error" }).click();
+  await expect(mentor.getByText("About your error")).toBeVisible();
+  await page.screenshot({ path: "test-results/4-playground.png" });
+});
+
+test("guests can keep their progress with a username and sign back in", async ({ page }) => {
+  await startAsGuest(page);
   await writeCode(page, CORRECT);
   await page.getByRole("button", { name: "Check answer" }).click();
   await expect(page.getByText(/Exercise complete/)).toBeVisible();
-  await page.evaluate(() => localStorage.clear());
-  await page.goto("/");
-  await expect(page.getByRole("link", { name: /Continue Learning/ })).toHaveCount(0);
-  await page.goto("/learn/what-is-programming");
-  await expect(page.getByText("Lesson complete", { exact: true })).toHaveCount(0);
+  await page.goto("/app/settings");
+  const username = `e2e_${Date.now()}`;
+  await page.getByLabel("Username").fill(username);
+  await page.getByLabel("Password").first().fill("e2e-password-123");
+  await page.getByRole("button", { name: "Keep my progress" }).click();
+  await expect(page.getByText("Your progress is saved")).toBeVisible();
+  await expect(page.getByText(`Signed in as ${username}.`)).toBeVisible();
+  await page.getByRole("button", { name: "Sign out" }).click();
+  // Let the sign-out redirect finish first, or it can land after (and override) the next goto.
+  await page.waitForURL((url) => !url.pathname.startsWith("/app"));
+  await page.goto("/login");
+  await page.getByLabel("Username").fill(username);
+  await page.getByLabel("Password").fill("e2e-password-123");
+  await page.getByRole("button", { name: /Sign in/ }).click();
+  await expect(page).toHaveURL(/\/app/);
+  await page.goto("/app/learn/what-is-programming");
+  await expect(page.getByText("Completed · +25 XP")).toBeVisible();
 });
 
-test("corrupt saved progress is reset with a notice, not a crash", async ({ page }) => {
-  await page.evaluate(() => localStorage.setItem("cm-progress", "{\"v\":42,\"oops\":true"));
-  await page.goto("/learn");
-  await expect(page.getByText(/couldn't be read/)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "C++ course map" })).toBeVisible();
-});
-
-test("a slow network shows progress, and a failed request shows a clear message", async ({ page }) => {
-  await page.goto("/learn/what-is-programming");
+test("a failed request shows a clear message instead of a false success", async ({ page }) => {
+  await startAsGuest(page);
   await writeCode(page, CORRECT);
-  await page.route("**/api/guest/run", async (route) => {
-    await new Promise((r) => setTimeout(r, 2500));
-    await route.continue();
-  });
-  await page.getByRole("button", { name: "Run", exact: true }).click();
-  await expect(page.locator("[aria-busy=true]")).toBeVisible();
-  await expect(page.getByText(/Ran successfully/)).toBeVisible({ timeout: 30_000 });
-  await page.unroute("**/api/guest/run");
-  await page.route("**/api/guest/check", (route) => route.abort("connectionfailed"));
+  await page.route("**/api/lessons/check", (route) => route.abort("connectionfailed"));
   await page.getByRole("button", { name: "Check answer" }).click();
   await expect(page.getByText(/Couldn't reach CodeMentor|offline/)).toBeVisible();
+  await expect(page.getByText(/Exercise complete/)).toHaveCount(0);
 });
 
 test("the Monaco editor loads for desktop users", async ({ page }) => {
-  await page.goto("/learn/hello-world");
+  await startAsGuest(page);
   await expect(page.locator(".monaco-editor").first()).toBeVisible({ timeout: 30_000 });
 });
 
-test("mobile layout: readable lesson, no sideways scrolling, simple editor by default", async ({ browser }) => {
+test("mobile: landing, start and lessons are usable with no sideways scrolling", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
-  await page.goto("/learn/for-loops");
-  await expect(page.getByRole("heading", { level: 1, name: "for loops" })).toBeVisible();
-  await expect(page.getByText("Course map").first()).toBeVisible();
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(1);
-  await page.getByRole("link", { name: "Practise", exact: true }).click();
-  await expect(page.getByRole("textbox", { name: /Code editor for/ })).toBeVisible();
-  await page.screenshot({ path: "test-results/mobile-lesson.png" });
+  const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   await page.goto("/");
-  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-  await page.screenshot({ path: "test-results/mobile-home.png" });
+  expect(await overflow()).toBeLessThanOrEqual(1);
+  await page.getByRole("button", { name: /Start learning/ }).first().click();
+  await expect(page).toHaveURL(/\/app\/learn\/what-is-programming$/, { timeout: 30_000 });
+  expect(await overflow()).toBeLessThanOrEqual(1);
+  await expect(page.getByRole("textbox", { name: /Code editor for/ })).toBeVisible();
+  await page.screenshot({ path: "test-results/5-mobile-lesson.png" });
   await ctx.close();
 });
 
-test("admin pages and APIs refuse visitors who aren't signed in as admins", async ({ page, request }) => {
+test("admin pages and APIs refuse anyone who isn't an admin", async ({ page, request }) => {
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/login/);
   const res = await request.post("/api/admin/generate", { data: { conceptId: "for-loops", difficulty: 1 }, headers: { origin: "http://localhost:3400" } });
   expect(res.status()).toBe(401);
-  const res2 = await request.post("/api/admin/question-status", { data: { questionId: "x", status: "disabled" }, headers: { origin: "http://localhost:3400" } });
-  expect(res2.status()).toBe(401);
+  await startAsGuest(page);
+  await page.goto("/admin");
+  await expect(page).not.toHaveURL(/\/admin/);
+  const asGuest = await page.request.post("/api/admin/question-status", { data: { questionId: "x", status: "disabled" }, headers: { origin: "http://localhost:3400" } });
+  expect(asGuest.status()).toBe(403);
 });
