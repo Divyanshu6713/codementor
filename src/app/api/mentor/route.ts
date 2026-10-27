@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { EXERCISE_KEY } from "@/content/course";
 import { config } from "@/server/config";
 import { rateLimit, readJson, trustedClientIp, withStudent } from "@/server/http";
 import { noteHint } from "@/server/services/lesson-path";
 import { mentorHelp } from "@/server/services/mentor";
 
 const Body = z.object({
-  lessonId: z.string().regex(/^[a-z0-9-]{1,60}$/).nullable().default(null),
+  lessonId: z.string().regex(EXERCISE_KEY).nullable().default(null),
   mode: z.enum(["concept", "hint", "error", "review", "ask"]),
   hintLevel: z.number().int().min(1).max(4).nullable().default(null),
   code: z.string().max(64 * 1024).nullable().default(null),

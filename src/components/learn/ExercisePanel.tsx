@@ -143,8 +143,8 @@ export function ExercisePanel({ exercise }: { exercise: ExerciseView }) {
       <div aria-live="polite" aria-busy={busy !== null}>
         {result?.kind === "error" && <Callout tone="danger" title="That didn't work">{result.message}</Callout>}
         {result?.kind === "run" && <RunOutput r={result.data} />}
-        {result?.kind === "check" && <CheckOutput r={result.data} busy={busy === "reveal"} onReveal={() => check(true)} />}
-        {result?.kind === "check" && result.data.passed && reward && <Celebration reward={reward} />}
+        {result?.kind === "check" && <CheckOutput r={result.data} practice={lessonId.includes("~")} busy={busy === "reveal"} onReveal={() => check(true)} />}
+        {result?.kind === "check" && result.data.passed && reward && <Celebration reward={reward} maxXp={lessonId.endsWith("~p3") ? 30 : lessonId.endsWith("~p2") ? 20 : 25} />}
       </div>
     </div>
   );
@@ -198,7 +198,7 @@ function RunOutput({ r }: { r: RunResult }) {
   );
 }
 
-function CheckOutput({ r, busy, onReveal }: { r: CheckResult; busy: boolean; onReveal: () => void }) {
+function CheckOutput({ r, practice, busy, onReveal }: { r: CheckResult; practice: boolean; busy: boolean; onReveal: () => void }) {
   if (r.compileStatus !== "success") {
     return (
       <div className="space-y-3">
@@ -213,8 +213,8 @@ function CheckOutput({ r, busy, onReveal }: { r: CheckResult; busy: boolean; onR
     <div className="space-y-3">
       {r.passed ? (
         <div className="rounded-xl border border-success/30 bg-success-soft px-4 py-3">
-          <p className="flex items-center gap-2 font-semibold text-success"><CheckCircle2 size={18} aria-hidden /> Exercise complete — all {r.testsTotal} tests passed</p>
-          <p className="mt-1 text-sm text-ink-2">Lesson complete. Scroll down for the next step.</p>
+          <p className="flex items-center gap-2 font-semibold text-success"><CheckCircle2 size={18} aria-hidden /> {practice ? "Problem solved" : "Exercise complete"} — all {r.testsTotal} tests passed</p>
+          <p className="mt-1 text-sm text-ink-2">{practice ? "Nice work. Try the next level, or head back to the lesson." : "Lesson complete. Try the practice problems below, or scroll down for the next step."}</p>
         </div>
       ) : (
         <p className="flex items-center gap-2 font-semibold text-danger"><CircleX size={18} aria-hidden /> {r.testsPassed} of {r.testsTotal} tests passed</p>
@@ -269,7 +269,7 @@ function Mini({ label, text }: { label: string; text: string }) {
 }
 
 /** A short, earned celebration: XP for the first pass, module completion, new achievements. */
-function Celebration({ reward }: { reward: PassReward }) {
+function Celebration({ reward, maxXp }: { reward: PassReward; maxXp: number }) {
   return (
     <div className="animate-rise mt-3 overflow-hidden rounded-[var(--radius-card)] bg-hero p-5 text-white shadow-pop" role="status">
       <p className="flex items-center gap-2 text-lg font-extrabold"><Sparkles size={20} aria-hidden /> +{reward.xp} XP</p>
@@ -279,7 +279,7 @@ function Celebration({ reward }: { reward: PassReward }) {
       {reward.achievements.map((a) => (
         <p key={a.code} className="mt-2 flex items-center gap-2 font-semibold"><Trophy size={17} aria-hidden /> Achievement unlocked: {a.title}</p>
       ))}
-      <p className="mt-2 text-sm text-white/85">{reward.xp >= 25 ? "Solved with little or no help — that's the most XP a lesson gives." : "Next time, try one fewer hint for more XP."}</p>
+      <p className="mt-2 text-sm text-white/85">{reward.xp >= maxXp ? "Solved with little or no help — that's the most XP this problem gives." : "Next time, try one fewer hint for more XP."}</p>
     </div>
   );
 }

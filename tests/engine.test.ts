@@ -340,7 +340,7 @@ describe("pedagogy scenarios", () => {
     const states = Object.fromEntries(allSkillsOf(...BASICS, "for-loops").map((id) => [id, strong()]));
     const d = decideNext(snapshot(states, { completedLessons: new Set(["for-loops-core"]) }));
     expect(d.conceptId).not.toBe("for-loops");
-    expect(["nested-loops", "functions", "arrays"]).toContain(d.conceptId);
+    expect(["while-loops", "nested-loops", "functions", "arrays"]).toContain(d.conceptId);
   });
 
   it("B — writes syntax fine but fails boundaries: gets targeted boundary practice", () => {
@@ -398,9 +398,18 @@ describe("pedagogy scenarios", () => {
     expect(d.lessonId).toBe("comparison-ops-review");
   });
 
-  it("is honest when the right next topic has no adaptive lesson yet, and points to the course lesson", () => {
+  it("a topic with a question bank but no adaptive lesson goes straight to practice", () => {
     const states = Object.fromEntries(allSkillsOf("cpp-basics").map((id) => [id, strong()]));
     const d = decideNext(snapshot(states));
+    expect(d.action).toBe("practice");
+    expect(d.conceptId).toBe("variables-types");
+  });
+
+  it("is honest when the right next topic has no adaptive content yet, and points to the course lesson", () => {
+    const states = Object.fromEntries(allSkillsOf("cpp-basics").map((id) => [id, strong()]));
+    // Every concept has a question bank now, so simulate one that doesn't.
+    const concepts = conceptInfos().map((c) => (c.id === "variables-types" ? { ...c, practiceable: false } : c));
+    const d = decideNext(snapshot(states, { concepts }));
     expect(d.action).toBe("content_pending");
     expect(d.conceptId).toBe("variables-types");
     expect(d.alternative?.lessonId).toBe("for-loops-core");

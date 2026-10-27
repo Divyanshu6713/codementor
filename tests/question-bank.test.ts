@@ -75,7 +75,8 @@ describe.runIf(canRun)("question bank (real g++)", () => {
   const blanks = QUESTIONS.filter((q): q is CompleteCodeQuestion => q.type === "complete_code" && q.verify !== false);
   it.each(blanks.map((q) => [q.id, q] as const))("%s compiles with its accepted answer", async (_id, q) => {
     const code = q.code!.replace("____", q.accepted[0]);
-    const isDefinition = /^\s*(template\s*<[^>]*>\s*)?(struct|class|[\w:<>,&*]+\s+[\w:~]+\s*\([^;{]*\)\s*(const)?\s*\{)/.test(code);
+    // Top-level definitions (a struct, class or function starting at column 0) can't live inside main.
+    const isDefinition = /^(template\s*<[^>]*>\s*)?(struct |class |(?:[A-Za-z_][\w:<>,]*[ \t*&]+)+[\w:~]+\s*\([^;{]*\)\s*(const)?\s*\{)/m.test(code);
     const program = /\bint\s+main\s*\(/.test(code) ? code
       : isDefinition ? `${code}\nint main() { return 0; }`
       : `{\n${declsFor(code)}\n${code}\n}`;

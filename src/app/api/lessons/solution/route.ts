@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { EXERCISE_KEY } from "@/content/course";
 import { rateLimit, readJson, withStudent } from "@/server/http";
 import { workedSolution } from "@/server/services/lesson-exercises";
 import { noteSolutionViewed } from "@/server/services/lesson-path";
 
-const Body = z.object({ lessonId: z.string().regex(/^[a-z0-9-]{1,60}$/) });
+const Body = z.object({ lessonId: z.string().regex(EXERCISE_KEY) });
 
 /** Level 5 help: the worked solution, only on explicit request. Viewing it lowers the XP a later pass earns. */
 export const POST = withStudent(async (req, user) => {

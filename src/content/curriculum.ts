@@ -9,7 +9,7 @@ export const TRACKS: TrackDef[] = [
 
 /**
  * The concept dependency graph. Order inside the array is the default teaching order
- * (a valid topological order — checked by tests).
+ * (a valid topological order — checked by tests), and follows the course: for loops before while loops.
  */
 export const CONCEPTS: ConceptDef[] = [
   {
@@ -66,16 +66,6 @@ export const CONCEPTS: ConceptDef[] = [
     ],
   },
   {
-    id: "while-loops", trackId: "cpp-foundations", status: "active",
-    courseLessons: ["while-loops", "do-while"],
-    title: "While loops", summary: "Repeating while a condition stays true.",
-    prerequisites: [{ id: "comparison-ops", strength: "required" }, { id: "arithmetic-ops", strength: "required" }],
-    skills: [
-      { id: "while_loop", title: "while loops", description: "Condition checked before each repetition." },
-      { id: "do_while", title: "do-while loops", description: "The body runs once before the condition is checked." },
-    ],
-  },
-  {
     id: "for-loops", trackId: "cpp-foundations", status: "active",
     courseLessons: ["why-loops", "for-loops", "break-continue", "loop-patterns"],
     title: "For loops", summary: "Counting loops: start, keep-going condition, update — and getting the boundaries right.",
@@ -93,6 +83,16 @@ export const CONCEPTS: ConceptDef[] = [
       { id: "loop_boundaries", title: "Boundaries (< vs <=)", description: "First and last values; avoiding off-by-one." },
       { id: "loop_counting_down", title: "Counting down", description: "Loops that start high and decrease." },
       { id: "loop_accumulation", title: "Accumulating", description: "Building a sum, count or product inside a loop." },
+    ],
+  },
+  {
+    id: "while-loops", trackId: "cpp-foundations", status: "active",
+    courseLessons: ["while-loops", "do-while"],
+    title: "While loops", summary: "Repeating while a condition stays true.",
+    prerequisites: [{ id: "comparison-ops", strength: "required" }, { id: "arithmetic-ops", strength: "required" }, { id: "for-loops", strength: "recommended" }],
+    skills: [
+      { id: "while_loop", title: "while loops", description: "Condition checked before each repetition." },
+      { id: "do_while", title: "do-while loops", description: "The body runs once before the condition is checked." },
     ],
   },
   {

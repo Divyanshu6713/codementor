@@ -11,10 +11,11 @@ import { ExercisePanel } from "@/components/learn/ExercisePanel";
 import { HelpPanel } from "@/components/learn/HelpPanel";
 import { LessonFooter } from "@/components/learn/LessonFooter";
 import { LessonStateProvider } from "@/components/learn/LessonState";
+import { PracticeLadder } from "@/components/learn/PracticeLadder";
 import { PredictOutput } from "@/components/learn/PredictOutput";
 import { QuickCheck } from "@/components/learn/QuickCheck";
 import { Badge } from "@/components/ui";
-import { COURSE_MODULES, getCourseLesson, neighbours, toPublicLesson } from "@/content/course";
+import { COURSE_MODULES, exerciseKey, getCourseLesson, neighbours, toPublicLesson } from "@/content/course";
 import { getTrace } from "@/content/traces";
 import { requirePageUser } from "@/server/auth/current";
 import { getDb } from "@/server/db/client";
@@ -131,6 +132,13 @@ export default async function LessonPage({ params }: Params) {
         <Step id="practise" n={4} title={`Practise: ${pub.exercise.title}`}>
           <ExercisePanel exercise={{ title: pub.exercise.title, prompt: pub.exercise.prompt, samples: pub.exercise.samples, hiddenCount: pub.exercise.hiddenCount }} />
           <HelpPanel exerciseTitle={pub.exercise.title} />
+          <PracticeLadder
+            lessonId={lesson.id} current={null}
+            items={[
+              { id: null, level: "beginner", title: pub.exercise.title, passed: state.passed },
+              ...pub.practice.map((p) => ({ id: p.id, level: p.level, title: p.title, passed: progress.lessonState(exerciseKey(lesson.id, p.id)).passed })),
+            ]}
+          />
         </Step>
 
         <Step id="continue" n={5} title="Key points and next step">

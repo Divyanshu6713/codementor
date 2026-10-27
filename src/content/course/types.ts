@@ -80,6 +80,16 @@ export interface Exercise {
   solutionNotes: string;
 }
 
+/**
+ * Graded practice after the lesson exercise (which counts as the beginner problem):
+ * p2 = intermediate, p3 = challenge. Same shape and guarantees as the exercise — the reference
+ * solution passes every test and the starter doesn't (tests/course-content.test.ts).
+ */
+export interface PracticeProblem extends Exercise {
+  id: "p2" | "p3";
+  level: "intermediate" | "challenge";
+}
+
 export interface CourseLesson {
   id: string;
   moduleId: string;
@@ -102,6 +112,8 @@ export interface CourseLesson {
   quickCheck?: QuickCheck;
   /** D–F. Practise, run, improve. */
   exercise: Exercise;
+  /** Two more graded problems: intermediate (p2) and challenge (p3). */
+  practice?: PracticeProblem[];
   /** Curated "explain it another way" — used when no AI provider is enabled. */
   explainAgain: string;
   /** G. Key takeaways. */

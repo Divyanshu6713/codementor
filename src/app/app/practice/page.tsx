@@ -56,7 +56,7 @@ export default async function PracticePage() {
             </Card>
           ))}
         </div>
-        <p className="mt-4 text-sm text-ink-3">Only topics with a practice question bank are listed. More topics are being written.</p>
+        <p className="mt-4 text-sm text-ink-3">Every C++ topic has its own question bank: predict the output, find the bug, complete the code and write code — all checked by a real compiler.</p>
       </section>
     </div>
   );

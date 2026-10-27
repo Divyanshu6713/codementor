@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { EXERCISE_KEY } from "@/content/course";
 import { rateLimit, readJson, withStudent } from "@/server/http";
 import { checkExercise } from "@/server/services/lesson-exercises";
 import { recordPass } from "@/server/services/lesson-path";
 
 const Body = z.object({
-  lessonId: z.string().regex(/^[a-z0-9-]{1,60}$/),
+  lessonId: z.string().regex(EXERCISE_KEY),
   source: z.string().min(1).max(64 * 1024),
   showFailingHidden: z.boolean().default(false),
 });

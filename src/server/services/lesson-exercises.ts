@@ -3,8 +3,8 @@
  * sandbox, judged and not stored. Correctness is decided only by the deterministic judge, never
  * by AI. (Recording progress and XP is lesson-path.ts.)
  */
-import { getCourseLesson } from "@/content/course";
-import type { CourseLesson } from "@/content/course";
+import { getCourseLesson, resolveExercise } from "@/content/course";
+import type { CourseLesson, Exercise } from "@/content/course";
 import { judgeSubmission, publicJudgeView, type JudgeOutcome } from "@/server/execution/judge";
 import { execute } from "@/server/execution/providers";
 import { NotFoundError } from "@/server/errors";
@@ -14,6 +14,16 @@ export function requireLesson(lessonId: string): CourseLesson {
   const l = getCourseLesson(lessonId);
   if (!l) throw new NotFoundError("That lesson");
   return l;
+}
+
+/**
+ * Resolves an exercise key: "<lessonId>" (the lesson exercise) or "<lessonId>~p2" / "~p3"
+ * (the lesson's intermediate and challenge practice problems).
+ */
+export function requireExercise(key: string) {
+  const r = resolveExercise(key);
+  if (!r) throw new NotFoundError("That exercise");
+  return r;
 }
 
 /** "Run": compile and run once with the student's own input. */
@@ -31,22 +41,24 @@ export async function runOnce(source: string, input: string) {
   };
 }
 
-/** Runs the lesson's tests against a submission (shared by Check and the tutor's evidence). */
-export function judgeLesson(lesson: CourseLesson, source: string): Promise<JudgeOutcome> {
-  const tests = lesson.exercise.tests.map((t, i) => ({
+/** Runs an exercise's tests against a submission (shared by Check and the tutor's evidence). */
+export function judgeExercise(exercise: Exercise, source: string): Promise<JudgeOutcome> {
+  const tests = exercise.tests.map((t, i) => ({
     id: `t${i}`, label: t.label, input: t.input, expected: t.output, visibility: t.visibility, category: t.category,
   }));
-  return judgeSubmission(source, tests, lesson.exercise.compare);
+  return judgeSubmission(source, tests, exercise.compare);
 }
+
+export const judgeLesson = (lesson: CourseLesson, source: string) => judgeExercise(lesson.exercise, source);
 
 /**
  * "Check": judge against sample + hidden tests. Hidden tests return only pass/fail and the kind of
  * case — unless the student explicitly asks to see one failing hidden case after a wrong check
  * (`showFailingHidden`), in which case exactly that one case is revealed.
  */
-export async function checkExercise(lessonId: string, source: string, showFailingHidden: boolean) {
-  const lesson = requireLesson(lessonId);
-  const outcome = await judgeLesson(lesson, source);
+export async function checkExercise(key: string, source: string, showFailingHidden: boolean) {
+  const { exercise } = requireExercise(key);
+  const outcome = await judgeExercise(exercise, source);
   const view = publicJudgeView(outcome);
   let revealed: { label: string; input: string; expected: string; actual: string } | null = null;
   if (showFailingHidden && outcome.verdict !== "accepted" && outcome.compileStatus === "success") {
@@ -67,7 +79,7 @@ export async function checkExercise(lessonId: string, source: string, showFailin
 }
 
 /** Level 5: the worked solution, only on an explicit request from the student. */
-export function workedSolution(lessonId: string) {
-  const lesson = requireLesson(lessonId);
-  return { solution: lesson.exercise.solution, notes: lesson.exercise.solutionNotes };
+export function workedSolution(key: string) {
+  const { exercise } = requireExercise(key);
+  return { solution: exercise.solution, notes: exercise.solutionNotes };
 }

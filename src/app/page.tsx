@@ -13,6 +13,7 @@ import { getTrace } from "@/content/traces";
 import { COURSE_LESSONS, COURSE_MODULES } from "@/content/course";
 import { PY_LESSONS, PY_LEVELS, PY_MODULES, PY_QUESTIONS } from "@/content/python";
 import { ARENA_PROBLEM_IDS } from "@/content/problems";
+import { QUESTIONS } from "@/content";
 import { getCurrentUser, homeFor } from "@/server/auth/current";
 import { GuestStart } from "@/components/auth/GuestStart";
 
@@ -60,7 +61,7 @@ export default async function Landing() {
     { n: COURSE_LESSONS.length, label: "C++ lessons", note: "each with a compiler-checked exercise" },
     { n: PY_MODULES.length, label: "Python modules live", note: `of a ${PY_PLANNED_MODULES}-module roadmap` },
     { n: PY_LESSONS.length, label: "Python lessons", note: "every example run on real Python" },
-    { n: PY_QUESTIONS.length, label: "practice questions", note: "predict · fill · find the bug · MCQ" },
+    { n: QUESTIONS.length + PY_QUESTIONS.length, label: "practice questions", note: "predict · fill · find the bug · write code" },
     { n: ARENA_PROBLEM_IDS.length, label: "arena problems", note: "hidden tests, real judge" },
   ];
 

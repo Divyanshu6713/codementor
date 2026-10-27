@@ -9,7 +9,7 @@
  * has to guess whether it compiled or passed. If anything on the AI path fails, the curated answer
  * is returned with a short notice — the panel always answers.
  */
-import type { CourseLesson } from "@/content/course";
+import type { CourseLesson, Exercise } from "@/content/course";
 import { aiStatus, getAIProvider } from "@/server/ai";
 import { config } from "@/server/config";
 import { claimsUnverifiedExecution, revealsSolution, tooLong } from "@/server/ai/guardrails";
@@ -21,7 +21,7 @@ import { isAppError } from "@/server/errors";
 import { checkFeedback, explainCompilerOutput, runFeedback, type FeedbackItem } from "@/server/learning/feedback";
 import { logger } from "@/server/logger";
 import { claimAIRequest, refundAIRequest, remainingAIRequests, type QuotaDenied } from "./ai-quota";
-import { judgeLesson, requireLesson } from "./lesson-exercises";
+import { judgeExercise, requireExercise } from "./lesson-exercises";
 
 export interface TutorAnswer {
   source: "ai" | "curated";
@@ -67,13 +67,13 @@ function runItems(r: ExecutionResponse): string {
   return f ? items([f]) : "Your program compiles and runs without an error. If the output isn't what you expected, trace it line by line with a small input — or ask a question below.";
 }
 
-function curatedAnswer(lesson: CourseLesson | null, mode: TutorMode, hintLevel: number, ev: { judged: JudgeOutcome | null; ran: ExecutionResponse | null }, hadCode: boolean, canRun: boolean): string {
+function curatedAnswer(lesson: CourseLesson | null, exercise: Exercise | null, mode: TutorMode, hintLevel: number, ev: { judged: JudgeOutcome | null; ran: ExecutionResponse | null }, hadCode: boolean, canRun: boolean): string {
   if (!lesson && (mode === "concept" || mode === "hint")) return "Open a lesson to get its explanation and step-by-step hints. In the playground you can ask me to explain an error or a question.";
   switch (mode) {
     case "concept":
       return `${lesson!.explainAgain}\n\n**Key points**\n\n${lesson!.summary.map((s) => `- ${s}`).join("\n")}`;
     case "hint":
-      return lesson!.exercise.hints[Math.min(Math.max(hintLevel, 1), 4) - 1];
+      return exercise!.hints[Math.min(Math.max(hintLevel, 1), 4) - 1];
     case "error": {
       if (!hadCode) return "Write or paste your code in the editor first, then ask again — I'll compile it and explain any error.";
       if (ev.ran) return runItems(ev.ran);
@@ -118,7 +118,9 @@ export async function mentorHelp(args: {
   input?: string;
   question: string | null;
 }): Promise<TutorAnswer> {
-  const lesson = args.lessonId ? requireLesson(args.lessonId) : null;
+  const target = args.lessonId ? requireExercise(args.lessonId) : null;
+  const lesson = target?.lesson ?? null;
+  const exercise = target?.exercise ?? null;
   const hintLevel = Math.min(Math.max(args.hintLevel ?? 1, 1), 4);
   const code = args.code?.trim() ? args.code : null;
   const aiOn = aiStatus().provider !== "curated";
@@ -130,14 +132,14 @@ export async function mentorHelp(args: {
   const wantsEvidence = args.mode === "error" || args.mode === "review" || (args.mode === "hint" && hintLevel >= 3 && aiOn);
   if (code && wantsEvidence && exec.available) {
     try {
-      if (lesson) ev.judged = await judgeLesson(lesson, code);
+      if (exercise) ev.judged = await judgeExercise(exercise, code);
       else ev.ran = await execute({ language: "cpp", source: code, tests: [{ id: "run", input: args.input ?? "" }] });
     } catch (err) {
       logger.warn("mentor.evidence_failed", { err });
     }
   }
   const curated = (notice: string | null, remaining: number | null = null): TutorAnswer =>
-    ({ source: "curated", text: curatedAnswer(lesson, args.mode, hintLevel, ev, Boolean(code), exec.available), notice, remaining });
+    ({ source: "curated", text: curatedAnswer(lesson, exercise, args.mode, hintLevel, ev, Boolean(code), exec.available), notice, remaining });
 
   if (!aiOn) return curated(null);
   if (!lesson && (args.mode === "concept" || args.mode === "hint")) return curated(null);
@@ -154,7 +156,7 @@ export async function mentorHelp(args: {
   if (!claim.ok) return curated(QUOTA_NOTICE[claim.denied], claim.denied === "guest" ? 0 : null);
 
   const evidence = ev.judged ? judgeEvidence(ev.judged) : ev.ran ? runEvidence(ev.ran, args.input ?? "") : null;
-  const reference = lesson?.exercise.solution ?? "";
+  const reference = exercise?.solution ?? "";
   try {
     const res = await getAIProvider().lessonTutor({
       mode: args.mode, hintLevel: args.mode === "hint" ? hintLevel : null,
@@ -162,8 +164,8 @@ export async function mentorHelp(args: {
         ? {
           title: lesson.title, goals: lesson.goals, summary: lesson.summary,
           conceptText: lesson.sections.map((s) => `${s.title}\n${s.body}`).join("\n\n"),
-          exercisePrompt: lesson.exercise.prompt,
-          curatedHint: args.mode === "hint" ? lesson.exercise.hints[hintLevel - 1] : null,
+          exercisePrompt: exercise!.prompt,
+          curatedHint: args.mode === "hint" ? exercise!.hints[hintLevel - 1] : null,
         }
         : { title: "Code playground", goals: [], summary: [], conceptText: "The student is experimenting freely in the playground. There is no exercise and no expected answer.", exercisePrompt: "(none — free experimentation)", curatedHint: null },
       code, question: args.question?.trim() || null, evidence, answerSummary: reference || "(no reference solution — playground)",

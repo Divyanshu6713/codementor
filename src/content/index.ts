@@ -5,6 +5,8 @@ import { FOR_LOOP_QUESTIONS } from "./questions/for-loops";
 import { COMPARISON_QUESTIONS } from "./questions/comparison";
 import { FOUNDATION_QUESTIONS } from "./questions/foundations";
 import { FUNCTIONS_ARRAYS_QUESTIONS } from "./questions/functions-arrays";
+import { CORE_CPP_QUESTIONS } from "./questions/core-cpp";
+import { DSA_QUESTIONS } from "./questions/dsa";
 import { FOR_LOOPS_LESSON } from "./lessons/for-loops";
 import { COMPARISON_LESSON } from "./lessons/comparison-ops";
 import { TRACES } from "./traces";
@@ -30,7 +32,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   ...PY_ACHIEVEMENTS,
 ];
 
-export const QUESTIONS: QuestionDef[] = [...DIAGNOSTIC_QUESTIONS, ...FOR_LOOP_QUESTIONS, ...COMPARISON_QUESTIONS, ...FOUNDATION_QUESTIONS, ...FUNCTIONS_ARRAYS_QUESTIONS];
+export const QUESTIONS: QuestionDef[] = [...DIAGNOSTIC_QUESTIONS, ...FOR_LOOP_QUESTIONS, ...COMPARISON_QUESTIONS, ...FOUNDATION_QUESTIONS, ...FUNCTIONS_ARRAYS_QUESTIONS, ...CORE_CPP_QUESTIONS, ...DSA_QUESTIONS];
 export const LESSONS: LessonDef[] = [FOR_LOOPS_LESSON, COMPARISON_LESSON];
 export { CONCEPTS, DIAGNOSTIC_LADDER, MISCONCEPTIONS, TRACES, TRACKS };
 

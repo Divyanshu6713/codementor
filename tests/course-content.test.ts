@@ -7,7 +7,7 @@
  * Needs a sandbox backend with g++ (windows-job on Windows, local on macOS/Linux); skipped without one.
  */
 import { beforeAll, describe, expect, it } from "vitest";
-import { COURSE_LESSONS, COURSE_MODULES, neighbours, roadmap, toPublicLesson, validateCourse } from "@/content/course";
+import { COURSE_LESSONS, COURSE_MODULES, neighbours, roadmap, toPublicLesson, toPublicProblem, validateCourse } from "@/content/course";
 import { TRACES } from "@/content/traces";
 import { CONCEPTS } from "@/content/curriculum";
 import { renderManifest } from "@/content/course/manifest";
@@ -91,6 +91,14 @@ describe("course structure", () => {
     for (const l of COURSE_LESSONS) {
       const pub = JSON.stringify(toPublicLesson(l));
       expect(pub).not.toContain(l.exercise.solution);
+      for (const p of l.practice ?? []) {
+        expect(pub).not.toContain(p.solution);
+        const pp = JSON.stringify(toPublicProblem(p));
+        expect(pp).not.toContain(p.solution);
+        for (const t of p.tests.filter((x) => x.visibility === "hidden")) {
+          expect(pp.includes(JSON.stringify(t.label)) && pp.includes(JSON.stringify(t.input))).toBe(false);
+        }
+      }
       for (const t of l.exercise.tests.filter((x) => x.visibility === "hidden")) {
         expect(pub.includes(JSON.stringify(t.label)) && pub.includes(JSON.stringify(t.input))).toBe(false);
       }
@@ -120,6 +128,20 @@ describe.runIf(canRun)("course content compiles and is correct (real g++)", () =
     const allPass = res.compile.status === "success" &&
       l.exercise.tests.every((t, i) => res.tests[i].status === "ok" && outputsMatch(t.output, res.tests[i].stdout, l.exercise.compare));
     expect(allPass).toBe(false);
+  }, 60_000);
+
+  const PRACTICE = COURSE_LESSONS.flatMap((l) => (l.practice ?? []).map((p) => [`${l.id}~${p.id}`, p] as const));
+  it.each(PRACTICE)("practice %s: solution passes every test, starter doesn't", async (_key, p) => {
+    const inputs = p.tests.map((t) => t.input);
+    const res = await run(p.solution, inputs);
+    expect(res.compile.status, res.compile.output).toBe("success");
+    p.tests.forEach((t, i) => {
+      expect(res.tests[i].status, t.label).toBe("ok");
+      expect(outputsMatch(t.output, res.tests[i].stdout, p.compare), `${t.label}: got ${JSON.stringify(res.tests[i].stdout)}`).toBe(true);
+    });
+    const st = await run(p.starterCode, inputs);
+    const allPass = st.compile.status === "success" && p.tests.every((t, i) => st.tests[i].status === "ok" && outputsMatch(t.output, st.tests[i].stdout, p.compare));
+    expect(allPass, "starter already passes").toBe(false);
   }, 60_000);
 
   // Dry-run traces are hand-modelled in TypeScript; this keeps them honest against real C++.

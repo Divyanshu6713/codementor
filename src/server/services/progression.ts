@@ -38,6 +38,15 @@ export const XP_RULES = {
   lessonPassed: (hintLevel: number, afterSolution: boolean) => (afterSolution ? 5 : hintLevel <= 1 ? 25 : hintLevel === 2 ? 20 : 15),
   /** Finishing every lesson in a module. */
   moduleCompleted: 50,
+  /**
+   * Passing a lesson's practice problem: intermediate 20, challenge 30 at most one hint; fewer XP
+   * with more hints (−5 per level above one, at least half), 5 after the worked solution.
+   */
+  practicePassed: (level: "intermediate" | "challenge", hintLevel: number, afterSolution: boolean) => {
+    const full = level === "challenge" ? 30 : 20;
+    if (afterSolution) return 5;
+    return Math.max(full / 2, full - 5 * Math.max(0, hintLevel - 1));
+  },
 } as const;
 
 export interface PathRow { lessonId: string; passedAt: Date | null; passedHintLevel: number | null; passedAfterSolution: boolean | null }
@@ -45,9 +54,13 @@ export interface PathRow { lessonId: string; passedAt: Date | null; passedHintLe
 /** XP events from the step-by-step lesson path: one per passed exercise, plus a bonus per finished module. */
 export function pathXpEvents(rows: PathRow[]): { at: Date; xp: number; lessonId: string | null; moduleId: string | null }[] {
   const passed = new Map(rows.filter((r) => r.passedAt).map((r) => [r.lessonId, r]));
-  const events = [...passed.values()].map((r) => ({
-    at: r.passedAt!, xp: XP_RULES.lessonPassed(r.passedHintLevel ?? 0, Boolean(r.passedAfterSolution)), lessonId: r.lessonId as string | null, moduleId: null as string | null,
-  }));
+  const events = [...passed.values()].map((r) => {
+    const practice = r.lessonId.includes("~") ? (r.lessonId.endsWith("~p3") ? "challenge" : "intermediate") : null;
+    const xp = practice
+      ? XP_RULES.practicePassed(practice, r.passedHintLevel ?? 0, Boolean(r.passedAfterSolution))
+      : XP_RULES.lessonPassed(r.passedHintLevel ?? 0, Boolean(r.passedAfterSolution));
+    return { at: r.passedAt!, xp, lessonId: r.lessonId as string | null, moduleId: null as string | null };
+  });
   for (const m of COURSE_MODULES) {
     if (!m.lessons.length || !m.lessons.every((id) => passed.has(id))) continue;
     const at = new Date(Math.max(...m.lessons.map((id) => passed.get(id)!.passedAt!.getTime())));

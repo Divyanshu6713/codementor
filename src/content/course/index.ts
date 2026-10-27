@@ -16,17 +16,21 @@ import { ALGORITHMS_LESSONS } from "./module14-algorithms";
 import { FILES_EXCEPTIONS_LESSONS } from "./module15-files-exceptions";
 import { ADVANCED_CPP_LESSONS } from "./module16-advanced-cpp";
 import { PROJECT_LESSONS } from "./module17-projects";
-import type { CourseLesson, CourseLevel, CourseModule } from "./types";
+import type { CourseLesson, CourseLevel, CourseModule, Exercise, PracticeProblem } from "./types";
+import { PRACTICE_BY_LESSON } from "./practice";
 
-export type { CourseLesson, CourseModule } from "./types";
+export type { CourseLesson, CourseModule, Exercise, PracticeProblem } from "./types";
 
-/** Every written lesson. Each declares its own `moduleId`, which is the single source of membership. */
+/**
+ * Every written lesson. Each declares its own `moduleId`, which is the single source of membership.
+ * Practice problems live in ./practice (keyed by lesson id) and are attached here.
+ */
 const ALL_LESSONS: CourseLesson[] = [
   ...MODULE1_LESSONS, ...MODULE2_LESSONS, ...MODULE3_LESSONS, ...FUNCTIONS_LESSONS, ...ARRAYS_STRINGS_LESSONS,
   ...POINTERS_LESSONS, ...OOP_LESSONS, ...MODERN_CPP_LESSONS, ...STL_LESSONS, ...SEARCH_SORT_LESSONS,
   ...DATA_STRUCTURES_LESSONS, ...ALGORITHMS_LESSONS, ...FILES_EXCEPTIONS_LESSONS, ...ADVANCED_CPP_LESSONS,
   ...PROJECT_LESSONS,
-];
+].map((l) => ({ ...l, practice: l.practice ?? PRACTICE_BY_LESSON[l.id] }));
 
 type ModuleDef = Omit<CourseModule, "lessons" | "number">;
 
@@ -152,23 +156,58 @@ export const COURSE_VERSION = crypto.createHash("sha256").update(COURSE_LESSONS.
 export const exerciseVersion = (l: CourseLesson) =>
   crypto.createHash("sha256").update(l.exercise.prompt + l.exercise.starterCode).digest("hex").slice(0, 10);
 
-/** What the browser may receive: hidden tests and the reference solution are removed. */
+/**
+ * Exercise keys address every judged problem on the path: "<lessonId>" is the lesson exercise
+ * (the beginner problem), "<lessonId>~p2" / "<lessonId>~p3" are its intermediate and challenge
+ * practice problems. Progress, hints and XP are stored per key.
+ */
+export const EXERCISE_KEY = /^[a-z0-9-]{1,60}(~p[23])?$/;
+export const PRACTICE_LEVEL_LABEL = { beginner: "Beginner", intermediate: "Intermediate", challenge: "Challenge" } as const;
+
+export function exerciseKey(lessonId: string, problemId?: string | null) {
+  return problemId ? `${lessonId}~${problemId}` : lessonId;
+}
+
+export function resolveExercise(key: string): { lesson: CourseLesson; exercise: Exercise; problem: PracticeProblem | null } | null {
+  const [lessonId, problemId] = key.split("~");
+  const lesson = byId.get(lessonId);
+  if (!lesson) return null;
+  if (!problemId) return { lesson, exercise: lesson.exercise, problem: null };
+  const problem = lesson.practice?.find((p) => p.id === problemId) ?? null;
+  return problem ? { lesson, exercise: problem, problem } : null;
+}
+
+/** Every practice problem key on the path, in teaching order. */
+export const PRACTICE_KEYS: string[] = COURSE_LESSONS.flatMap((l) => (l.practice ?? []).map((p) => exerciseKey(l.id, p.id)));
+
+function publicExercise(exercise: Exercise, version: string) {
+  return {
+    title: exercise.title,
+    prompt: exercise.prompt,
+    starterCode: exercise.starterCode,
+    hints: exercise.hints,
+    samples: exercise.tests.filter((t) => t.visibility !== "hidden").map((t) => ({ label: t.label, input: t.input, output: t.output })),
+    hiddenCount: exercise.tests.filter((t) => t.visibility === "hidden").length,
+    version,
+  };
+}
+
+/** What the browser may receive: hidden tests and the reference solutions are removed. */
 export function toPublicLesson(l: CourseLesson) {
-  const { exercise, ...rest } = l;
+  const { exercise, practice, ...rest } = l;
   return {
     ...rest,
-    exercise: {
-      title: exercise.title,
-      prompt: exercise.prompt,
-      starterCode: exercise.starterCode,
-      hints: exercise.hints,
-      samples: exercise.tests.filter((t) => t.visibility !== "hidden").map((t) => ({ label: t.label, input: t.input, output: t.output })),
-      hiddenCount: exercise.tests.filter((t) => t.visibility === "hidden").length,
-      version: exerciseVersion(l),
-    },
+    exercise: publicExercise(exercise, exerciseVersion(l)),
+    practice: (practice ?? []).map((p) => ({ id: p.id, level: p.level, title: p.title })),
   };
 }
 export type PublicLesson = ReturnType<typeof toPublicLesson>;
+
+/** A practice problem as the browser may see it. */
+export function toPublicProblem(p: PracticeProblem) {
+  const version = crypto.createHash("sha256").update(p.prompt + p.starterCode).digest("hex").slice(0, 10);
+  return { id: p.id, level: p.level, ...publicExercise(p, version) };
+}
 
 /** A compact roadmap for navigation (no lesson bodies). */
 export function roadmap() {
@@ -195,6 +234,7 @@ export function validateCourse(): string[] {
   for (const l of ALL_LESSONS) {
     if (!moduleIds.has(l.moduleId)) problems.push(`${l.id}: unknown module ${l.moduleId}`);
   }
+  for (const id of Object.keys(PRACTICE_BY_LESSON)) if (!ALL_LESSONS.some((l) => l.id === id)) problems.push(`practice: unknown lesson ${id}`);
   // The concept map links to lessons by id: a typo would turn into a dead "Open lesson" link.
   for (const c of CONCEPTS) {
     for (const id of c.courseLessons) if (!ALL_LESSONS.some((l) => l.id === id)) problems.push(`concept ${c.id}: unknown course lesson ${id}`);
@@ -224,6 +264,16 @@ export function validateCourse(): string[] {
     if (ex.tests.some((t) => t.input.trim()) && !ex.tests.some((t) => t.visibility === "hidden")) problems.push(`${l.id}: exercise needs a hidden test`);
     if (l.mistakes.length < 2) problems.push(`${l.id}: needs at least 2 common mistakes`);
     if (l.quickCheck && !l.quickCheck.options.some((o) => o.id === l.quickCheck!.correct)) problems.push(`${l.id}: quick check answer missing`);
+    const practice = l.practice ?? [];
+    if (practice.length && practice.map((p) => p.id).join(",") !== "p2,p3") problems.push(`${l.id}: practice must be [p2 intermediate, p3 challenge]`);
+    for (const p of practice) {
+      if (p.level !== (p.id === "p2" ? "intermediate" : "challenge")) problems.push(`${l.id}~${p.id}: wrong level ${p.level}`);
+      if (!p.tests.some((t) => t.visibility === "sample")) problems.push(`${l.id}~${p.id}: needs a sample test`);
+      if (!p.tests.some((t) => t.visibility === "hidden")) problems.push(`${l.id}~${p.id}: needs a hidden test`);
+      if (p.hints.length !== 4 || p.hints.some((h) => !h.trim())) problems.push(`${l.id}~${p.id}: needs 4 hints`);
+      if (!p.solution.includes("main")) problems.push(`${l.id}~${p.id}: solution missing`);
+      if (p.tests.length > 20) problems.push(`${l.id}~${p.id}: too many tests (max 20)`);
+    }
   }
   return problems;
 }

@@ -59,7 +59,10 @@ export interface PassReward {
   achievements: { code: string; title: string }[];
 }
 
-/** Records a judged pass (first pass only earns XP) and reports what it unlocked. */
+/**
+ * Records a judged pass (first pass only earns XP) and reports what it unlocked. `lessonId` is an
+ * exercise key: a lesson id, or "<lessonId>~p2"/"~p3" for its practice problems.
+ */
 export async function recordPass(studentId: string, lessonId: string): Promise<PassReward> {
   const db = await getDb();
   return db.transaction(async (tx) => {
@@ -74,7 +77,9 @@ export async function recordPass(studentId: string, lessonId: string): Promise<P
     const titles = await achievementCodes(tx, earned);
     return {
       firstPass: true,
-      xp: XP_RULES.lessonPassed(hintLevel, afterSolution),
+      xp: lessonId.includes("~")
+        ? XP_RULES.practicePassed(lessonId.endsWith("~p3") ? "challenge" : "intermediate", hintLevel, afterSolution)
+        : XP_RULES.lessonPassed(hintLevel, afterSolution),
       moduleCompleted: mod?.complete ? { title: mod.title, xp: XP_RULES.moduleCompleted } : null,
       achievements: titles.map((a) => ({ code: a.code, title: a.title })),
     };
