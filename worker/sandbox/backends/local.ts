@@ -10,7 +10,8 @@
  *     unprivileged user 65534 (`setpriv`), so the program has no network and can't write your files.
  *   - Linux as a normal user: a user + network namespace (`unshare -rn`) when the kernel allows it.
  *   - macOS: a `sandbox-exec` profile that denies network access, process creation (C++) and file
- *     writes outside the program's scratch folder.
+ *     writes outside the program's scratch folder. macOS ignores memory rlimits, so a watchdog
+ *     polls the program's memory and stops it at the limit.
  *
  * It is for running your OWN code on your OWN machine. `production` is false, and the worker
  * refuses to use it in production; public sites use the docker backend (see docs/SANDBOX.md).
@@ -18,7 +19,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFile, execFileSync, spawnSync } from "node:child_process";
 import { EXECUTION_LIMITS, type RunResult } from "../../../src/server/execution/protocol";
 import type { CompileResult, RunLimits, SandboxBackend } from "./types";
 import { runCaptured, type CapturedRun } from "./proc";
@@ -145,6 +146,27 @@ function limitedCommand(program: string[], l: { cpuSeconds: number; memoryMb: nu
   return ["/bin/sh", "-c", script, ...program];
 }
 
+/** Polls a process's resident memory (KB, via `ps`) and calls `onExceed` once it passes the limit. */
+function watchMemory(pid: number, memoryMb: number, onExceed: () => void): () => void {
+  let stopped = false;
+  const check = () => {
+    if (stopped) return;
+    execFile("ps", ["-o", "rss=", "-p", String(pid)], (err, out) => {
+      if (stopped || err) return;
+      const kb = Number(out.trim());
+      if (Number.isFinite(kb) && kb > memoryMb * 1024) {
+        stopped = true;
+        onExceed();
+      }
+    });
+  };
+  const timer = setInterval(check, 50);
+  return () => {
+    stopped = true;
+    clearInterval(timer);
+  };
+}
+
 const SIGNAL_NUMBERS = os.constants.signals as Record<string, number>;
 
 function classify(res: CapturedRun, id: string, limits: RunLimits, describe: (code: number, stderr: string) => string): RunResult {
@@ -179,10 +201,17 @@ export function createLocalBackend(): SandboxBackend {
       ...iso.wrap(a.dir, { allowFork: a.allowFork }),
       ...limitedCommand(a.program, { cpuSeconds: Math.max(1, Math.ceil(a.limits.timeMs / 1000)), memoryMb: a.limits.memoryMb, noFork: !a.allowFork }),
     ];
+    let memoryKilled = false;
     const res = await runCaptured(cmd[0], cmd.slice(1), {
       input: a.input, env: a.env, cwd: a.cwd, maxStdout: a.maxStdout, maxStderr: a.limits.maxStderrBytes,
       guardMs: a.limits.timeMs + 1500,
+      // macOS ignores memory rlimits, so watch the program's resident memory instead.
+      onSpawn: process.platform === "linux" ? undefined : (pid, kill) => watchMemory(pid, a.limits.memoryMb, () => {
+        memoryKilled = true;
+        kill();
+      }),
     });
+    if (memoryKilled) return { id: a.id, stdout: res.stdout, stderr: res.stderr, status: "memory_limit", exitCode: null, detail: "The program used too much memory.", timeMs: res.wallMs };
     return classify(res, a.id, a.limits, a.describe);
   };
 

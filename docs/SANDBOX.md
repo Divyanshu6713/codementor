@@ -19,6 +19,7 @@ Browser ──HTTPS──▶ Next.js web app ──HTTP + bearer token (127.0.0.
    - Header allow-list; no quoted includes, `#embed`, `#define`, trigraphs/digraphs, line splices; banned identifiers for files, processes, sockets, threads, environment, inline asm.
 4. **Isolation backend**
    - `docker` (production): one container per compile and per test; `--network none`, read-only root, `--cap-drop ALL`, `no-new-privileges`, uid 65534, `--pids-limit` (fork bombs), memory = swap limit, 1 CPU, `--ipc none`, `--log-driver none`, nofile/fsize/core ulimits, hard kill on timeout, program mounted read-only for runs. **gVisor (`runsc`) required in production** unless `SANDBOX_ALLOW_RUNC=1`.
+   - `local` (development only, macOS/Linux): `ulimit` CPU/file-size/process limits (+ address space on Linux, a memory watchdog on macOS) and the strongest isolation the machine passes a self-test for — `unshare -n` + `setpriv` to user 65534 (Linux as root), `unshare -rn` (Linux user), or a `sandbox-exec` profile (macOS: no network, no new processes, writes only in its folder). Refuses to start in production.
    - `windows-job` (development only): job object (memory, CPU, wall time, one process), low-integrity token, empty environment. **No network isolation** → refuses to start in production.
 5. **Limits per run** (`src/server/execution/protocol.ts`): 2 s CPU default (max 5 s), 256 MB default (max 512 MB), 64 KB stdout, 8 KB stderr; compile limited to 30 s / 1 GB.
 
@@ -30,5 +31,6 @@ Controlling Docker is root-equivalent. The worker runs as `cmsandbox` (in the `d
 |---|---|---|
 | Policy rejections, compile errors, infinite loop, waiting for input, memory, output flood, runtime errors, malformed input, file writes blocked, child processes blocked | `tests/sandbox.test.ts` (windows-job, real g++) | ✅ pass on the dev machine |
 | Worker over HTTP: auth, validation, 8 simultaneous requests → bounded accept + 503 busy, healthy afterwards | `tests/worker-http.test.ts` | ✅ pass on the dev machine |
-| Docker backend: normal run, infinite loop, memory, fork bomb, **no network**, no writes / no secrets, output flood | `tests/sandbox-docker.test.ts` | ⚠️ **not run** — no Docker on the dev machine. Must pass on the VPS before `EXECUTION_PUBLIC_ENABLED=true` |
+| Same checks on the `local` backend (Linux, root + namespaces) | `tests/sandbox.test.ts`, `tests/sandbox-python.test.ts` | ✅ pass (2026-10-28) |
+| Docker backend: normal run, infinite loop, memory, fork bomb, **no network**, no writes / no secrets, output flood | `tests/sandbox-docker.test.ts` | ✅ 8/8 pass with `gcc:14` on runc (2026-10-28, Linux). Re-run on the VPS with `SANDBOX_DOCKER_RUNTIME=runsc` before `EXECUTION_PUBLIC_ENABLED=true` |
 | gVisor | VPS | ⚠️ not verified |

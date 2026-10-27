@@ -19,6 +19,8 @@ export interface CapturedRun {
 export function runCaptured(cmd: string, args: string[], opts: {
   input: string; env: Record<string, string | undefined>; cwd: string; maxStdout: number; maxStderr: number; guardMs: number;
   onTimeout?: () => void;
+  /** Called once the process has started; the returned function runs when it ends. */
+  onSpawn?: (pid: number, kill: () => void) => (() => void) | void;
 }): Promise<CapturedRun> {
   return new Promise((resolve) => {
     const started = Date.now();
@@ -38,6 +40,7 @@ export function runCaptured(cmd: string, args: string[], opts: {
         /* already gone */
       }
     };
+    const cleanup = child.pid !== undefined ? opts.onSpawn?.(child.pid, () => kill()) : undefined;
     const guard = setTimeout(() => {
       killedByGuard = true;
       opts.onTimeout?.();
@@ -69,6 +72,7 @@ export function runCaptured(cmd: string, args: string[], opts: {
       if (settled) return;
       settled = true;
       clearTimeout(guard);
+      cleanup?.();
       resolve({
         stdout: Buffer.concat(out).toString("utf8"),
         stderr: Buffer.concat(err).toString("utf8"),
