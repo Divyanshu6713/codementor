@@ -81,6 +81,12 @@ interface QuestionBase {
   hints: HintLadder;
   /** Why the answer is right — shown after the item is finished. */
   explanation: string;
+  /**
+   * predict_output questions are checked by running their code with real g++ (tests/question-bank.test.ts)
+   * and comparing with the correct option. Set false only when the answer isn't literal output
+   * (e.g. "It doesn't compile") or the code can't run in the sandbox.
+   */
+  verify?: false;
 }
 
 export interface McqOption {
