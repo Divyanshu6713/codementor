@@ -138,7 +138,8 @@ function limitedCommand(program: string[], l: { cpuSeconds: number; memoryMb: nu
     set("-f", 2048), // file size, in 512-byte (sh) or 1 KB (bash) blocks: ≤ 2 MB either way
     set("-t", l.cpuSeconds),
     process.platform === "linux" ? set("-v", l.memoryMb * 1024 + 64 * 1024) : "",
-    l.noFork ? set("-u", 1) : "",
+    // Max processes for this user: -u in bash/zsh (macOS), -p in dash (Debian/Ubuntu /bin/sh).
+    l.noFork ? "ulimit -u 1 2>/dev/null || ulimit -p 1 2>/dev/null;" : "",
     'exec "$0" "$@"',
   ].join(" ");
   return ["/bin/sh", "-c", script, ...program];

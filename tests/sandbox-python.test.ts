@@ -12,6 +12,7 @@ import type { SandboxBackend } from "../worker/sandbox/backends/types";
 import type { PythonTrace } from "@/server/execution/protocol";
 
 const backend: SandboxBackend | null = createDevBackend();
+const win = process.platform === "win32";
 const canRun = Boolean(backend?.compiler && backend?.python);
 
 const run = (source: string, inputs: string[] = [""], extra: { files?: { name: string; content: string }[]; limits?: { timeMs?: number; memoryMb?: number }; mode?: "run" | "trace" } = {}) =>
@@ -138,11 +139,11 @@ describe.runIf(canRun)(`python sandbox (${backend?.id} backend)`, () => {
   });
 
   it.each([
-    ["reading a system file", "print(open(r'C:\\Windows\\win.ini').read())"],
-    ["writing to the home folder", "import os\nopen(os.path.join(r'C:\\Users', 'cm-test.txt'), 'w').write('x')"],
-    ["listing another folder", "import os\nprint(os.listdir(r'C:\\Users'))"],
+    ["reading a system file", `print(open(r'${win ? "C:\\Windows\\win.ini" : "/etc/hosts"}').read())`],
+    ["writing to the home folder", `import os\nopen(os.path.join(r'${win ? "C:\\Users" : "/tmp"}', 'cm-test.txt'), 'w').write('x')`],
+    ["listing another folder", `import os\nprint(os.listdir(r'${win ? "C:\\Users" : "/etc"}'))`],
     ["os.system", "import os\nos.system('echo hi')"],
-    ["subprocess", "import subprocess\nsubprocess.run(['cmd', '/c', 'echo hi'])"],
+    ["subprocess", `import subprocess\nsubprocess.run(${win ? "['cmd', '/c', 'echo hi']" : "['echo', 'hi']"})`],
     ["a network connection", "import socket\nsocket.create_connection(('example.com', 80), timeout=2)"],
     ["urllib", "import urllib.request\nurllib.request.urlopen('http://example.com', timeout=2)"],
     ["a local service", "import socket\ns = socket.socket()\ns.connect(('127.0.0.1', 3410))"],
