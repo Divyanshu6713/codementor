@@ -5,6 +5,7 @@
  * Each test gets a fresh browser context, i.e. a brand-new visitor.
  */
 import { expect, test, type Page } from "@playwright/test";
+import { COURSE_LESSONS } from "../src/content/course";
 
 const CORRECT = `#include <iostream>
 using namespace std;
@@ -74,7 +75,7 @@ test("journey: start in one click → lesson → run → check → XP → reload
   // Dashboard: XP and the next lesson.
   await page.goto("/app");
   await expect(page.getByRole("link", { name: /25 XP/ }).first()).toBeVisible();
-  await expect(page.getByText(/Lesson path · 1\/22 done/)).toBeVisible();
+  await expect(page.getByText(`Lesson path · 1/${COURSE_LESSONS.length} done`)).toBeVisible();
   await page.getByRole("link", { name: /Continue with “How programs work”/ }).click();
   await expect(page.getByRole("heading", { level: 1, name: "How programs work" })).toBeVisible();
 });

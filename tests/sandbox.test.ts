@@ -45,6 +45,18 @@ describe("source policy", () => {
     const src = prog('    // we never call system() here\n    cout << "fopen and system are just words";');
     expect(checkSource(src)).toEqual({ ok: true });
   });
+
+  it("allows <memory> for smart pointers (taught in the course), still not file streams", () => {
+    expect(checkSource(prog("    auto p = make_unique<int>(5);\n    cout << *p;", ["memory"]))).toEqual({ ok: true });
+    expect(checkSource(prog("    ofstream f;", ["memory"])).ok).toBe(false);
+  });
+
+  it("allows exceptions, optional, string_view and assert, but still refuses <fstream> and <thread>", () => {
+    expect(checkSource(prog("    try { throw runtime_error(\"x\"); } catch (const exception& e) { cout << e.what(); }", ["iostream", "stdexcept"])).ok).toBe(true);
+    expect(checkSource(prog("    optional<int> o; string_view v = \"hi\"; assert(true);", ["optional", "string_view", "cassert"])).ok).toBe(true);
+    expect(checkSource("#include <fstream>\nint main(){}").ok).toBe(false);
+    expect(checkSource("#include <thread>\nint main(){}").ok).toBe(false);
+  });
 });
 
 describe.runIf(canRun)("sandbox execution (windows-job backend)", () => {

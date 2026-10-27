@@ -11,6 +11,10 @@ export const ALLOWED_HEADERS = new Set([
   "iostream", "iomanip", "string", "vector", "array", "algorithm", "numeric", "utility", "cmath", "climits",
   "cfloat", "cstdlib", "cstdio", "cstring", "cctype", "cstdint", "map", "set", "unordered_map", "unordered_set",
   "stack", "queue", "deque", "list", "sstream", "functional", "iterator", "limits", "tuple", "bitset",
+  // Smart pointers (unique_ptr, make_unique) are taught in the Pointers and OOP modules; <memory> has no OS access.
+  "memory",
+  // Exceptions, optional/string_view (C++17) and assert: language/library only, no OS access.
+  "stdexcept", "exception", "optional", "string_view", "cassert",
 ]);
 
 /** Identifiers that reach the OS, files, processes or the environment. */

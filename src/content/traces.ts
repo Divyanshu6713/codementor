@@ -6,7 +6,7 @@
  * and checks the final output matches the trace, so the visualizer can't drift from C++ semantics.
  */
 
-export type TracePhase = "declare" | "init" | "check" | "body" | "update" | "after";
+export type TracePhase = "declare" | "init" | "check" | "body" | "update" | "after" | "call" | "return";
 
 export interface TraceStep {
   /** 1-based line in `code` to highlight. */
@@ -17,6 +17,8 @@ export interface TraceStep {
   output: string;
   note: string;
   condition?: { text: string; value: boolean };
+  /** Pending function calls, outermost first (recursion traces only). */
+  stack?: string[];
 }
 
 export interface TraceDef {
@@ -116,7 +118,46 @@ function nestedTrace(): TraceDef {
   return { id: "nested-2x3", title: "A loop inside a loop", code, steps };
 }
 
-export const TRACES: TraceDef[] = [sumTrace(), countDownTrace(), nestedTrace()];
+function factorialTrace(): TraceDef {
+  const code = `int factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
+
+int main() {
+    cout << factorial(3);
+}`;
+  const steps: TraceStep[] = [];
+  const stack: string[] = ["main()"];
+  const snap = () => [...stack];
+  steps.push({ line: 7, phase: "call", vars: {}, output: "", stack: snap(), note: "main calls factorial(3) and waits for the answer." });
+  const fact = (n: number): number => {
+    stack.push(`factorial(${n})`);
+    steps.push({ line: 1, phase: "call", vars: { n }, output: "", stack: snap(), note: `A new call starts with its own n = ${n}.` });
+    const base = n <= 1;
+    steps.push({
+      line: 2, phase: "check", vars: { n }, output: "", stack: snap(), condition: { text: `${n} <= 1`, value: base },
+      note: base ? "Base case reached: no more calls." : `Not the base case, so factorial(${n}) needs factorial(${n - 1}) first.`,
+    });
+    let result: number;
+    if (base) {
+      result = 1;
+    } else {
+      steps.push({ line: 3, phase: "call", vars: { n }, output: "", stack: snap(), note: `factorial(${n}) pauses at "n * factorial(${n - 1})" and calls factorial(${n - 1}).` });
+      const sub = fact(n - 1);
+      result = n * sub;
+      steps.push({ line: 3, phase: "body", vars: { n }, output: "", stack: snap(), note: `Back in factorial(${n}): ${n} * ${sub} = ${result}.` });
+    }
+    stack.pop();
+    steps.push({ line: base ? 2 : 3, phase: "return", vars: { n }, output: "", stack: snap(), note: `factorial(${n}) returns ${result} and is removed from the stack.` });
+    return result;
+  };
+  const answer = fact(3);
+  steps.push({ line: 7, phase: "after", vars: {}, output: String(answer), stack: snap(), note: `main receives ${answer} and prints it.` });
+  return { id: "factorial-3", title: "factorial(3) on the call stack", code, steps };
+}
+
+export const TRACES: TraceDef[] = [sumTrace(), countDownTrace(), nestedTrace(), factorialTrace()];
 
 export function getTrace(id: string): TraceDef | undefined {
   return TRACES.find((t) => t.id === id);

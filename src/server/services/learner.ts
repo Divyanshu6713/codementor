@@ -10,6 +10,7 @@ import { decideNext, type ConceptInfo, type Decision, type LearnerSnapshot, type
 import type { StudentContext } from "@/server/ai/types";
 import { loadSkillStates } from "./student-model";
 import { getPool } from "./questions";
+import { getCourseLesson } from "@/content/course";
 
 export async function conceptInfos(db: Tx): Promise<ConceptInfo[]> {
   const pool = await getPool(db);
@@ -19,6 +20,7 @@ export async function conceptInfos(db: Tx): Promise<ConceptInfo[]> {
     skills: c.skills.map((s) => ({ id: s.id, title: s.title })),
     coreLessonId: lessonsForConcept(c.id, "core")[0]?.id ?? null,
     remediationLessonId: lessonsForConcept(c.id, "remediation")[0]?.id ?? null,
+    courseLessonId: c.courseLessons[0] ?? null,
     practiceable: practiceable.has(c.id),
   }));
 }
@@ -92,6 +94,7 @@ export async function skillMap(db: Tx, studentId: string, now = new Date()) {
       return {
         id: c.id, title: c.title, summary: c.summary, status: c.status,
         hasLesson: lessonsForConcept(c.id).length > 0,
+        courseLessons: c.courseLessons.map((id) => ({ id, title: getCourseLesson(id)?.title ?? id })),
         mastery: summary.mastery, confidence: confidenceLabel(summary.confidence), coverage: summary.coverage, mastered: summary.mastered,
         prerequisites: c.prerequisites.map((p) => ({ id: p.id, title: CONCEPTS.find((x) => x.id === p.id)?.title ?? p.id, strength: p.strength })),
         activeMisconceptions: mcs.filter((m) => misconceptionByCode.get(m.code)?.conceptId === c.id).map((m) => ({ code: m.code, title: misconceptionByCode.get(m.code)!.title, occurrences: m.occurrences })),

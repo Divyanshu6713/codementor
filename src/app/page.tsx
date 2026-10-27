@@ -192,17 +192,17 @@ export default async function Landing() {
               <div className="relative flex items-start justify-between gap-4">
                 <div>
                   <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-brand">Path · C++</p>
-                  <h3 className="mt-3 text-4xl font-bold sm:text-5xl">C++ Foundations</h3>
+                  <h3 className="mt-3 text-4xl font-bold sm:text-5xl">C++ Mastery</h3>
                 </div>
                 <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand font-display text-xl font-bold text-on-brand">C++</span>
               </div>
-              <p className="relative mt-4 max-w-md opacity-80">From “what is a program?” to loops you can reason about — for board exams, semester labs and the road to DSA.</p>
+              <p className="relative mt-4 max-w-md opacity-80">From “what is a program?” to pointers, OOP, the STL, data structures, algorithms and a capstone project — for board exams, semester labs, DSA and placements.</p>
               <ol className="relative mt-6 space-y-2">
                 {cppLive.map((m) => (
                   <li key={m.id} className="flex items-baseline gap-3 border-t border-[var(--panel-line)] pt-2">
                     <span className="font-mono text-xs text-brand">M{String(m.number).padStart(2, "0")}</span>
                     <span className="font-semibold">{m.title}</span>
-                    <span className="ml-auto shrink-0 font-mono text-xs opacity-70">{m.lessons.length} lessons</span>
+                    <span className="ml-auto shrink-0 font-mono text-xs opacity-70">{m.lessons.length} lesson{m.lessons.length === 1 ? "" : "s"}</span>
                   </li>
                 ))}
                 {cppPlanned.length > 0 && (

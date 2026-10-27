@@ -65,6 +65,16 @@ int main() {
         { line: 8, text: "After the loop finishes, the program continues normally." },
       ],
     },
+    quickCheck: {
+      prompt: "You need to print the numbers 1 to 1000. What is the main advantage of a loop over 1000 cout lines?",
+      options: [
+        { id: "a", text: "The program runs much faster", feedback: "Speed is about the same — the computer still prints 1000 numbers." },
+        { id: "b", text: "A few lines handle any count, and a change is made in one place", feedback: "Right: change 1000 to n, or the format of each line, by editing one spot." },
+        { id: "c", text: "It uses no memory", feedback: "Loops use memory like any other code; that isn't the point." },
+      ],
+      correct: "b",
+      explanation: "Loops express repetition once. The count can even come from input, which 1000 copied lines can never do.",
+    },
     exercise: {
       title: "Count to ten",
       prompt: `The program prints 1 to 3. Change it so it prints the numbers **1 to 10**, each on its own line. (No input.)`,
@@ -266,6 +276,21 @@ int main() {
         { line: 8, text: "Checked before every iteration: still bigger than 1?" },
         { line: 9, text: "This line moves the loop towards stopping. Without it, the loop would never end." },
       ],
+    },
+    quickCheck: {
+      prompt: "What is printed?",
+      code: r`int n = 1;
+while (n < 20) {
+    n *= 3;
+}
+cout << n;`,
+      options: [
+        { id: "a", text: "9", feedback: "9 < 20 is still true, so the body runs once more." },
+        { id: "b", text: "27", feedback: "Right: 1 → 3 → 9 → 27, and 27 < 20 is false." },
+        { id: "c", text: "20", feedback: "n is multiplied by 3 each time; it never equals exactly 20." },
+      ],
+      correct: "b",
+      explanation: "The condition is checked before every repetition. The loop stops at the first value that fails it — which can overshoot the limit.",
     },
     exercise: {
       title: "Sum of digits",
@@ -517,6 +542,22 @@ int main() {
         { line: 9, text: "End of a row: new line." },
       ],
     },
+    quickCheck: {
+      prompt: "What is the value of count afterwards?",
+      code: r`int count = 0;
+for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 4; j++) {
+        count++;
+    }
+}`,
+      options: [
+        { id: "a", text: "7", feedback: "That's 3 + 4. The inner loop runs completely for every outer step." },
+        { id: "b", text: "12", feedback: "Right: 3 outer steps × 4 inner steps each." },
+        { id: "c", text: "4", feedback: "The inner loop starts over for each of the 3 outer steps." },
+      ],
+      correct: "b",
+      explanation: "For every iteration of the outer loop, the inner loop runs all of its iterations: 3 × 4 = 12.",
+    },
     exercise: exerciseFromQuestion("fl-code-square", "Square of stars"),
     explainAgain: `Think of a clock: the minute hand (inner loop) goes all the way round, 0 to 59, for **each** step of the hour hand (outer loop). The hour hand moves once; the minute hand does a full circle. Nested loops work exactly like that.`,
     summary: [
@@ -593,6 +634,21 @@ int main() {
         { line: 7, text: "At i = 11 the whole loop ends." },
         { line: 10, text: "For 3, 6, 9 the print is skipped." },
       ],
+    },
+    quickCheck: {
+      prompt: "What does this print?",
+      code: r`for (int i = 1; i <= 6; i++) {
+    if (i == 3) continue;
+    if (i == 5) break;
+    cout << i;
+}`,
+      options: [
+        { id: "a", text: "12456", feedback: "break at i == 5 ends the whole loop, so 5 and 6 never print." },
+        { id: "b", text: "124", feedback: "Right: 3 is skipped by continue, and the loop stops completely at 5." },
+        { id: "c", text: "12", feedback: "continue only skips the rest of that one iteration; the loop goes on with 4." },
+      ],
+      correct: "b",
+      explanation: "continue jumps to the next iteration; break leaves the loop entirely.",
     },
     exercise: {
       title: "First multiple of 7",
@@ -727,6 +783,22 @@ int main() {
       notes: [
         { line: 8, text: "The inner limit is `row`, so row 1 prints one number, row 4 prints four." },
       ],
+    },
+    quickCheck: {
+      prompt: "What is printed?",
+      code: r`int n = 1234, sum = 0;
+while (n > 0) {
+    sum += n % 10;
+    n /= 10;
+}
+cout << sum;`,
+      options: [
+        { id: "a", text: "1234", feedback: "sum only collects single digits." },
+        { id: "b", text: "10", feedback: "Right: % 10 takes the last digit and / 10 removes it: 4 + 3 + 2 + 1." },
+        { id: "c", text: "4", feedback: "The loop repeats until n reaches 0, adding every digit." },
+      ],
+      correct: "b",
+      explanation: "n % 10 is the last digit and n /= 10 drops it — the standard pattern for walking through the digits of a number.",
     },
     exercise: {
       title: "Right triangle of stars",

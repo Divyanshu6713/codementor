@@ -1,0 +1,329 @@
+# C++ curriculum manifest
+
+> Generated from `src/content/course` by `npm run content:manifest`. Do not edit by hand —
+> `tests/course-content.test.ts` fails when this file is out of date.
+
+**68 published lessons** in 17 of 17 modules · 293 exercise tests · 59 planned topics not yet written.
+
+Every published lesson has: goals, concept sections, common mistakes, a worked example whose output is
+checked against real g++, a quick check, a coding exercise with sample and hidden tests, four
+progressive hints, a reference solution (server-only), an explain-again text and a summary.
+Baseline standard: C++17 (the sandbox compiles with `-std=c++17`).
+
+Status key: **published** = written and compiler-verified · **planned** = listed in the roadmap, no lesson page yet.
+
+## Overview
+
+| # | Module | Level | Published | Planned |
+|---|---|---|---|---|
+| 1 | Introduction to C++ (`foundations`) | Beginner | 4 | 3 |
+| 2 | Variables, data types and input/output (`variables-io`) | Beginner | 3 | 6 |
+| 3 | Operators and expressions (`operators`) | Beginner | 1 | 4 |
+| 4 | Conditional statements (`logic`) | Beginner | 7 | 2 |
+| 5 | Loops (`loops`) | Beginner | 7 | 2 |
+| 6 | Functions and recursion (`functions`) | Beginner | 6 | 0 |
+| 7 | Arrays and strings (`arrays-strings`) | Beginner | 7 | 2 |
+| 8 | Pointers, references and dynamic memory (`pointers`) | Intermediate | 3 | 3 |
+| 9 | Object-oriented programming (`oop`) | Intermediate | 3 | 5 |
+| 10 | Modern C++ and advanced functions (`modern-cpp`) | Intermediate | 3 | 4 |
+| 11 | The Standard Template Library (`stl`) | Intermediate | 3 | 5 |
+| 12 | Searching and sorting (`searching-sorting`) | Intermediate | 3 | 4 |
+| 13 | Data structures (`data-structures`) | Advanced | 4 | 6 |
+| 14 | Algorithms and problem solving (`algorithms`) | Advanced | 5 | 3 |
+| 15 | Files, exceptions and debugging (`files-exceptions`) | Advanced | 3 | 2 |
+| 16 | Advanced C++ and engineering practice (`advanced-cpp`) | Advanced | 3 | 4 |
+| 17 | Projects and capstone (`projects`) | Advanced | 3 | 4 |
+
+## 1. Introduction to C++
+
+`foundations` · Beginner — What programming is, how a program is built and run, the structure of a C++ program and your first output.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `what-is-programming` | What is programming? | 10 | C++17 | — | 1/0 | published |
+| `how-programs-work` | How programs work | 12 | C++17 | — | 1/0 | published |
+| `program-structure` | Structure of a C++ program | 12 | C++17 | — | 1/0 | published |
+| `hello-world` | Hello World and printing | 12 | C++17 | — | 1/0 | published |
+
+Still to write in this module:
+
+- Source files, compiling and linking — planned
+- Reading your first compiler errors — planned
+- Writing portable C++ — planned
+
+## 2. Variables, data types and input/output
+
+`variables-io` · Beginner — Storing values, choosing types, reading input with cin and getline, and printing with cout.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `input-output` | Input and output | 15 | C++17 | — | 2/3 | published |
+| `variables` | Variables | 15 | C++17 | — | 1/3 | published |
+| `data-types` | Data types | 15 | C++17 | — | 2/3 | published |
+
+Still to write in this module:
+
+- Constants and const — planned
+- getline and whole-line input — planned
+- Escape sequences and sizeof — planned
+- Integer overflow and signed/unsigned — planned
+- Floating-point precision — planned
+- Validating input — planned
+
+## 3. Operators and expressions
+
+`operators` · Beginner — Arithmetic, assignment, increment, precedence, integer division, modulo and type conversion.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `operators` | Operators | 15 | C++17 | — | 2/3 | published |
+
+Still to write in this module:
+
+- Precedence and associativity — planned
+- Integer division and modulo in depth — planned
+- Type promotion and casting — planned
+- Predict-the-output challenges — planned
+
+## 4. Conditional statements
+
+`logic` · Beginner — Comparisons, and/or/not, if, else, else-if ladders, nesting, switch and real eligibility rules.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `comparison-operators` | Comparison operators | 12 | C++17 | — | 1/3 | published |
+| `logical-operators` | Logical operators | 12 | C++17 | — | 2/4 | published |
+| `if-statements` | if statements | 12 | C++17 | — | 2/3 | published |
+| `if-else` | if-else | 12 | C++17 | — | 2/3 | published |
+| `else-if` | else-if ladders | 15 | C++17 | — | 2/6 | published |
+| `nested-conditions` | Nested conditions | 15 | C++17 | — | 2/4 | published |
+| `switch` | switch statements | 12 | C++17 | — | 2/5 | published |
+
+Still to write in this module:
+
+- The ternary operator — planned
+- Eligibility and grading problems — planned
+
+## 5. Loops
+
+`loops` · Beginner — for, while and do-while; nested loops, break/continue, tracing, off-by-one errors and patterns.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `why-loops` | Why loops are needed | 10 | C++17 | — | 1/0 | published |
+| `for-loops` | for loops | 20 | C++17 | — | 2/3 | published |
+| `while-loops` | while loops | 15 | C++17 | — | 2/3 | published |
+| `do-while` | do-while loops | 12 | C++17 | — | 2/3 | published |
+| `nested-loops` | Nested loops | 18 | C++17 | — | 2/2 | published |
+| `break-continue` | break and continue | 12 | C++17 | — | 2/3 | published |
+| `loop-patterns` | Number and pattern problems | 18 | C++17 | — | 1/3 | published |
+
+Still to write in this module:
+
+- Infinite loops and how to spot them — planned
+- Debug-the-loop missions — planned
+
+## 6. Functions and recursion
+
+`functions` · Beginner — Naming and reusing work, parameters and return values, references, scope, overloading and recursion.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `functions-intro` | Functions: name a job, reuse it | 15 | C++17 | function, call, void, declaration, definition | 2/2 | published |
+| `parameters-return` | Parameters and return values | 20 | C++17 | parameter, argument, return, bool function | 1/3 | published |
+| `pass-by-reference` | Pass by value and by reference | 20 | C++17 | pass by value, pass by reference, reference parameter, const reference | 2/3 | published |
+| `scope-lifetime` | Scope and lifetime | 15 | C++17 | scope, local variable, shadowing, global variable, static local | 1/2 | published |
+| `overloading-defaults` | Overloading and default arguments | 15 | C++17 | function overloading, default arguments, ambiguity | 1/3 | published |
+| `recursion` | Recursion and base cases | 25 | C++17 | recursion, base case, call stack, recursive case | 2/4 | published |
+
+## 7. Arrays and strings
+
+`arrays-strings` · Beginner — Many values under one name, traversal, searching, 2D grids, std::string and a first look at std::vector.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `arrays-intro` | Arrays: many values, one name | 15 | C++17 | array, index, zero-based, out of bounds | 2/2 | published |
+| `array-traversal` | Traversal: sum, max and counting | 20 | C++17 | traversal, accumulator, running maximum, average | 2/3 | published |
+| `array-search` | Searching and frequency counting | 20 | C++17 | linear search, sentinel -1, frequency array, counting | 2/2 | published |
+| `arrays-functions` | Arrays in functions, and std::vector | 20 | C++17 | array parameter, size parameter, std::vector, push_back, size() | 2/3 | published |
+| `two-d-arrays` | 2D arrays: grids and tables | 20 | C++17 | 2D array, row, column, nested loops, matrix | 1/3 | published |
+| `strings-basics` | Strings: working with text | 20 | C++17 | std::string, getline, length, char, concatenation | 2/2 | published |
+| `string-problems` | String problems: palindromes and C-strings | 20 | C++17 | two pointers, palindrome, isalpha, C-style string, null terminator | 2/4 | published |
+
+Still to write in this module:
+
+- C-style strings and character arrays in depth — planned
+- Prefix sums — planned
+
+## 8. Pointers, references and dynamic memory
+
+`pointers` · Intermediate — Addresses, pointers, dereferencing, pointer arithmetic, new/delete, leaks, dangling pointers and smart pointers.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `pointers-basics` | Addresses and pointers | 20 | C++17 | address, pointer, dereference, nullptr, address-of operator | 1/3 | published |
+| `pointers-arrays` | Pointers, arrays and functions | 20 | C++17 | pointer arithmetic, array decay, begin/end pointers, const pointer | 2/3 | published |
+| `dynamic-memory` | Dynamic memory: new, delete and smart pointers | 25 | C++17 | stack, heap, new, delete, memory leak, dangling pointer, unique_ptr | 2/2 | published |
+
+Still to write in this module:
+
+- shared_ptr and weak_ptr — planned
+- Pointers to pointers and arrays of pointers — planned
+- References in depth — planned
+
+## 9. Object-oriented programming
+
+`oop` · Intermediate — Classes and objects, encapsulation, constructors and destructors, inheritance and polymorphism.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `classes-objects` | Classes and objects | 25 | C++17 | class, object, member function, public, private, encapsulation, struct | 1/3 | published |
+| `constructors-destructors` | Constructors and destructors | 25 | C++17 | constructor, initializer list, default constructor, destructor, object lifetime | 2/3 | published |
+| `inheritance-polymorphism` | Inheritance and polymorphism | 30 | C++17 | inheritance, base class, derived class, virtual, override, abstract class, polymorphism | 1/3 | published |
+
+Still to write in this module:
+
+- Static members — planned
+- Composition and aggregation — planned
+- Operator overloading — planned
+- Friend functions — planned
+- Mini project: a class from scratch — planned
+
+## 10. Modern C++ and advanced functions
+
+`modern-cpp` · Intermediate — auto, range-based for, lambdas, templates, namespaces, const correctness and newer standard features.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `auto-lambdas` | auto, range-for and lambdas | 25 | C++17 | auto, range-based for, lambda, capture, comparator, count_if | 1/3 | published |
+| `templates` | Function and class templates | 25 | C++17 | template, typename, type deduction, class template, generic programming | 1/2 | published |
+| `modern-features` | Modern C++17 tools: optional, string_view, enum class | 25 | C++17 | std::optional, std::string_view, enum class, structured bindings, constexpr, C++20 | 1/3 | published |
+
+Still to write in this module:
+
+- Namespaces and headers — planned
+- const correctness in depth — planned
+- Function pointers and std::function — planned
+- Variadic templates — planned
+
+## 11. The Standard Template Library
+
+`stl` · Intermediate — vector, pair, string, stack, queue, deque, priority_queue, set, map, unordered containers, iterators and algorithms.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `vector-algorithms` | vector, iterators and algorithms | 25 | C++17 | vector, iterator, begin/end, sort, find, count, accumulate, unique | 2/3 | published |
+| `map-set` | set and map | 25 | C++17 | set, map, key-value, insert, count, find, unordered_map, ordered iteration | 1/3 | published |
+| `stack-queue` | stack, queue and priority_queue | 25 | C++17 | stack, LIFO, queue, FIFO, deque, priority_queue | 1/3 | published |
+
+Still to write in this module:
+
+- pair and tuple — planned
+- multiset and multimap — planned
+- unordered_map and unordered_set in depth — planned
+- Custom comparators — planned
+- Choosing the right container — planned
+
+## 12. Searching and sorting
+
+`searching-sorting` · Intermediate — Time and space complexity, binary search, bubble, selection, insertion, merge and quick sort, and std::sort.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `complexity` | Time and space complexity | 25 | C++17 | Big-O, time complexity, space complexity, O(1), O(log n), O(n), O(n log n), O(n^2), constraints | 2/5 | published |
+| `binary-search` | Binary search | 25 | C++17 | binary search, sorted array, lower_bound, O(log n), invariant | 1/4 | published |
+| `simple-sorts` | Sorting: bubble, selection, insertion and std::sort | 30 | C++17 | bubble sort, selection sort, insertion sort, stability, std::sort, comparator | 1/4 | published |
+
+Still to write in this module:
+
+- Merge sort — planned
+- Quicksort — planned
+- Counting sort — planned
+- Comparing algorithms by constraints — planned
+
+## 13. Data structures
+
+`data-structures` · Advanced — Linked lists, stacks, queues, hash tables, trees, BSTs, heaps, tries, graphs and union-find.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `linked-lists` | Linked lists | 30 | C++17 | linked list, node, head, traversal, insertion, deletion, std::list | 1/3 | published |
+| `trees-bst` | Trees and binary search trees | 30 | C++17 | tree, binary tree, binary search tree, root, leaf, height, inorder traversal | 2/3 | published |
+| `hashing-heaps` | Hash tables and heaps | 30 | C++17 | hash table, hash function, bucket, collision, load factor, heap, priority queue, top-k | 1/3 | published |
+| `graphs-bfs-dfs` | Graphs: BFS and DFS | 35 | C++17 | graph, vertex, edge, adjacency list, BFS, DFS, shortest path, connected components | 1/3 | published |
+
+Still to write in this module:
+
+- How vector grows (dynamic arrays) — planned
+- Stacks and queues from scratch — planned
+- Tries — planned
+- Topological sort — planned
+- Disjoint-set union — planned
+- Shortest paths: Dijkstra — planned
+
+## 14. Algorithms and problem solving
+
+`algorithms` · Advanced — Two pointers, sliding window, prefix sums, recursion, backtracking, greedy, divide and conquer, DP, bits and number theory.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `two-pointers-window` | Prefix sums, two pointers and sliding windows | 30 | C++17 | prefix sums, two pointers, sliding window, brute force to optimisation | 2/3 | published |
+| `greedy` | Greedy algorithms | 25 | C++17 | greedy, activity selection, exchange argument, counterexample | 1/4 | published |
+| `backtracking` | Backtracking | 30 | C++17 | backtracking, recursion, search tree, permutations, combinations, pruning | 1/3 | published |
+| `dynamic-programming` | Dynamic programming | 35 | C++17 | dynamic programming, overlapping subproblems, memoization, tabulation, state, coin change | 2/4 | published |
+| `bits-number-theory` | Bit manipulation and number theory | 30 | C++17 | binary, bitwise operators, power of two, gcd, lcm, modular arithmetic, sieve of Eratosthenes | 2/3 | published |
+
+Still to write in this module:
+
+- Divide and conquer — planned
+- More DP: knapsack and longest increasing subsequence — planned
+- Choosing an approach from constraints — planned
+
+## 15. Files, exceptions and debugging
+
+`files-exceptions` · Advanced — File streams, exceptions, defensive programming, reading compiler warnings, debugging and basic testing.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `streams-parsing` | Streams: files, string streams and parsing | 30 | C++17 | stream, ifstream, ofstream, stringstream, getline, delimiter, stream errors, istream& | 1/2 | published |
+| `exceptions` | Exceptions: throw, try and catch | 30 | C++17 | exception, throw, try, catch, std::exception, invalid_argument, runtime_error, out_of_range, stack unwinding | 1/3 | published |
+| `debugging-testing` | Debugging and testing your code | 25 | C++17 | compiler errors, warnings, assert, debug output, unit test, edge cases, minimal reproduction | 1/3 | published |
+
+Still to write in this module:
+
+- std::filesystem — planned
+- Debugging with breakpoints in an IDE — planned
+
+## 16. Advanced C++ and engineering practice
+
+`advanced-cpp` · Advanced — RAII, ownership, move semantics, the rule of zero/three/five, undefined behaviour, concurrency basics and tooling.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `raii-ownership` | RAII and ownership | 30 | C++17 | RAII, ownership, unique_ptr, shared_ptr, use_count, deleted copy, scope guard | 1/2 | published |
+| `move-semantics` | Copy, move and the rule of five | 35 | C++17 | copy constructor, copy assignment, move constructor, rvalue reference, std::move, rule of three, rule of five, rule of zero | 1/2 | published |
+| `undefined-behaviour` | Undefined behaviour and writing safe code | 30 | C++17 | undefined behaviour, signed overflow, out of bounds, uninitialised variable, dangling reference, sanitizers, numeric_limits | 1/3 | published |
+
+Still to write in this module:
+
+- Threads, mutexes and race conditions — planned
+- Separate compilation and header guards — planned
+- CMake fundamentals — planned
+- A basic Git workflow — planned
+
+## 17. Projects and capstone
+
+`projects` · Advanced — Guided projects that combine everything: from a calculator to a full command-line application.
+
+| Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Status |
+|---|---|---|---|---|---|---|
+| `project-grade-manager` | Project: student grade manager | 45 | C++17 | project, command loop, map, sorting, functions, input validation | 1/3 | published |
+| `project-bank-system` | Project: bank account system | 50 | C++17 | project, classes, map, exceptions, invariants, atomic operation | 1/3 | published |
+| `capstone-library` | Capstone: library management system | 60 | C++17 | capstone, design, classes, map, set, string parsing, case-insensitive search, business rules | 1/3 | published |
+
+Still to write in this module:
+
+- Calculator — planned
+- Number guessing game — planned
+- Contact manager — planned
+- File-based expense tracker — planned

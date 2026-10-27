@@ -187,6 +187,18 @@ int main() {
         { line: 5, text: "Text inside quotes is printed exactly as written. `2 + 3` (without quotes) is **calculated**, so it prints 5." },
       ],
     },
+    quickCheck: {
+      prompt: "Your program has a missing semicolon on line 5. When is that mistake reported?",
+      code: r`cout << "Hello" << endl
+return 0;`,
+      options: [
+        { id: "a", text: "When the program runs and reaches line 5", feedback: "A program with a syntax error never runs — it can't be compiled first." },
+        { id: "b", text: "When it is compiled, before anything runs", feedback: "Right: the compiler checks the whole file first and stops with an error." },
+        { id: "c", text: "Never — the compiler adds the semicolon", feedback: "The compiler reports mistakes; it doesn't guess what you meant." },
+      ],
+      correct: "b",
+      explanation: "Source code is compiled into a program before it runs. Syntax errors stop compilation, so nothing runs at all.",
+    },
     exercise: {
       title: "Fix the compile error",
       prompt: `This program should print:
@@ -421,6 +433,19 @@ int main() {
         { line: 7, text: "The number 4 isn't in quotes, so it's printed as a number." },
       ],
     },
+    quickCheck: {
+      prompt: "What appears on the screen?",
+      code: r`cout << "A";
+cout << "B" << endl;
+cout << "C";`,
+      options: [
+        { id: "a", text: "A, B and C on three separate lines", feedback: "Only the second statement ends the line." },
+        { id: "b", text: "AB on one line, then C on the next", feedback: "Right: nothing separates A and B, and endl moves C to a new line." },
+        { id: "c", text: "ABC on one line", feedback: "The endl after B starts a new line before C." },
+      ],
+      correct: "b",
+      explanation: "cout prints exactly what you give it. A new line appears only where you put endl (or \\n).",
+    },
     exercise: {
       title: "Print a name card",
       prompt: `Print this card exactly — three lines, with the spaces after each colon:
@@ -470,7 +495,7 @@ int main() {
 
   {
     id: "input-output",
-    moduleId: "foundations",
+    moduleId: "variables-io",
     title: "Input and output",
     minutes: 15,
     goals: [
@@ -541,6 +566,19 @@ int main() {
         { line: 8, text: "`n * 2` is calculated using whatever number was read." },
       ],
     },
+    quickCheck: {
+      prompt: "The input is `3 4`. What is printed?",
+      code: r`int a, b;
+cin >> a >> b;
+cout << a + b;`,
+      options: [
+        { id: "a", text: "34", feedback: "a and b are ints, so + adds them as numbers." },
+        { id: "b", text: "7", feedback: "Right: cin reads 3 into a and 4 into b, and a + b is 7." },
+        { id: "c", text: "a + b", feedback: "Without quotes, a + b is an expression that gets calculated." },
+      ],
+      correct: "b",
+      explanation: "cin >> a >> b reads two whitespace-separated numbers. a + b with ints is arithmetic, not joining text.",
+    },
     exercise: {
       title: "Add two numbers",
       prompt: `Read two whole numbers and print their **sum** — just the number, nothing else.
@@ -593,7 +631,7 @@ Input in CodeMentor comes from the **Input** box below the editor. The checker t
 
   {
     id: "variables",
-    moduleId: "foundations",
+    moduleId: "variables-io",
     title: "Variables",
     minutes: 15,
     goals: [
@@ -744,7 +782,7 @@ Variables work the same way: assigning to a variable throws away what was in it,
 
   {
     id: "data-types",
-    moduleId: "foundations",
+    moduleId: "variables-io",
     title: "Data types",
     minutes: 15,
     goals: [
@@ -881,7 +919,7 @@ Pick the container that matches what you want to keep.`,
 
   {
     id: "operators",
-    moduleId: "foundations",
+    moduleId: "operators",
     title: "Operators",
     minutes: 15,
     goals: [

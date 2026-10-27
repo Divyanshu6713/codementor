@@ -1,6 +1,6 @@
 import Link from "next/link";
 import clsx from "clsx";
-import { ArrowRight, CheckCircle2, Circle, Lock, PartyPopper } from "lucide-react";
+import { ArrowRight, CheckCircle2, Circle, PartyPopper, PenLine } from "lucide-react";
 import { Badge, ButtonLink } from "@/components/ui";
 import { HUE_CLASSES, type Hue } from "@/lib/palette";
 
@@ -36,7 +36,7 @@ export function LessonPath({ modules, next, nextTitle, passedCount, total }: { m
         {next && <ButtonLink href={`/app/learn/${next}`}>{passedCount ? "Continue" : "Start"}: {nextTitle} <ArrowRight size={16} aria-hidden /></ButtonLink>}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2" data-course-modules>
         {modules.map((m, i) => {
           const hue = HUE_CLASSES[MODULE_HUES[i % MODULE_HUES.length]];
           const available = m.lessons.length > 0;
@@ -47,7 +47,7 @@ export function LessonPath({ modules, next, nextTitle, passedCount, total }: { m
                   <span className={clsx("grid h-10 w-10 shrink-0 place-items-center rounded-2xl font-mono text-sm font-bold", hue.soft, hue.text)}>{m.number}</span>
                   <div>
                     <h3 className="font-bold leading-tight">{m.title}</h3>
-                    <p className="text-xs text-ink-3">{available ? `${m.done}/${m.lessons.length} lessons` : "coming later"}</p>
+                    <p className="text-xs text-ink-3">{available ? `${m.done}/${m.lessons.length} lessons` : "being written"}</p>
                   </div>
                 </div>
                 {m.complete && <Badge tone="success"><PartyPopper size={12} aria-hidden /> Complete</Badge>}
@@ -68,9 +68,10 @@ export function LessonPath({ modules, next, nextTitle, passedCount, total }: { m
                       </li>
                     ))}
                   </ol>
+                  {m.planned.length > 0 && <p className="mt-2 px-2 text-xs text-ink-3">Coming next in this module: {m.planned.join(" · ")}</p>}
                 </>
               ) : (
-                <p className="mt-3 text-sm text-ink-3"><Lock size={13} className="mr-1 inline" aria-hidden />{m.summary} Planned: {m.planned.join(" · ")}.</p>
+                <p className="mt-3 text-sm text-ink-3"><PenLine size={13} className="mr-1 inline" aria-hidden />{m.summary} Lessons being written: {m.planned.join(" · ")}. Nothing here is locked — it opens as soon as the lessons are published.</p>
               )}
             </div>
           );

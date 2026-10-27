@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Lock, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import { requirePageUser } from "@/server/auth/current";
 import { getDb } from "@/server/db/client";
 import { skillMap } from "@/server/services/learner";
@@ -16,15 +16,25 @@ export default async function SkillsPage() {
     <div className="space-y-8">
       <PageHeader title="Skill Map" subtitle="Every number here comes from your answers. “Confidence” shows how much evidence we have — one lucky answer isn't enough to call something mastered." />
       {!any && <EmptyState title="No skill estimates yet" action={<ButtonLink href="/app/diagnostic">Take the placement check</ButtonLink>}>Your map fills in as you answer questions.</EmptyState>}
-      {map.map((track) => (
+      {map.filter((track) => track.concepts.length > 0).map((track) => (
         <section key={track.id} aria-labelledby={`t-${track.id}`}>
           <div className="mb-3 flex items-center gap-2">
             <h2 id={`t-${track.id}`} className="text-lg font-bold">{track.title}</h2>
-            {track.status === "planned" && <Badge><Lock size={12} aria-hidden /> coming later</Badge>}
           </div>
-          {track.status === "planned" ? (
-            <p className="rounded-xl border border-dashed border-line-strong px-4 py-3 text-sm text-ink-3">{track.concepts.map((c) => c.title).join(" · ")}</p>
-          ) : (
+          {track.concepts.some((c) => !c.skills.length) && (
+            <ul className="mb-4 grid gap-2 sm:grid-cols-2">
+              {track.concepts.filter((c) => !c.skills.length).map((c) => (
+                <li key={c.id} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-sm">
+                  <span className="min-w-0">
+                    <span className="font-semibold">{c.title}</span>
+                    <span className="block text-xs text-ink-3">{c.courseLessons.length} step-by-step lesson{c.courseLessons.length === 1 ? "" : "s"} · no adaptive mastery estimate for this topic yet</span>
+                  </span>
+                  {c.courseLessons[0] && <ButtonLink href={`/app/learn/${c.courseLessons[0].id}`} size="sm" variant="secondary">Open</ButtonLink>}
+                </li>
+              ))}
+            </ul>
+          )}
+          {track.concepts.some((c) => c.skills.length > 0) && (
             <div className="grid gap-4 md:grid-cols-2">
               {track.concepts.filter((c) => c.skills.length).map((c) => (
                 <Card key={c.id} className="p-5">

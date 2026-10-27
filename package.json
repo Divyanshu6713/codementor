@@ -16,6 +16,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "content:validate": "tsx scripts/validate-content.ts",
+    "content:manifest": "tsx scripts/course-manifest.ts",
     "admin:create": "tsx scripts/create-admin.ts",
     "start:local": "next start --port 3400",
     "cleanup:guests": "tsx scripts/cleanup-guests.ts"
@@ -52,5 +53,8 @@
   },
   "engines": {
     "node": ">=20.9"
+  },
+  "overrides": {
+    "dompurify": "3.4.17"
   }
 }

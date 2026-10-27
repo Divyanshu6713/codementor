@@ -17,6 +17,8 @@ export interface ConceptInfo {
   skills: { id: string; title: string }[];
   coreLessonId: string | null;
   remediationLessonId: string | null;
+  /** First step-by-step course lesson for this concept (/app/learn/[id]), if any. */
+  courseLessonId: string | null;
   /** Has practice questions in the pool (so a practice session is possible). */
   practiceable: boolean;
 }
@@ -68,6 +70,8 @@ export interface Decision {
   reasons: string[];
   /** When the ideal next concept has no lesson yet, the closest thing available. */
   alternative: { conceptId: string; lessonId: string; title: string } | null;
+  /** content_pending only: the course lesson that already teaches the concept. */
+  courseLessonId?: string | null;
 }
 
 const DAY = 86_400_000;
@@ -243,13 +247,16 @@ export function decideNext(s: LearnerSnapshot): Decision {
     };
   }
 
-  // Honest: the right next topic has no content yet. Offer the nearest concept that does.
+  // Honest: the right next topic has no adaptive content yet. Point to the course lesson that
+  // teaches it, and offer the nearest concept that does have an adaptive lesson.
   const alt = ordered.find((c) => c.coreLessonId && !secure(c) && !s.completedLessons.has(c.coreLessonId));
   return {
-    ...blank, action: "content_pending", conceptId: focus.id, title: `Next up: ${focus.title}`,
+    ...blank, action: "content_pending", conceptId: focus.id, title: `Next up: ${focus.title}`, courseLessonId: focus.courseLessonId,
     reasons: [
       `Based on your answers, ${focus.title.toLowerCase()} is the right next step for you.`,
-      "That lesson hasn't been built yet in this early version of CodeMentor.",
+      focus.courseLessonId
+        ? "It has step-by-step lessons in the C++ course; adaptive practice for it isn't written yet."
+        : "That lesson hasn't been built yet in this early version of CodeMentor.",
       ...(alt ? [`The lesson available now is ${alt.title}. It assumes some earlier topics, so expect a few new ideas.`] : []),
     ],
     alternative: alt ? { conceptId: alt.id, lessonId: alt.coreLessonId!, title: alt.title } : null,

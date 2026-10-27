@@ -322,6 +322,20 @@ int main() {
         { line: 10, text: "Outside the braces: always runs." },
       ],
     },
+    quickCheck: {
+      prompt: "What does this print?",
+      code: r`int x = 5;
+if (x > 10)
+    cout << "big ";
+    cout << "done";`,
+      options: [
+        { id: "a", text: "big done", feedback: "x > 10 is false, so the statement controlled by the if is skipped." },
+        { id: "b", text: "done", feedback: "Right: without braces only the first statement belongs to the if. The indentation of the second line is misleading." },
+        { id: "c", text: "Nothing", feedback: "The second cout is not part of the if, so it always runs." },
+      ],
+      correct: "b",
+      explanation: "Without { }, an if controls exactly one statement. Always use braces so the code does what the indentation suggests.",
+    },
     exercise: {
       title: "Hot day warning",
       prompt: `Read a temperature (a whole number). If it is **above 30**, print \`Hot\`. Then — always — print \`Done\`.
@@ -578,6 +592,23 @@ int main() {
         { line: 9, text: "12 < 18 is true → this branch runs, the rest is skipped." },
       ],
     },
+    quickCheck: {
+      prompt: "With m = 85, what does this print?",
+      code: r`if (m >= 50) {
+    cout << "pass";
+} else if (m >= 80) {
+    cout << "merit";
+} else {
+    cout << "fail";
+}`,
+      options: [
+        { id: "a", text: "merit", feedback: "The ladder stops at the first true condition, and m >= 50 comes first." },
+        { id: "b", text: "pass", feedback: "Right: 85 >= 50 is true, so that branch runs and the rest is skipped. The merit branch can never run — the order is wrong." },
+        { id: "c", text: "passmerit", feedback: "Exactly one branch of an else-if ladder runs." },
+      ],
+      correct: "b",
+      explanation: "In a ladder, put the most specific (highest) condition first: check >= 80 before >= 50.",
+    },
     exercise: {
       title: "Grade calculator",
       prompt: `Read marks (0–100). Print the grade:
@@ -713,6 +744,25 @@ int main() {
         { line: 7, text: "4 >= 9 is false → go to the outer else." },
         { line: 14, text: "Only now ask the second question: 9 >= 2 → print 9." },
       ],
+    },
+    quickCheck: {
+      prompt: "With age = 20 and hasId = false, what is printed?",
+      code: r`if (age >= 18) {
+    if (hasId) {
+        cout << "enter";
+    } else {
+        cout << "show ID";
+    }
+} else {
+    cout << "too young";
+}`,
+      options: [
+        { id: "a", text: "enter", feedback: "The inner condition hasId is false." },
+        { id: "b", text: "show ID", feedback: "Right: the outer check passes, then the inner else runs." },
+        { id: "c", text: "too young", feedback: "20 >= 18 is true, so the outer else is skipped." },
+      ],
+      correct: "b",
+      explanation: "The inner if/else only runs when the outer condition is true; then it picks one of its own two branches.",
     },
     exercise: {
       title: "Leap year",
@@ -856,6 +906,22 @@ int main() {
         { line: 7, text: "The switch looks at the value of `choice` once." },
         { line: 12, text: "Matching case found: print, then `break` leaves the switch." },
       ],
+    },
+    quickCheck: {
+      prompt: "With d = 2, what does this print?",
+      code: r`switch (d) {
+    case 1: cout << "one";
+    case 2: cout << "two";
+    case 3: cout << "three"; break;
+    default: cout << "other";
+}`,
+      options: [
+        { id: "a", text: "two", feedback: "There is no break after case 2, so execution continues into case 3." },
+        { id: "b", text: "twothree", feedback: "Right: execution falls through from case 2 into case 3, then break stops it." },
+        { id: "c", text: "twothreeother", feedback: "The break after case 3 leaves the switch before default." },
+      ],
+      correct: "b",
+      explanation: "A case label is only an entry point. Without break, execution falls through into the following cases.",
     },
     exercise: {
       title: "Day of the week",

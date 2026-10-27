@@ -34,6 +34,12 @@ export interface ConceptDef {
   status: ContentStatus;
   prerequisites: { id: string; strength: "required" | "recommended" }[];
   skills: SkillDef[];
+  /**
+   * Step-by-step course lessons (src/content/course) that teach this concept, in order. A concept
+   * with course lessons is open to everyone even when `status` is "planned" — `status` only says
+   * whether the adaptive engine has its own questions for it yet. Prerequisites are advice, never locks.
+   */
+  courseLessons: string[];
 }
 
 export interface ReteachBlock {

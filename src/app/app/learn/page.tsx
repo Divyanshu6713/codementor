@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { BookOpen, Lock } from "lucide-react";
+import { BookOpen, CheckCircle2, PenLine } from "lucide-react";
 import { requirePageUser } from "@/server/auth/current";
 import { getDb } from "@/server/db/client";
 import { completedLessons, nextDecision, skillMap } from "@/server/services/learner";
 import { LESSONS, conceptById } from "@/content";
-import { Badge, Card, MasteryBar, PageHeader, pct } from "@/components/ui";
+import { Badge, ButtonLink, Card, MasteryBar, PageHeader, pct } from "@/components/ui";
 import { StartSessionButton } from "@/components/app/StartSessionButton";
 import { LessonPath } from "@/components/app/LessonPath";
 import { getCourseLesson } from "@/content/course";
@@ -16,7 +16,8 @@ export default async function LearnPage() {
   const user = await requirePageUser(["STUDENT"]);
   const db = await getDb();
   const [decision, done, map, path] = await Promise.all([nextDecision(db, user.id), completedLessons(db, user.id), skillMap(db, user.id), pathProgress(db, user.id)]);
-  const concepts = map.flatMap((t) => t.concepts.map((c) => ({ ...c, track: t.title, trackStatus: t.status })));
+  const concepts = map.flatMap((t) => t.concepts.map((c) => ({ ...c, track: t.title })));
+  const passed = new Set(path.modules.flatMap((m) => m.lessons.filter((l) => l.passed).map((l) => l.id)));
 
   return (
     <div className="space-y-8">
@@ -29,7 +30,10 @@ export default async function LearnPage() {
         <ul className="mt-2 space-y-1 text-sm text-ink-2">{decision.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
         <div className="mt-4">
           {decision.action === "content_pending"
-            ? decision.alternative && <StartSessionButton body={{ mode: "recommended", useAlternative: true }} label={`Start ${decision.alternative.title} anyway`} />
+            ? <div className="flex flex-wrap gap-2">
+                {decision.courseLessonId && <ButtonLink href={`/app/learn/${decision.courseLessonId}`}>Open the {decision.title.replace(/^Next up: /, "")} lesson</ButtonLink>}
+                {decision.alternative && <StartSessionButton variant={decision.courseLessonId ? "secondary" : "primary"} body={{ mode: "recommended", useAlternative: true }} label={`Start ${decision.alternative.title} anyway`} />}
+              </div>
             : decision.action !== "all_done" && <StartSessionButton body={{ mode: "recommended" }} label="Start" />}
         </div>
       </Card>
@@ -53,25 +57,36 @@ export default async function LearnPage() {
       </section>
 
       <section aria-labelledby="path">
-        <h2 id="path" className="mb-3 font-semibold">The full path</h2>
+        <h2 id="path" className="font-semibold">The full path</h2>
+        <p className="mb-3 mt-1 text-sm text-ink-2">Every topic opens straight away. &ldquo;Best after&rdquo; is advice on what to learn first, not a lock.</p>
         <ol className="space-y-2">
-          {concepts.map((c, i) => (
-            <li key={c.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3">
-              <span className="w-6 text-right font-mono text-xs text-ink-3">{i + 1}</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">{c.title} <span className="font-normal text-ink-3">· {c.track}</span></p>
-                {c.prerequisites.length > 0 && <p className="text-xs text-ink-3">needs: {c.prerequisites.map((p) => p.title).join(", ")}</p>}
-              </div>
-              {c.status === "planned" || c.trackStatus === "planned" ? (
-                <span className="flex items-center gap-1 text-xs text-ink-3"><Lock size={13} aria-hidden /> coming later</span>
-              ) : (
-                <div className="flex w-36 items-center gap-2">
-                  <MasteryBar value={c.mastery} label={`${c.title} mastery`} />
-                  <span className="w-9 text-right font-mono text-xs text-ink-2">{pct(c.mastery)}</span>
+          {concepts.map((c, i) => {
+            const done = c.courseLessons.filter((l) => passed.has(l.id)).length;
+            const target = c.courseLessons.find((l) => !passed.has(l.id)) ?? c.courseLessons[0];
+            return (
+              <li key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-surface px-4 py-3" data-concept={c.id}>
+                <span className="w-6 text-right font-mono text-xs text-ink-3">{i + 1}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">{c.title} <span className="font-normal text-ink-3">· {c.track}</span></p>
+                  {c.prerequisites.length > 0 && <p className="text-xs text-ink-3">Best after: {c.prerequisites.map((p) => p.title).join(", ")}</p>}
                 </div>
-              )}
-            </li>
-          ))}
+                {c.skills.length > 0 && (
+                  <div className="flex w-28 items-center gap-2" title="Adaptive mastery estimate">
+                    <MasteryBar value={c.mastery} label={`${c.title} mastery`} />
+                    <span className="w-9 text-right font-mono text-xs text-ink-2">{pct(c.mastery)}</span>
+                  </div>
+                )}
+                {target ? (
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs text-ink-3">{done === c.courseLessons.length ? <CheckCircle2 size={14} className="inline text-success" aria-label="all lessons done" /> : null} {done}/{c.courseLessons.length}</span>
+                    <ButtonLink href={`/app/learn/${target.id}`} size="sm" variant={done ? "secondary" : "primary"} aria-label={`Open ${c.title}: ${target.title}`}>{done && done < c.courseLessons.length ? "Continue" : "Open"}</ButtonLink>
+                  </div>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-ink-3"><PenLine size={13} aria-hidden /> being written</span>
+                )}
+              </li>
+            );
+          })}
         </ol>
       </section>
     </div>

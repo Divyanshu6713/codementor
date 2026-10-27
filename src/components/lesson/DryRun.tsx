@@ -13,6 +13,7 @@ export interface TraceStepView {
   output: string;
   note: string;
   condition?: { text: string; value: boolean };
+  stack?: string[];
 }
 
 const PHASE: Record<string, { label: string; cls: string }> = {
@@ -22,6 +23,8 @@ const PHASE: Record<string, { label: string; cls: string }> = {
   body: { label: "Run body", cls: "bg-success-soft text-success" },
   update: { label: "Update", cls: "bg-hint-soft text-hint" },
   after: { label: "After the loop", cls: "bg-sunken text-ink-2" },
+  call: { label: "Call", cls: "bg-concept-soft text-concept" },
+  return: { label: "Return", cls: "bg-success-soft text-success" },
 };
 
 /**
@@ -53,6 +56,16 @@ export function DryRun({ code, steps }: { code: string; steps: TraceStepView[] }
             {s.condition.text} → {String(s.condition.value)}
           </p>
         )}
+        {s.stack && (
+          <div className="rounded-xl border border-line">
+            <p className="border-b border-line px-3 py-1.5 text-xs font-semibold text-ink-3">Call stack (newest on top)</p>
+            <ol className="flex flex-col-reverse gap-1 p-2">
+              {s.stack.map((frame, k) => (
+                <li key={k} className={clsx("rounded-md px-2.5 py-1 font-mono text-sm", k === s.stack!.length - 1 ? "bg-concept-soft font-semibold text-concept" : "bg-sunken text-ink-2")}>{frame}</li>
+              ))}
+            </ol>
+          </div>
+        )}
         <div className="rounded-xl border border-line">
           <p className="border-b border-line px-3 py-1.5 text-xs font-semibold text-ink-3">Variables</p>
           <dl className="grid gap-px bg-line" style={{ gridTemplateColumns: `repeat(${Math.max(1, Math.min(3, Object.keys(s.vars).length))}, minmax(0, 1fr))` }}>
@@ -61,7 +74,7 @@ export function DryRun({ code, steps }: { code: string; steps: TraceStepView[] }
                 <dt className="font-mono text-xs text-ink-3">{k}</dt>
                 <dd className="font-mono text-lg font-bold">{v}</dd>
               </div>
-            )) : <div className="col-span-3 bg-surface px-3 py-2 text-sm text-ink-3">(the loop variable no longer exists)</div>}
+            )) : <div className="col-span-3 bg-surface px-3 py-2 text-sm text-ink-3">{s.stack ? "(no local variables in main)" : "(the loop variable no longer exists)"}</div>}
           </dl>
         </div>
         <div className="rounded-xl bg-code-bg px-3 py-2 font-mono text-sm text-code-ink">

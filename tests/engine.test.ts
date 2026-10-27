@@ -321,6 +321,7 @@ function conceptInfos(): ConceptInfo[] {
     id: c.id, title: c.title, status: c.status, order, prerequisites: c.prerequisites, skills: c.skills.map((s) => ({ id: s.id, title: s.title })),
     coreLessonId: lessonsForConcept(c.id, "core")[0]?.id ?? null,
     remediationLessonId: lessonsForConcept(c.id, "remediation")[0]?.id ?? null,
+    courseLessonId: c.courseLessons[0] ?? null,
     practiceable: practiceable.has(c.id),
   }));
 }
@@ -397,13 +398,14 @@ describe("pedagogy scenarios", () => {
     expect(d.lessonId).toBe("comparison-ops-review");
   });
 
-  it("is honest when the right next topic has no lesson yet", () => {
+  it("is honest when the right next topic has no adaptive lesson yet, and points to the course lesson", () => {
     const states = Object.fromEntries(allSkillsOf("cpp-basics").map((id) => [id, strong()]));
     const d = decideNext(snapshot(states));
     expect(d.action).toBe("content_pending");
     expect(d.conceptId).toBe("variables-types");
     expect(d.alternative?.lessonId).toBe("for-loops-core");
-    expect(d.reasons.join(" ")).toMatch(/hasn't been built yet/);
+    expect(d.courseLessonId).toBe("variables");
+    expect(d.reasons.join(" ")).toContain("step-by-step lessons in the C++ course");
   });
 
   it("puts overdue revision first", () => {

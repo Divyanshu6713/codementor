@@ -10,13 +10,19 @@
  */
 import type { TestCaseDef, VisualId } from "../types";
 
+export type CourseLevel = "beginner" | "intermediate" | "advanced";
+/** Language standard a lesson needs. The sandbox compiles with -std=c++17. */
+export type CppStandard = "C++11" | "C++17" | "C++20" | "C++23";
+
 export interface CourseModule {
   id: string;
   number: number;
   title: string;
   summary: string;
-  /** Lesson ids in teaching order. Planned lessons are listed by title only. */
+  level: CourseLevel;
+  /** Lesson ids in teaching order (published, compiler-verified lessons only). */
   lessons: string[];
+  /** Topics still to be written, shown honestly as "coming later" — never as empty lesson pages. */
   planned?: string[];
 }
 
@@ -79,6 +85,10 @@ export interface CourseLesson {
   moduleId: string;
   title: string;
   minutes: number;
+  /** Defaults to C++17 (the sandbox's standard). Set only when a lesson needs something newer. */
+  standard?: CppStandard;
+  /** Short concept tags used by search and the mentor (e.g. "recursion", "base case"). */
+  concepts?: string[];
   /** A. What you will learn. */
   goals: string[];
   intro: string;
