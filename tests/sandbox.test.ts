@@ -1,6 +1,7 @@
 /**
  * Execution safety tests (§68). These compile and run real C++ through the sandbox backend, so they
- * only run where a backend is available: windows-job on Windows with g++, docker elsewhere.
+ * only run where a backend is available: windows-job on Windows, local on macOS/Linux (g++ needed).
+ * The docker backend has its own suite (sandbox-docker.test.ts).
  */
 import os from "node:os";
 import fs from "node:fs";
@@ -8,10 +9,10 @@ import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { executeRequest } from "../worker/sandbox/runner";
 import { checkSource } from "../worker/sandbox/policy";
-import { createWindowsJobBackend } from "../worker/sandbox/backends/windows-job";
+import { createDevBackend } from "../worker/sandbox/backends";
 import type { SandboxBackend } from "../worker/sandbox/backends/types";
 
-const backend: SandboxBackend | null = process.platform === "win32" ? createWindowsJobBackend() : null;
+const backend: SandboxBackend | null = createDevBackend();
 const canRun = Boolean(backend?.compiler);
 
 const prog = (body: string, headers = ["iostream"]) => `${headers.map((h) => `#include <${h}>`).join("\n")}
@@ -59,7 +60,7 @@ describe("source policy", () => {
   });
 });
 
-describe.runIf(canRun)("sandbox execution (windows-job backend)", () => {
+describe.runIf(canRun)(`sandbox execution (${backend?.id} backend)`, () => {
   beforeAll(async () => {
     await backend!.init();
   }, 120_000);
@@ -113,7 +114,8 @@ describe.runIf(canRun)("sandbox execution (windows-job backend)", () => {
     expect(r.tests.every((t) => t.status === "ok")).toBe(true);
   });
 
-  it("cannot write files outside the sandbox even if the policy were bypassed", async () => {
+  it("cannot write files outside the sandbox even if the policy were bypassed", async (ctx) => {
+    if (!backend!.contained) ctx.skip(); // e.g. Linux as a normal user without namespaces
     // Exercise the OS layer directly: compile a program that writes to the user's profile folder.
     const target = path.join(os.homedir(), `cmk-probe-${process.pid}.txt`).replace(/\\/g, "/");
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cmk-test-"));
@@ -129,14 +131,16 @@ describe.runIf(canRun)("sandbox execution (windows-job backend)", () => {
     }
   });
 
-  it("cannot start other processes even if the policy were bypassed (fork / shell escape)", async () => {
+  it("cannot start other processes even if the policy were bypassed (fork / shell escape)", async (ctx) => {
+    if (!backend!.contained) ctx.skip();
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cmk-test-"));
-    fs.writeFileSync(path.join(dir, "main.cpp"), `#include <cstdlib>\n#include <cstdio>\nint main(){ int r = std::system("cmd /c echo pwned"); std::printf("r=%d", r); return 0; }`);
+    const shell = process.platform === "win32" ? "cmd /c echo pwned" : "echo pwned";
+    fs.writeFileSync(path.join(dir, "main.cpp"), `#include <cstdlib>\n#include <cstdio>\nint main(){ int r = std::system("${shell}"); std::printf("r=%d", r); return 0; }`);
     try {
       expect((await backend!.compile(dir)).ok).toBe(true);
       const r = await backend!.run(dir, "", { timeMs: 2000, memoryMb: 128, maxOutputBytes: 1024, maxStderrBytes: 1024 }, "proc");
       expect(r.stdout).not.toContain("pwned");
-      expect(r.processLimitHit).toBe(true);
+      if (backend!.id === "windows-job") expect(r.processLimitHit).toBe(true);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }

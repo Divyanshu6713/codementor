@@ -150,6 +150,7 @@ export function createWindowsJobBackend(): SandboxBackend {
     id: "windows-job",
     isolation: "Local dev sandbox: Windows job object (memory, CPU, time and single-process limits), low-integrity token, empty environment. No network isolation.",
     production: false,
+    contained: true,
     compiler: gxx,
     python: py?.version ?? null,
 

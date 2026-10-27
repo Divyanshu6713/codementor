@@ -6,7 +6,7 @@
  *
  * Student code never runs inside the web server. This service binds to localhost by default,
  * requires a shared token, validates every request, limits concurrency and queue length, and
- * delegates to an isolation backend (docker in production, windows-job for local development).
+ * delegates to an isolation backend (docker in production; windows-job or local for development).
  */
 import http from "node:http";
 import fs from "node:fs";
@@ -15,9 +15,7 @@ import crypto from "node:crypto";
 import { z } from "zod";
 import { EXECUTION_LIMITS, type WorkerHealth } from "../../src/server/execution/protocol";
 import { executeRequest } from "./runner";
-import type { SandboxBackend } from "./backends/types";
-import { createWindowsJobBackend } from "./backends/windows-job";
-import { createDockerBackend } from "./backends/docker";
+import { chooseBackend } from "./backends";
 
 for (const file of [".env.local", ".env"]) {
   const p = path.join(process.cwd(), file);
@@ -43,13 +41,6 @@ const RequestSchema = z.object({
   files: z.array(z.object({ name: z.string().max(60), content: z.string().max(EXECUTION_LIMITS.maxFileBytes) })).max(EXECUTION_LIMITS.maxFiles).optional(),
   mode: z.enum(["run", "trace"]).optional(),
 }).refine((r) => r.language === "python" || (!r.files?.length && (r.mode ?? "run") === "run"), { message: "files and trace are Python-only" });
-
-function chooseBackend(): SandboxBackend {
-  const wanted = process.env.SANDBOX_BACKEND || (process.platform === "win32" ? "windows-job" : "docker");
-  if (wanted === "docker") return createDockerBackend();
-  if (wanted === "windows-job") return createWindowsJobBackend();
-  throw new Error(`Unknown SANDBOX_BACKEND "${wanted}". Use "docker" or "windows-job".`);
-}
 
 // ── Concurrency: a tiny semaphore with a bounded queue ──
 let running = 0;

@@ -8,6 +8,7 @@ export function describeExit(code: number): string {
     0xc0000374: "Memory corruption was detected.",
     3: "The program was aborted (for example an uncaught exception).",
     134: "The program was aborted (for example an uncaught exception).",
+    132: "The program hit an illegal instruction — usually undefined behaviour, such as dividing by zero.",
     136: "Arithmetic error (for example division by zero).",
     139: "Invalid memory access (for example reading outside an array).",
   };

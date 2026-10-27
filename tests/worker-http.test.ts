@@ -1,7 +1,7 @@
 /**
  * The sandbox worker as a real separate process over HTTP: authentication, request validation,
  * and behaviour under many simultaneous requests (bounded concurrency + bounded queue → "busy",
- * never a pile-up). Uses the Windows development backend, so it runs only where that exists.
+ * never a pile-up). Uses this OS's development backend (windows-job or local), so it runs where g++ exists.
  */
 import { spawn, type ChildProcess } from "node:child_process";
 import crypto from "node:crypto";
@@ -29,7 +29,7 @@ async function execute(source: string, token = TOKEN) {
 describe.runIf(canExecute)("sandbox worker over HTTP", () => {
   beforeAll(async () => {
     worker = spawn(process.execPath, ["--import", "tsx", path.join("worker", "sandbox", "server.ts")], {
-      env: { ...process.env, NODE_ENV: "development", SANDBOX_PORT: String(PORT), SANDBOX_TOKEN: TOKEN, SANDBOX_CONCURRENCY: "2", SANDBOX_MAX_QUEUE: "2", SANDBOX_BACKEND: "windows-job" },
+      env: { ...process.env, NODE_ENV: "development", SANDBOX_PORT: String(PORT), SANDBOX_TOKEN: TOKEN, SANDBOX_CONCURRENCY: "2", SANDBOX_MAX_QUEUE: "2", SANDBOX_BACKEND: process.platform === "win32" ? "windows-job" : "local" },
       stdio: "ignore",
     });
     for (let i = 0; i < 120; i++) {
@@ -44,12 +44,14 @@ describe.runIf(canExecute)("sandbox worker over HTTP", () => {
   }, 90_000);
 
   afterAll(() => {
-    if (worker?.pid) spawn("taskkill", ["/pid", String(worker.pid), "/T", "/F"], { stdio: "ignore" });
+    if (!worker?.pid) return;
+    if (process.platform === "win32") spawn("taskkill", ["/pid", String(worker.pid), "/T", "/F"], { stdio: "ignore" });
+    else worker.kill("SIGTERM");
   });
 
   it("reports health without exposing secrets", async () => {
     const h = await (await fetch(`${BASE}/health`)).json();
-    expect(h).toMatchObject({ ok: true, backend: "windows-job", production: false });
+    expect(h).toMatchObject({ ok: true, backend: process.platform === "win32" ? "windows-job" : "local", production: false });
     expect(JSON.stringify(h)).not.toContain(TOKEN);
   });
 

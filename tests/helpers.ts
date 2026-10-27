@@ -3,12 +3,12 @@ import { createUser } from "@/server/auth/auth";
 import { saveOnboarding } from "@/server/services/students";
 import { setExecutionProviderForTesting } from "@/server/execution/providers";
 import { executeRequest } from "../worker/sandbox/runner";
-import { createWindowsJobBackend } from "../worker/sandbox/backends/windows-job";
+import { createDevBackend } from "../worker/sandbox/backends";
 import { questionById } from "@/content";
 import { splitQuestion } from "@/server/content/question-parts";
 import type { StudentAnswer } from "@/types/questions";
 
-export const canExecute = process.platform === "win32" && Boolean(createWindowsJobBackend().compiler);
+export const canExecute = Boolean(createDevBackend().compiler);
 
 export async function freshDb(): Promise<{ db: DB; close: () => Promise<void> }> {
   const opened = await createTestDb();
@@ -18,7 +18,7 @@ export async function freshDb(): Promise<{ db: DB; close: () => Promise<void> }>
 
 /** Routes the judge to the real local sandbox backend (no worker HTTP hop in tests). */
 export async function useLocalSandbox() {
-  const backend = createWindowsJobBackend();
+  const backend = createDevBackend();
   await backend.init();
   setExecutionProviderForTesting({
     id: "test-local",

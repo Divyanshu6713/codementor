@@ -19,6 +19,11 @@ export interface SandboxBackend {
   isolation: string;
   /** True when the backend is safe to expose beyond a developer's own machine. */
   production: boolean;
+  /**
+   * True when the OS layer itself stops a program from writing outside its folder and from starting
+   * other processes (even if the source policy were bypassed). Known after init().
+   */
+  contained?: boolean;
   compiler: string | null;
   /** Python interpreter version (e.g. "3.12.10"), or null when this backend can't run Python. */
   python: string | null;

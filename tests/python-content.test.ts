@@ -7,7 +7,7 @@
  *   - every bug fix prints its stated output and the buggy version does not,
  *   - every reference solution passes all of its tests, and no starter code already passes,
  *   - hidden tests and solutions never reach the browser.
- * Needs the windows-job backend with Python 3.10+; the execution checks are skipped elsewhere.
+ * Needs a dev backend (windows-job / local) with Python 3.10+; the execution checks are skipped elsewhere.
  */
 import { beforeAll, describe, expect, it } from "vitest";
 import {
@@ -19,10 +19,10 @@ import { PY_REFERENCE } from "@/content/python/reference";
 import { PY_COMPARE } from "@/content/python/compare";
 import { getPyLesson } from "@/content/python";
 import { executeRequest } from "../worker/sandbox/runner";
-import { createWindowsJobBackend } from "../worker/sandbox/backends/windows-job";
+import { createDevBackend } from "../worker/sandbox/backends";
 import type { SandboxBackend } from "../worker/sandbox/backends/types";
 
-const backend: SandboxBackend | null = process.platform === "win32" ? createWindowsJobBackend() : null;
+const backend: SandboxBackend | null = createDevBackend();
 const canRun = Boolean(backend?.python);
 
 describe("python catalogue structure", () => {

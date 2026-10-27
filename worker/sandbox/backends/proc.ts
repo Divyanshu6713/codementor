@@ -4,6 +4,8 @@ export interface CapturedRun {
   stdout: string;
   stderr: string;
   code: number | null;
+  /** The signal that ended the process (POSIX), e.g. "SIGSEGV". */
+  signal: NodeJS.Signals | null;
   outputLimitHit: boolean;
   killedByGuard: boolean;
   wallMs: number;
@@ -63,17 +65,17 @@ export function runCaptured(cmd: string, args: string[], opts: {
     });
     child.stdin.end(opts.input);
 
-    const finish = (code: number | null) => {
+    const finish = (code: number | null, signal: NodeJS.Signals | null = null) => {
       if (settled) return;
       settled = true;
       clearTimeout(guard);
       resolve({
         stdout: Buffer.concat(out).toString("utf8"),
         stderr: Buffer.concat(err).toString("utf8"),
-        code, outputLimitHit, killedByGuard, wallMs: Date.now() - started,
+        code, signal, outputLimitHit, killedByGuard, wallMs: Date.now() - started,
       });
     };
-    child.on("close", finish);
+    child.on("close", (code, signal) => finish(code, signal));
     child.on("error", () => finish(null));
   });
 }

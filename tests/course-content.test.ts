@@ -4,7 +4,7 @@
  *   - every starter program does NOT already pass (so the exercise asks for real work),
  *   - every worked example prints exactly the output the lesson claims,
  *   - and the structure validates.
- * Needs a sandbox backend (windows-job on Windows with g++); skipped elsewhere.
+ * Needs a sandbox backend with g++ (windows-job on Windows, local on macOS/Linux); skipped without one.
  */
 import { beforeAll, describe, expect, it } from "vitest";
 import { COURSE_LESSONS, COURSE_MODULES, neighbours, roadmap, toPublicLesson, validateCourse } from "@/content/course";
@@ -14,10 +14,10 @@ import { renderManifest } from "@/content/course/manifest";
 import { readFileSync } from "node:fs";
 import { outputsMatch } from "@/server/execution/judge";
 import { executeRequest } from "../worker/sandbox/runner";
-import { createWindowsJobBackend } from "../worker/sandbox/backends/windows-job";
+import { createDevBackend } from "../worker/sandbox/backends";
 import type { SandboxBackend } from "../worker/sandbox/backends/types";
 
-const backend: SandboxBackend | null = process.platform === "win32" ? createWindowsJobBackend() : null;
+const backend: SandboxBackend | null = createDevBackend();
 const canRun = Boolean(backend?.compiler);
 
 describe("course structure", () => {

@@ -1,5 +1,5 @@
 /**
- * Python execution through the real sandbox (windows-job backend + harness). These run actual
+ * Python execution through the real sandbox (the OS's dev backend + harness). These run actual
  * CPython under the job object with a low-integrity token, so they only run where that backend and
  * Python 3.10+ are available.
  */
@@ -7,11 +7,11 @@ import os from "node:os";
 import { beforeAll, describe, expect, it } from "vitest";
 import { executeRequest } from "../worker/sandbox/runner";
 import { checkPythonSource } from "../worker/sandbox/policy";
-import { createWindowsJobBackend } from "../worker/sandbox/backends/windows-job";
+import { createDevBackend } from "../worker/sandbox/backends";
 import type { SandboxBackend } from "../worker/sandbox/backends/types";
 import type { PythonTrace } from "@/server/execution/protocol";
 
-const backend: SandboxBackend | null = process.platform === "win32" ? createWindowsJobBackend() : null;
+const backend: SandboxBackend | null = createDevBackend();
 const canRun = Boolean(backend?.compiler && backend?.python);
 
 const run = (source: string, inputs: string[] = [""], extra: { files?: { name: string; content: string }[]; limits?: { timeMs?: number; memoryMb?: number }; mode?: "run" | "trace" } = {}) =>
@@ -26,7 +26,7 @@ describe("python source policy", () => {
   });
 });
 
-describe.runIf(canRun)("python sandbox (windows-job backend)", () => {
+describe.runIf(canRun)(`python sandbox (${backend?.id} backend)`, () => {
   beforeAll(async () => {
     await backend!.init();
   }, 120_000);
