@@ -95,7 +95,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       {nextLesson && nextModule && (
         <Link href={`/app/learn/${nextLesson.id}`} className="group flex flex-wrap items-center gap-4 rounded-[var(--radius-card)] border border-accent/25 bg-surface p-5 shadow-card transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-pop animate-rise">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-accent-soft text-accent"><BookOpen size={24} aria-hidden /></span>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-[13rem] flex-1">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent">Lesson path · {path.passedCount}/{path.total} done · Module {nextModule.number}: {nextModule.title}</p>
             <p className="mt-0.5 text-lg font-extrabold">{path.passedCount ? "Continue" : "Start"} with “{nextLesson.title}”</p>
             <div className="mt-2 h-1.5 max-w-md overflow-hidden rounded-full bg-sunken"><div className="h-full rounded-full bg-accent" style={{ width: `${(path.passedCount / path.total) * 100}%` }} /></div>
@@ -159,7 +159,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <section aria-labelledby="daily" className="rounded-[var(--radius-card)] bg-hero p-[2px] shadow-card">
             <div className="flex h-full flex-wrap items-center gap-5 rounded-[calc(var(--radius-card)-2px)] bg-surface p-5">
               <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-hero text-white shadow-pop"><CalendarDays size={26} aria-hidden /></span>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-[13rem] flex-1">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-concept">Daily Challenge · +{d.daily.bonus} bonus XP</p>
                 <h2 id="daily" className="mt-0.5 text-lg font-extrabold">{d.daily.title}</h2>
                 <p className="mt-1 flex flex-wrap gap-1.5 text-xs">
