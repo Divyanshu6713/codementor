@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LEVELS, XP_RULES, dailySolves, levelFor, pathXpEvents, streaks, xpForOutcome } from "@/server/services/progression";
-import { dailyChallengeFor } from "@/content/problems";
+import { ALL_DAILY_POOL_IDS, ARENA_PROBLEM_IDS, DAILY_POOL, PROBLEM_META, dailyChallengeFor } from "@/content/problems";
+import { questionById } from "@/content";
 
 describe("progression (compete with yourself)", () => {
   it("awards more XP for harder and hint-free solves, nothing for wrong, revealed or placement answers", () => {
@@ -34,6 +35,32 @@ describe("progression (compete with yourself)", () => {
     const rows = [row(pick, day), row(pick, new Date("2026-10-07T15:00:00Z")), row(other, day), row(pick, new Date("2026-10-07T10:00:00Z"), false)];
     expect(dailySolves(rows)).toHaveLength(1);
     expect(dailyChallengeFor(day)).toBe(dailyChallengeFor(new Date("2026-10-07T23:59:00Z")));
+  });
+});
+
+describe("Practice Arena catalogue", () => {
+  it("lists only judged write_code questions, each with a title and tags", () => {
+    expect(ARENA_PROBLEM_IDS.length).toBeGreaterThanOrEqual(50);
+    for (const id of ARENA_PROBLEM_IDS) {
+      expect(questionById.get(id)?.type, id).toBe("write_code");
+      expect(PROBLEM_META[id].title.length, id).toBeGreaterThan(0);
+      expect(PROBLEM_META[id].tags.length, id).toBeGreaterThan(0);
+    }
+    for (const id of ALL_DAILY_POOL_IDS) expect(ARENA_PROBLEM_IDS, id).toContain(id);
+  });
+
+  it("never changes the Daily Challenge for days before the pool grew (XP is recomputed from history)", () => {
+    const legacy = ["fl-code-evens", "fl-code-debug-offby1", "fl-code-multiples", "fl-code-table", "fl-code-read-sum", "fl-code-factorial", "fl-code-square"];
+    const pickWith = (pool: string[], d: Date) => {
+      let h = 0;
+      for (const ch of d.toISOString().slice(0, 10)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      return pool[h % pool.length];
+    };
+    for (let t = Date.parse("2026-01-01T12:00:00Z"); t < Date.parse("2026-10-29T00:00:00Z"); t += 86_400_000) {
+      expect(dailyChallengeFor(new Date(t))).toBe(pickWith(legacy, new Date(t)));
+    }
+    const later = new Date("2026-11-15T12:00:00Z");
+    expect(dailyChallengeFor(later)).toBe(pickWith(DAILY_POOL, later));
   });
 });
 
