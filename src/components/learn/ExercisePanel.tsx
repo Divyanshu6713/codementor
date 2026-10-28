@@ -276,6 +276,9 @@ export function Celebration({ reward, maxXp, note }: { reward: PassReward; maxXp
       {reward.moduleCompleted && (
         <p className="mt-2 flex items-center gap-2 font-semibold"><PartyPopper size={18} aria-hidden /> Module complete: {reward.moduleCompleted.title}! +{reward.moduleCompleted.xp} XP bonus</p>
       )}
+      {reward.revisionScheduled && (
+        <p className="mt-2 flex items-center gap-2 font-semibold"><RotateCcw size={17} aria-hidden /> Every {reward.revisionScheduled.concept} lesson is done — it&apos;s now in your spaced revision, first review tomorrow.</p>
+      )}
       {reward.achievements.map((a) => (
         <p key={a.code} className="mt-2 flex items-center gap-2 font-semibold"><Trophy size={17} aria-hidden /> Achievement unlocked: {a.title}</p>
       ))}

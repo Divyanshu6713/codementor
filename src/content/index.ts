@@ -46,6 +46,11 @@ export const lessonById = byId(LESSONS, "id") as Map<string, LessonDef>;
 export const skillToConcept = new Map<string, string>(CONCEPTS.flatMap((c) => c.skills.map((s) => [s.id, c.id] as const)));
 export const skillTitle = new Map<string, string>(CONCEPTS.flatMap((c) => c.skills.map((s) => [s.id, s.title] as const)));
 
+/** The concept whose step-by-step course lessons include this lesson (null for none). */
+export function conceptForCourseLesson(lessonId: string): ConceptDef | null {
+  return CONCEPTS.find((c) => c.courseLessons.includes(lessonId)) ?? null;
+}
+
 export function lessonsForConcept(conceptId: string, kind?: "core" | "remediation") {
   return LESSONS.filter((l) => l.conceptId === conceptId && (!kind || l.kind === kind));
 }

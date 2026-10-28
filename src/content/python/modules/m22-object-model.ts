@@ -86,15 +86,15 @@ print(len(pts), Point(1, 2) in pts, hash((1, 2)) == hash(Point(1, 2)))
 try:
     {[1, 2]: "list key"}
 except TypeError as e:
-    print(e)`,
-        output: "['a', 'new'] box box!\nTrue False True\n2 True True\nunhashable type: 'list'\n",
+    print(type(e).__name__, "unhashable" in str(e))`,
+        output: "['a', 'new'] box box!\nTrue False True\n2 True True\nTypeError True\n",
         lines: [
           [2, "Mutating the shared list: the caller's `data` changes."],
           [3, "Rebinding the local `label` to a new string: the caller's `name` is untouched."],
           [10, "y is another reference to the same list; z is a new list with equal contents."],
           [16, "Equality by value…"],
           [18, "…and a hash built from the same fields, so equal points collapse in a set."],
-          [23, "Lists are mutable, so they can't be hashed."],
+          [23, "Lists are mutable, so they can't be hashed: a TypeError whose message says \"unhashable\" (the exact wording changed in Python 3.14)."],
         ],
       },
       mistakes: [

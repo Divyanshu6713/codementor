@@ -29,6 +29,7 @@ export interface PassReward {
   xp: number;
   moduleCompleted: { title: string; xp: number } | null;
   achievements: { code: string; title: string }[];
+  revisionScheduled?: { concept: string; skills: number } | null;
 }
 
 interface Ctx {

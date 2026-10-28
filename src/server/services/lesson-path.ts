@@ -9,6 +9,8 @@ import { getDb, schema, type Tx } from "@/server/db/client";
 import { checkAchievements, achievementCodes } from "./achievements";
 import { XP_RULES, pathXpEvents, pathXpFor } from "./progression";
 import { FILL_SUFFIX, isFillKey } from "@/content/course";
+import { conceptForCourseLesson } from "@/content";
+import { firstRevision } from "@/server/learning/adaptivity";
 
 export type LessonState = { hintLevel: number; solutionViewed: boolean; passed: boolean; xp: number };
 
@@ -58,6 +60,27 @@ export interface PassReward {
   xp: number;
   moduleCompleted: { title: string; xp: number } | null;
   achievements: { code: string; title: string }[];
+  /** Set when this pass finished every lesson of a topic and its skills joined spaced revision. */
+  revisionScheduled: { concept: string; skills: number } | null;
+}
+
+/**
+ * When the last course lesson of a concept is passed, that concept's skills enter spaced revision
+ * (first review tomorrow) — unless practice already scheduled them. No mastery is invented: the
+ * revision questions themselves are the evidence.
+ */
+async function scheduleConceptRevision(tx: Tx, studentId: string, lessonId: string, passed: (id: string) => boolean, now: Date) {
+  const concept = conceptForCourseLesson(lessonId);
+  if (!concept || !concept.skills.length || !concept.courseLessons.every(passed)) return null;
+  const existing = await tx.select({ skillId: schema.revisionItems.skillId }).from(schema.revisionItems).where(eq(schema.revisionItems.studentId, studentId));
+  const have = new Set(existing.map((r) => r.skillId));
+  const first = firstRevision(now);
+  const fresh = concept.skills.filter((s) => !have.has(s.id));
+  for (const s of fresh) {
+    await tx.insert(schema.revisionItems).values({ studentId, skillId: s.id, stage: first.stage, intervalDays: first.intervalDays, dueAt: first.dueAt, reason: first.reason })
+      .onConflictDoNothing();
+  }
+  return fresh.length ? { concept: concept.title, skills: fresh.length } : null;
 }
 
 /**
@@ -68,7 +91,7 @@ export async function recordPass(studentId: string, lessonId: string): Promise<P
   const db = await getDb();
   return db.transaction(async (tx) => {
     const row = await tx.query.courseProgress.findFirst({ where: and(eq(schema.courseProgress.studentId, studentId), eq(schema.courseProgress.lessonId, lessonId)) });
-    if (row?.passedAt) return { firstPass: false, xp: 0, moduleCompleted: null, achievements: [] };
+    if (row?.passedAt) return { firstPass: false, xp: 0, moduleCompleted: null, achievements: [], revisionScheduled: null };
     // "Complete the code" shares hints and the worked solution with the exercise it scaffolds.
     const base = isFillKey(lessonId)
       ? await tx.query.courseProgress.findFirst({ where: and(eq(schema.courseProgress.studentId, studentId), eq(schema.courseProgress.lessonId, lessonId.slice(0, -FILL_SUFFIX.length))) })
@@ -78,6 +101,10 @@ export async function recordPass(studentId: string, lessonId: string): Promise<P
     await upsert(tx, studentId, lessonId, { passedAt: new Date(), passedHintLevel: hintLevel, passedAfterSolution: afterSolution });
     const progress = await pathProgress(tx, studentId);
     const mod = progress.modules.find((m) => m.lessons.some((l) => l.id === lessonId));
+    const passedIds = new Set(progress.modules.flatMap((m) => m.lessons.filter((l) => l.passed).map((l) => l.id)));
+    const revisionScheduled = lessonId.includes("~") || isFillKey(lessonId)
+      ? null
+      : await scheduleConceptRevision(tx, studentId, lessonId, (id) => passedIds.has(id), new Date());
     const earned = await checkAchievements(tx, studentId);
     const titles = await achievementCodes(tx, earned);
     return {
@@ -85,6 +112,7 @@ export async function recordPass(studentId: string, lessonId: string): Promise<P
       xp: pathXpFor(lessonId, hintLevel, afterSolution),
       moduleCompleted: mod?.complete ? { title: mod.title, xp: XP_RULES.moduleCompleted } : null,
       achievements: titles.map((a) => ({ code: a.code, title: a.title })),
+      revisionScheduled,
     };
   });
 }

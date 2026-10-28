@@ -106,4 +106,4 @@ and [LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md).
 2. HTTPS, firewall, off-site backups, a tested restore and alerts — scripted, but must be run and
    checked on the VPS.
 3. Real AI provider calls unverified (blocker only if AI is enabled at launch).
-4. Python course: one lesson's expected output depends on the Python version (separate task).
+

@@ -17,6 +17,8 @@ import { PracticeLadder } from "@/components/learn/PracticeLadder";
 import { PredictOutput } from "@/components/learn/PredictOutput";
 import { QuickCheck } from "@/components/learn/QuickCheck";
 import { Badge } from "@/components/ui";
+import { StartSessionButton } from "@/components/app/StartSessionButton";
+import { conceptForCourseLesson } from "@/content";
 import { COURSE_MODULES, FILL_SUFFIX, exerciseKey, getCourseLesson, neighbours, toPublicLesson } from "@/content/course";
 import { getTrace } from "@/content/traces";
 import { requirePageUser } from "@/server/auth/current";
@@ -60,6 +62,7 @@ export default async function LessonPage({ params }: Params) {
   const state = progress.lessonState(lesson.id);
   const moduleProgress = progress.modules.find((m) => m.id === mod.id)!;
   const fill = fillInView(lesson.id);
+  const concept = conceptForCourseLesson(lesson.id);
 
   return (
     <LessonStateProvider
@@ -149,6 +152,15 @@ export default async function LessonPage({ params }: Params) {
           <ul className="space-y-1.5">
             {lesson.summary.map((s) => <li key={s} className="flex gap-2"><span className="text-success" aria-hidden>✓</span><Markdown text={s} className="text-ink" /></li>)}
           </ul>
+          {concept && concept.skills.length > 0 && (
+            <div className="flex flex-wrap items-center gap-4 rounded-xl border border-concept/30 bg-concept-soft/50 p-4">
+              <div className="min-w-[13rem] flex-1 text-sm">
+                <p className="font-semibold text-ink">Make it stick: mixed practice on {concept.title}</p>
+                <p className="mt-0.5 text-ink-2">A short adaptive set — predict the output, find the bug, write code — that adjusts to how you do. When you&apos;ve passed every {concept.title} lesson, the topic joins your spaced revision.</p>
+              </div>
+              <StartSessionButton size="md" variant="secondary" body={{ mode: "practice", conceptId: concept.id, length: "quick" }} label="Practise this topic" />
+            </div>
+          )}
           <LessonFooter prev={prev && { id: prev.id, title: prev.title }} next={next && { id: next.id, title: next.title }} />
         </Step>
       </div>

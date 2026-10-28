@@ -79,6 +79,19 @@ describe("lesson path progress and XP", () => {
     expect(p.xp).toBe(45);
   });
 
+  it("finishing every lesson of a topic puts its skills into spaced revision (once)", async () => {
+    const g = await createGuestUser("beginner");
+    const first = await recordPass(g.id, "two-d-arrays");
+    expect(first.revisionScheduled).toEqual({ concept: "2D arrays & matrices", skills: 2 });
+    const items = await db.select().from(schema.revisionItems).where(eq(schema.revisionItems.studentId, g.id));
+    expect(items).toHaveLength(2);
+    expect(items.map((i) => i.skillId)).toContain("matrix_indexing");
+    expect(items.every((i) => i.dueAt.getTime() > Date.now())).toBe(true);
+    // One lesson of a multi-lesson topic doesn't schedule anything; practice problems and fill-ins never do.
+    expect((await recordPass(g.id, "while-loops")).revisionScheduled).toBeNull();
+    expect((await recordPass(g.id, "two-d-arrays~p2")).revisionScheduled).toBeNull();
+  });
+
   it("celebrates a finished module with bonus XP and an achievement", async () => {
     const g = await createGuestUser("beginner");
     const mod = COURSE_MODULES.find((m) => m.id === "loops")!;

@@ -50,7 +50,7 @@ signed-in).
 - Real AI provider verification (needs API keys on staging).
 - Running the launch kit on the real VPS (Docker + gVisor sandbox tests, HTTPS, alerts).
 - A human review of lesson wording; correctness is compiler-verified but clarity isn't.
-- Link lesson concepts to adaptive mastery (revision suggestions per lesson concept).
+
 
 ## How to verify
 
