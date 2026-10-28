@@ -194,6 +194,9 @@ export const exerciseVersion = (l: CourseLesson) =>
  * practice problems. Progress, hints and XP are stored per key.
  */
 export const EXERCISE_KEY = /^[a-z0-9-]{1,60}(~p[23])?$/;
+/** Progress key for an exercise solved in "Complete the code" mode: "<exercise key>+fill". */
+export const FILL_SUFFIX = "+fill";
+export const isFillKey = (key: string) => key.endsWith(FILL_SUFFIX);
 export const PRACTICE_LEVEL_LABEL = { beginner: "Beginner", intermediate: "Intermediate", challenge: "Challenge" } as const;
 
 export function exerciseKey(lessonId: string, problemId?: string | null) {
@@ -314,3 +317,6 @@ export function validateCourse(): string[] {
   }
   return problems;
 }
+
+export { fillInPuzzle, assembleFillIn, MAX_ANSWER_LENGTH, MAX_BLANKS } from "./fill-in";
+export type { FillInPuzzle, FillInBlank } from "./fill-in";

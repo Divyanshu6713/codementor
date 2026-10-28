@@ -7,7 +7,8 @@ import { and, eq, sql } from "drizzle-orm";
 import { COURSE_LESSONS, COURSE_MODULES, getCourseLesson } from "@/content/course";
 import { getDb, schema, type Tx } from "@/server/db/client";
 import { checkAchievements, achievementCodes } from "./achievements";
-import { XP_RULES, pathXpEvents } from "./progression";
+import { XP_RULES, pathXpEvents, pathXpFor } from "./progression";
+import { FILL_SUFFIX, isFillKey } from "@/content/course";
 
 export type LessonState = { hintLevel: number; solutionViewed: boolean; passed: boolean; xp: number };
 
@@ -68,8 +69,12 @@ export async function recordPass(studentId: string, lessonId: string): Promise<P
   return db.transaction(async (tx) => {
     const row = await tx.query.courseProgress.findFirst({ where: and(eq(schema.courseProgress.studentId, studentId), eq(schema.courseProgress.lessonId, lessonId)) });
     if (row?.passedAt) return { firstPass: false, xp: 0, moduleCompleted: null, achievements: [] };
-    const hintLevel = row?.hintLevel ?? 0;
-    const afterSolution = Boolean(row?.solutionViewedAt);
+    // "Complete the code" shares hints and the worked solution with the exercise it scaffolds.
+    const base = isFillKey(lessonId)
+      ? await tx.query.courseProgress.findFirst({ where: and(eq(schema.courseProgress.studentId, studentId), eq(schema.courseProgress.lessonId, lessonId.slice(0, -FILL_SUFFIX.length))) })
+      : null;
+    const hintLevel = Math.max(row?.hintLevel ?? 0, base?.hintLevel ?? 0);
+    const afterSolution = Boolean(row?.solutionViewedAt ?? base?.solutionViewedAt);
     await upsert(tx, studentId, lessonId, { passedAt: new Date(), passedHintLevel: hintLevel, passedAfterSolution: afterSolution });
     const progress = await pathProgress(tx, studentId);
     const mod = progress.modules.find((m) => m.lessons.some((l) => l.id === lessonId));
@@ -77,9 +82,7 @@ export async function recordPass(studentId: string, lessonId: string): Promise<P
     const titles = await achievementCodes(tx, earned);
     return {
       firstPass: true,
-      xp: lessonId.includes("~")
-        ? XP_RULES.practicePassed(lessonId.endsWith("~p3") ? "challenge" : "intermediate", hintLevel, afterSolution)
-        : XP_RULES.lessonPassed(hintLevel, afterSolution),
+      xp: pathXpFor(lessonId, hintLevel, afterSolution),
       moduleCompleted: mod?.complete ? { title: mod.title, xp: XP_RULES.moduleCompleted } : null,
       achievements: titles.map((a) => ({ code: a.code, title: a.title })),
     };

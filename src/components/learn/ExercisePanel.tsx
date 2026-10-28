@@ -21,7 +21,7 @@ interface RunResult {
   feedback: Feedback[];
 }
 
-interface CheckResult {
+export interface CheckResult {
   passed: boolean;
   verdict: string;
   compileStatus: "success" | "error" | "rejected";
@@ -198,7 +198,7 @@ function RunOutput({ r }: { r: RunResult }) {
   );
 }
 
-function CheckOutput({ r, practice, busy, onReveal }: { r: CheckResult; practice: boolean; busy: boolean; onReveal: () => void }) {
+export function CheckOutput({ r, practice, busy, onReveal, successText }: { r: CheckResult; practice: boolean; busy: boolean; onReveal: () => void; successText?: string }) {
   if (r.compileStatus !== "success") {
     return (
       <div className="space-y-3">
@@ -214,7 +214,7 @@ function CheckOutput({ r, practice, busy, onReveal }: { r: CheckResult; practice
       {r.passed ? (
         <div className="rounded-xl border border-success/30 bg-success-soft px-4 py-3">
           <p className="flex items-center gap-2 font-semibold text-success"><CheckCircle2 size={18} aria-hidden /> {practice ? "Problem solved" : "Exercise complete"} — all {r.testsTotal} tests passed</p>
-          <p className="mt-1 text-sm text-ink-2">{practice ? "Nice work. Try the next level, or head back to the lesson." : "Lesson complete. Try the practice problems below, or scroll down for the next step."}</p>
+          <p className="mt-1 text-sm text-ink-2">{successText ?? (practice ? "Nice work. Try the next level, or head back to the lesson." : "Lesson complete. Try the practice problems below, or scroll down for the next step.")}</p>
         </div>
       ) : (
         <p className="flex items-center gap-2 font-semibold text-danger"><CircleX size={18} aria-hidden /> {r.testsPassed} of {r.testsTotal} tests passed</p>
@@ -269,7 +269,7 @@ function Mini({ label, text }: { label: string; text: string }) {
 }
 
 /** A short, earned celebration: XP for the first pass, module completion, new achievements. */
-function Celebration({ reward, maxXp }: { reward: PassReward; maxXp: number }) {
+export function Celebration({ reward, maxXp, note }: { reward: PassReward; maxXp: number; note?: string }) {
   return (
     <div className="animate-rise mt-3 overflow-hidden rounded-[var(--radius-card)] bg-hero p-5 text-white shadow-pop" role="status">
       <p className="flex items-center gap-2 text-lg font-extrabold"><Sparkles size={20} aria-hidden /> +{reward.xp} XP</p>
@@ -279,7 +279,7 @@ function Celebration({ reward, maxXp }: { reward: PassReward; maxXp: number }) {
       {reward.achievements.map((a) => (
         <p key={a.code} className="mt-2 flex items-center gap-2 font-semibold"><Trophy size={17} aria-hidden /> Achievement unlocked: {a.title}</p>
       ))}
-      <p className="mt-2 text-sm text-white/85">{reward.xp >= maxXp ? "Solved with little or no help — that's the most XP this problem gives." : "Next time, try one fewer hint for more XP."}</p>
+      <p className="mt-2 text-sm text-white/85">{note ?? (reward.xp >= maxXp ? "Solved with little or no help — that's the most XP this problem gives." : "Next time, try one fewer hint for more XP.")}</p>
     </div>
   );
 }

@@ -23,7 +23,9 @@ export async function checkAchievements(db: Tx, studentId: string): Promise<stri
 
   const path = await db.select({ lessonId: schema.courseProgress.lessonId, passedHintLevel: schema.courseProgress.passedHintLevel, passedAfterSolution: schema.courseProgress.passedAfterSolution })
     .from(schema.courseProgress).where(and(eq(schema.courseProgress.studentId, studentId), isNotNull(schema.courseProgress.passedAt)));
-  const passedLessons = new Set(path.map((p) => p.lessonId));
+  // "Complete the code" passes are scaffolded, so they don't count towards lesson achievements.
+  const solved = path.filter((p) => !p.lessonId.endsWith("+fill"));
+  const passedLessons = new Set(solved.map((p) => p.lessonId));
   const moduleDone = (id: string) => {
     const m = COURSE_MODULES.find((x) => x.id === id);
     return Boolean(m?.lessons.length && m.lessons.every((l) => passedLessons.has(l)));
@@ -32,7 +34,7 @@ export async function checkAchievements(db: Tx, studentId: string): Promise<stri
   await check("MODULE_FOUNDATIONS", () => moduleDone("foundations"));
   await check("MODULE_LOGIC", () => moduleDone("logic"));
   await check("MODULE_LOOPS", () => moduleDone("loops"));
-  await check("LESSON_SOLO_5", () => path.filter((p) => (p.passedHintLevel ?? 0) <= 1 && !p.passedAfterSolution).length >= 5);
+  await check("LESSON_SOLO_5", () => solved.filter((p) => (p.passedHintLevel ?? 0) <= 1 && !p.passedAfterSolution).length >= 5);
 
   await check("FIRST_PROGRAM", async () => {
     // A passed lesson exercise is a compiled, judged program too.

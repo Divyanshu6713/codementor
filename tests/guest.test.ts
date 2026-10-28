@@ -17,7 +17,8 @@ import type { AIProvider, LessonTutorRequest } from "@/server/ai/types";
 import { AIBudgetExhaustedError, resetMeteringForTesting } from "@/server/ai/metering";
 import { applySafetyGate, setExecutionProviderForTesting } from "@/server/execution/providers";
 import { explainCompilerOutput, firstErrorLine } from "@/server/learning/feedback";
-import { checkExercise, runOnce, workedSolution } from "@/server/services/lesson-exercises";
+import { checkExercise, checkFillIn, fillInView, runOnce, workedSolution } from "@/server/services/lesson-exercises";
+import { fillInPuzzle } from "@/content/course/fill-in";
 import { noteHint, noteSolutionViewed, pathProgress, recordPass } from "@/server/services/lesson-path";
 import { mentorHelp } from "@/server/services/mentor";
 import { progression } from "@/server/services/progression";
@@ -94,6 +95,31 @@ describe("lesson path progress and XP", () => {
 describe.runIf(canExecute)("checking exercises (real compiler)", () => {
   beforeAll(async () => useLocalSandbox(), 120_000);
   afterAll(() => setExecutionProviderForTesting(null));
+
+  it("Complete the code: any correct line passes, wrong lines fail, and it earns 10 XP without counting as the lesson", async () => {
+    const lesson = getCourseLesson("for-loops")!;
+    const view = fillInView("for-loops")!;
+    expect(JSON.stringify(view)).not.toContain(lesson.exercise.tests.find((t) => t.visibility === "hidden")!.output);
+    const puzzle = fillInPuzzle(lesson.exercise)!;
+    const ours = puzzle.blanks.map((b) => lesson.exercise.solution.split("\n")[b.line].trim().replace(/\s*\{$/, ""));
+    expect((await checkFillIn("for-loops", ours, false)).passed).toBe(true);
+    // A wrong line in the first blank fails the real tests.
+    const wrong = [...ours];
+    wrong[0] = "int count = 1;";
+    const bad = await checkFillIn("for-loops", wrong, false);
+    if (/count/.test(ours[0])) expect(bad.passed).toBe(false);
+    await expect(checkFillIn("for-loops", ours.slice(1), false)).rejects.toThrow(/every blank/);
+    await expect(checkFillIn("for-loops", ours.map((a, i) => (i === 0 ? `${a}\nint x;` : a)), false)).rejects.toThrow(/one line/);
+
+    const g = await createGuestUser("beginner");
+    expect((await recordPass(g.id, "for-loops+fill")).xp).toBe(10);
+    const progress = await pathProgress(db, g.id);
+    expect(progress.lessonState("for-loops").passed).toBe(false);
+    expect(progress.passedCount).toBe(0);
+    expect((await progression(db, g.id)).xp).toBe(10);
+    const ach = await db.select().from(schema.studentAchievements).where(eq(schema.studentAchievements.studentId, g.id));
+    expect(ach.map((a) => a.code)).not.toContain("FIRST_LESSON");
+  });
 
   it("passes a correct solution", async () => {
     const r = await checkExercise("if-else", getCourseLesson("if-else")!.exercise.solution, false);

@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { ChevronLeft, Sparkles } from "lucide-react";
 import { ExercisePanel } from "@/components/learn/ExercisePanel";
 import { HelpPanel } from "@/components/learn/HelpPanel";
+import { FillInToggle } from "@/components/learn/FillInPanel";
+import { fillInView } from "@/server/services/lesson-exercises";
 import { LessonStateProvider } from "@/components/learn/LessonState";
 import { PracticeLadder } from "@/components/learn/PracticeLadder";
 import { Badge } from "@/components/ui";
-import { COURSE_MODULES, PRACTICE_LEVEL_LABEL, exerciseKey, getCourseLesson, toPublicProblem } from "@/content/course";
+import { COURSE_MODULES, FILL_SUFFIX, PRACTICE_LEVEL_LABEL, exerciseKey, getCourseLesson, toPublicProblem } from "@/content/course";
 import { requirePageUser } from "@/server/auth/current";
 import { getDb } from "@/server/db/client";
 import { executionStatus } from "@/server/execution/providers";
@@ -37,6 +39,7 @@ export default async function PracticeProblemPage({ params }: Params) {
   const { lesson, problem } = f;
   const pub = toPublicProblem(problem);
   const key = exerciseKey(lesson.id, problem.id);
+  const fill = fillInView(key);
   const mod = COURSE_MODULES.find((m) => m.id === lesson.moduleId)!;
   const db = await getDb();
   const [progress, exec, mentor] = await Promise.all([pathProgress(db, user.id), executionStatus(), mentorStatus(user.id)]);
@@ -76,6 +79,7 @@ export default async function PracticeProblemPage({ params }: Params) {
         <section aria-label="Problem" className="space-y-4">
           <ExercisePanel exercise={{ title: pub.title, prompt: pub.prompt, samples: pub.samples, hiddenCount: pub.hiddenCount }} />
           <HelpPanel exerciseTitle={pub.title} />
+          {fill && <FillInToggle exerciseKey={key} view={fill} executionAvailable={exec.available} alreadyPassed={progress.lessonState(`${key}${FILL_SUFFIX}`).passed} />}
         </section>
       </div>
     </LessonStateProvider>

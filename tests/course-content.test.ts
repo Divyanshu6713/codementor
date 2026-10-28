@@ -11,6 +11,7 @@ import { COURSE_LESSONS, COURSE_MODULES, neighbours, roadmap, toPublicLesson, to
 import { TRACES } from "@/content/traces";
 import { CONCEPTS } from "@/content/curriculum";
 import { renderManifest } from "@/content/course/manifest";
+import { assembleFillIn, blankAnswer, fillInPuzzle } from "@/content/course/fill-in";
 import { readFileSync } from "node:fs";
 import { outputsMatch } from "@/server/execution/judge";
 import { executeRequest } from "../worker/sandbox/runner";
@@ -101,6 +102,36 @@ describe("course structure", () => {
       }
       for (const t of l.exercise.tests.filter((x) => x.visibility === "hidden")) {
         expect(pub.includes(JSON.stringify(t.label)) && pub.includes(JSON.stringify(t.input))).toBe(false);
+      }
+    }
+  });
+});
+
+describe("Complete the code", () => {
+  const all = COURSE_LESSONS.flatMap((l) => [l.exercise, ...(l.practice ?? [])].map((ex) => ({ id: l.id, ex })));
+
+  it("has a puzzle for nearly every exercise, with 1–3 blanks", () => {
+    const withPuzzle = all.filter(({ ex }) => fillInPuzzle(ex));
+    expect(withPuzzle.length / all.length).toBeGreaterThan(0.9);
+    for (const { ex } of withPuzzle) {
+      const n = fillInPuzzle(ex)!.blanks.length;
+      expect(n).toBeGreaterThanOrEqual(1);
+      expect(n).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it("our own answers rebuild exactly the reference solution, and the puzzle hides those lines", () => {
+    for (const { id, ex } of all) {
+      const p = fillInPuzzle(ex);
+      if (!p) continue;
+      const answers = p.blanks.map((b) => blankAnswer(ex, b));
+      expect(assembleFillIn(p, answers), `${id}: ${ex.title}`).toBe(ex.solution);
+      for (const b of p.blanks) expect(p.lines[b.line], id).toBeNull();
+      // Blanks are never lines the starter already gives away (a line may appear once in the starter and twice in the solution).
+      const count = (text: string, line: string) => text.split("\n").filter((l) => l.trim() === line).length;
+      for (const b of p.blanks) {
+        const line = ex.solution.split("\n")[b.line].trim();
+        expect(count(ex.solution, line), `${id}: ${line}`).toBeGreaterThan(count(ex.starterCode, line));
       }
     }
   });

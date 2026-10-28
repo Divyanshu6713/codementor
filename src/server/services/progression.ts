@@ -47,7 +47,16 @@ export const XP_RULES = {
     if (afterSolution) return 5;
     return Math.max(full / 2, full - 5 * Math.max(0, hintLevel - 1));
   },
+  /** Solving an exercise in "Complete the code" mode (most of the solution is shown): 10, or 5 after the worked solution. */
+  fillPassed: (afterSolution: boolean) => (afterSolution ? 5 : 10),
 } as const;
+
+/** XP for one passed exercise key (lesson exercise, practice problem, or "Complete the code"). */
+export function pathXpFor(key: string, hintLevel: number, afterSolution: boolean): number {
+  if (key.endsWith("+fill")) return XP_RULES.fillPassed(afterSolution);
+  if (key.includes("~")) return XP_RULES.practicePassed(key.endsWith("~p3") ? "challenge" : "intermediate", hintLevel, afterSolution);
+  return XP_RULES.lessonPassed(hintLevel, afterSolution);
+}
 
 export interface PathRow { lessonId: string; passedAt: Date | null; passedHintLevel: number | null; passedAfterSolution: boolean | null }
 
@@ -55,10 +64,7 @@ export interface PathRow { lessonId: string; passedAt: Date | null; passedHintLe
 export function pathXpEvents(rows: PathRow[]): { at: Date; xp: number; lessonId: string | null; moduleId: string | null }[] {
   const passed = new Map(rows.filter((r) => r.passedAt).map((r) => [r.lessonId, r]));
   const events = [...passed.values()].map((r) => {
-    const practice = r.lessonId.includes("~") ? (r.lessonId.endsWith("~p3") ? "challenge" : "intermediate") : null;
-    const xp = practice
-      ? XP_RULES.practicePassed(practice, r.passedHintLevel ?? 0, Boolean(r.passedAfterSolution))
-      : XP_RULES.lessonPassed(r.passedHintLevel ?? 0, Boolean(r.passedAfterSolution));
+    const xp = pathXpFor(r.lessonId, r.passedHintLevel ?? 0, Boolean(r.passedAfterSolution));
     return { at: r.passedAt!, xp, lessonId: r.lessonId as string | null, moduleId: null as string | null };
   });
   for (const m of COURSE_MODULES) {

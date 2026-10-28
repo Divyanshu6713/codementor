@@ -8,6 +8,8 @@ import { Markdown } from "@/components/Markdown";
 import { DryRun } from "@/components/lesson/DryRun";
 import { Visual } from "@/components/lesson/Visuals";
 import { ExercisePanel } from "@/components/learn/ExercisePanel";
+import { FillInToggle } from "@/components/learn/FillInPanel";
+import { fillInView } from "@/server/services/lesson-exercises";
 import { HelpPanel } from "@/components/learn/HelpPanel";
 import { LessonFooter } from "@/components/learn/LessonFooter";
 import { LessonStateProvider } from "@/components/learn/LessonState";
@@ -15,7 +17,7 @@ import { PracticeLadder } from "@/components/learn/PracticeLadder";
 import { PredictOutput } from "@/components/learn/PredictOutput";
 import { QuickCheck } from "@/components/learn/QuickCheck";
 import { Badge } from "@/components/ui";
-import { COURSE_MODULES, exerciseKey, getCourseLesson, neighbours, toPublicLesson } from "@/content/course";
+import { COURSE_MODULES, FILL_SUFFIX, exerciseKey, getCourseLesson, neighbours, toPublicLesson } from "@/content/course";
 import { getTrace } from "@/content/traces";
 import { requirePageUser } from "@/server/auth/current";
 import { getDb } from "@/server/db/client";
@@ -57,6 +59,7 @@ export default async function LessonPage({ params }: Params) {
   const [progress, exec, mentor] = await Promise.all([pathProgress(db, user.id), executionStatus(), mentorStatus(user.id)]);
   const state = progress.lessonState(lesson.id);
   const moduleProgress = progress.modules.find((m) => m.id === mod.id)!;
+  const fill = fillInView(lesson.id);
 
   return (
     <LessonStateProvider
@@ -139,6 +142,7 @@ export default async function LessonPage({ params }: Params) {
           />
           <ExercisePanel exercise={{ title: pub.exercise.title, prompt: pub.exercise.prompt, samples: pub.exercise.samples, hiddenCount: pub.exercise.hiddenCount }} />
           <HelpPanel exerciseTitle={pub.exercise.title} />
+          {fill && <FillInToggle exerciseKey={lesson.id} view={fill} executionAvailable={exec.available} alreadyPassed={progress.lessonState(`${lesson.id}${FILL_SUFFIX}`).passed} />}
         </Step>
 
         <Step id="continue" n={5} title="Key points and next step">

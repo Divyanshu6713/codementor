@@ -3,7 +3,8 @@
  * sandbox, judged and not stored. Correctness is decided only by the deterministic judge, never
  * by AI. (Recording progress and XP is lesson-path.ts.)
  */
-import { getCourseLesson, resolveExercise } from "@/content/course";
+import { MAX_ANSWER_LENGTH, assembleFillIn, fillInPuzzle, getCourseLesson, resolveExercise } from "@/content/course";
+import { AppError } from "@/server/errors";
 import type { CourseLesson, Exercise } from "@/content/course";
 import { judgeSubmission, publicJudgeView, type JudgeOutcome } from "@/server/execution/judge";
 import { execute } from "@/server/execution/providers";
@@ -58,6 +59,43 @@ export const judgeLesson = (lesson: CourseLesson, source: string) => judgeExerci
  */
 export async function checkExercise(key: string, source: string, showFailingHidden: boolean) {
   const { exercise } = requireExercise(key);
+  const outcome = await judgeExercise(exercise, source);
+  const view = publicJudgeView(outcome);
+  let revealed: { label: string; input: string; expected: string; actual: string } | null = null;
+  if (showFailingHidden && outcome.verdict !== "accepted" && outcome.compileStatus === "success") {
+    const t = outcome.tests.find((x) => x.visibility === "hidden" && !x.passed);
+    if (t) revealed = { label: t.label, input: t.input, expected: t.expected, actual: t.actual.slice(0, 4000) };
+  }
+  return {
+    passed: outcome.verdict === "accepted",
+    verdict: outcome.verdict,
+    compileStatus: outcome.compileStatus,
+    compileOutput: outcome.compileOutput,
+    testsPassed: outcome.testsPassed,
+    testsTotal: outcome.testsTotal,
+    tests: view.tests.map((t) => ({ label: t.label, hidden: t.hidden, category: t.category, passed: t.passed, status: t.status, input: t.input, expected: t.expected, actual: t.actual, detail: t.detail })),
+    revealedHidden: revealed,
+    feedback: checkFeedback(outcome),
+  };
+}
+
+/** The public "Complete the code" view: the solution's lines with the blanks left out. */
+export function fillInView(key: string): { lines: (string | null)[]; blanks: { indent: string; suffix: string }[] } | null {
+  const { exercise } = requireExercise(key);
+  const puzzle = fillInPuzzle(exercise);
+  if (!puzzle) return null;
+  return { lines: puzzle.lines, blanks: puzzle.blanks.map((b) => ({ indent: b.indent, suffix: b.suffix })) };
+}
+
+/** Judges "Complete the code" answers by splicing them into the solution and running the real tests. */
+export async function checkFillIn(key: string, answers: string[], showFailingHidden: boolean) {
+  const { exercise } = requireExercise(key);
+  const puzzle = fillInPuzzle(exercise);
+  if (!puzzle) throw new NotFoundError("That exercise's \"Complete the code\" version");
+  if (answers.length !== puzzle.blanks.length) throw new AppError("Fill in every blank.", 400, "invalid_input");
+  if (answers.some((a) => a.length > MAX_ANSWER_LENGTH || /[\r\n]/.test(a))) throw new AppError("Each blank takes one line of code.", 400, "invalid_input");
+  if (answers.some((a) => !a.trim())) throw new AppError("Fill in every blank.", 400, "invalid_input");
+  const source = assembleFillIn(puzzle, answers);
   const outcome = await judgeExercise(exercise, source);
   const view = publicJudgeView(outcome);
   let revealed: { label: string; input: string; expected: string; actual: string } | null = null;
