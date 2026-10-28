@@ -1,6 +1,6 @@
 # CodeMentor — launch status
 
-Last updated: 2026-10-27 (Milestone 2). **Verdict: NO-GO for public launch** — see §8.
+Last updated: 2026-10-28 (Milestone 3). **Verdict: ready for private testing on the VPS; NO-GO for students until the server checks in §8 pass.**
 Lesson-level detail: [CPP_CURRICULUM_MANIFEST.md](CPP_CURRICULUM_MANIFEST.md) (generated from the code).
 Earlier audit: [CODE_MENTOR_AUDIT.md](CODE_MENTOR_AUDIT.md).
 
@@ -38,13 +38,16 @@ Also: a knowledge-check question was written for the 12 older lessons that had n
 now **refuses to publish** a lesson without a quick check (3+ options, each with feedback), at least two
 common mistakes, four hints, a sample test, and hidden tests for any exercise that reads input.
 
+**Milestone 3 (2026-10-28):** 127 lessons, 0 planned topics; every lesson has three judged problems
+(exercise + intermediate + challenge = 381, all compiler-verified); question banks for every concept;
+60 Arena problems; "Complete the code" mode; 14 dry-run traces and 8 interactive diagrams; account
+recovery; C++20 in the sandbox. See [IMPLEMENTATION_PROGRESS.md](IMPLEMENTATION_PROGRESS.md).
+
 Honest limits of the content:
-- Each lesson has **one** coding exercise + **one** quiz question. The spec's "three practice problems
-  (beginner/intermediate/challenge)" per lesson is **not met** yet.
-- Topics the sandbox cannot run are kept as *planned* (threads, CMake, Git, `std::filesystem`, multi-file
-  builds). File streams are taught in text; runnable examples use string streams (same interface).
-- The sandbox compiles C++20 (since 2026-10-28). C++23 features are described, not executed.
-- Remaining planned topics per module are listed in the manifest.
+- Topics the sandbox cannot run (threads, CMake, Git, multi-file builds, `std::filesystem`) show the
+  real code as reading material and are practised through deterministic simulations.
+- C++23 features are described, not executed.
+- Lesson wording has not had a human review yet; correctness is compiler-verified.
 
 ## 3. Sandbox header policy changes
 
@@ -56,18 +59,16 @@ no OS access. `<fstream>`, `<thread>`, `<filesystem>`, processes, `#define`, quo
 
 | Feature | Status |
 |---|---|
-| All C++ lessons open without locks; prev/next across all 17 modules | working, tested (unit + browser) |
-| Editor (Monaco + plain-text fallback), Run with stdin, Reset, Check | working (existing) |
-| Verdicts: accepted / wrong answer / compile error / runtime error / time limit / memory limit / output limit | working (existing judge) |
-| Hidden tests; reveal one failing hidden case on request | working (existing) |
-| Knowledge check per lesson with per-option feedback | working, all 68 lessons |
-| Dry-run visualiser (4 traces incl. recursion call stack), checked against g++ | working |
-| Progressive hints 1–4 + worked solution on explicit request (reduced XP) | working (existing) |
+| 127 C++ lessons, all open without locks; prev/next across all 17 modules | working, tested (unit + browser) |
+| Three judged problems per lesson (beginner / intermediate / challenge) with XP by help used | working, tested |
+| "Complete the code" (1–3 blanked lines, judged by the real tests, 10 XP) | working, tested (unit) |
+| Editor, Run with stdin, Check, hidden tests, reveal one failing hidden case | working |
+| Dry-run visualiser: 14 traces (arrays, call stacks), each checked against g++ | working |
+| Interactive diagrams: 8 (loops, comparisons, pointers/memory, complexity, stack vs queue) | working |
+| Adaptive practice banks for every concept; Practice Arena (60 problems); Daily Challenge | working |
+| Account recovery: recovery codes, reset links (admin / linked parent), change password | working, tested (unit + browser + production build on PostgreSQL) |
 | AI mentor (Claude/OpenAI) | optional; curated fallback works; **real provider calls NOT VERIFIED** |
-| Guest learning; per-lesson server progress; Continue | working |
-| 3 practice problems per lesson | **not implemented** |
-| Modes: Predict output (quick checks), Fix the bug (e.g. scope, debugging lessons), Coding challenge, Guided project (Module 17) | present |
-| Mode: Complete the code (course) | **not implemented** for course lessons |
+| VPS launch kit (install, update/rollback, backups, restore test, alerts) | scripts written; backup/restore/health run against PostgreSQL 16; **systemd/Caddy/gVisor parts need the real VPS** |
 
 ## 5. Security
 
@@ -79,33 +80,30 @@ no OS access. `<fstream>`, `<thread>`, `<filesystem>`, processes, `#define`, quo
   (Monaco pins a vulnerable 3.4.8).
 - AI keys server-side; quotas and monthly budget; code fenced as untrusted data.
 
-## 6. Tests executed
-
-Full gate run after Milestone 2 (Windows dev machine, real g++, sandbox windows-job backend):
+## 6. Tests executed (2026-10-28, Linux, real g++, local sandbox backend)
 
 | Gate | Result |
 |---|---|
 | `npx tsc --noEmit` | pass |
 | `npx eslint src tests worker scripts e2e` | pass |
-| `npx vitest run` | 1400 passed, 1 failed, 7 skipped (Docker-only). The failure is the Python lesson `py-objects-references` (Python 3.15 changed an error message) — not C++ |
-| Course content (in vitest) | every lesson: solution passes all tests, starter does not, example output exact; 4 traces match g++ |
-| `npm run build` | pass (Next 16.4.3) |
-| `npx playwright test` | 16 / 16 passed — incl. 5 course-access tests (guest + signed-in, full path, direct URLs, first lesson of all 17 modules, prev/next, not-found page) and the Monaco editor test after the dompurify override |
-| `npm audit --omit=dev` | 0 vulnerabilities |
+| `npx vitest run` | **2077 passed, 0 failed** (18 files) — every lesson example, exercise and practice problem compiled and judged; 14 traces; question banks; account recovery |
+| `next build` (standalone) | pass; production server started against PostgreSQL 16: health ok, signup → recovery code → `/forgot` reset → login |
+| `npx playwright test` | 17 / 17 passed |
 
-Not executed here: `tests/sandbox-docker.test.ts` (needs Docker + gVisor), real AI calls, load tests.
+Not executed here: `tests/sandbox-docker.test.ts` with gVisor (needs the VPS), real AI calls, load tests.
 
 ## 7. Deployment
 
-No new environment variables. **No database migration**: lesson ids and module ids are unchanged; new
-concept rows are upserted by the existing content sync. Steps: deploy the commit, `npm ci`, `npm run build`,
-restart web **and sandbox worker**. Rollback: redeploy the previous commit (no data to undo).
-See [DEPLOYMENT-HOSTINGER.md](DEPLOYMENT-HOSTINGER.md) and [LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md).
+**New migration `0005_account_recovery`** (adds `users.recovery_code_hash` and `password_resets`;
+additive, safe to roll back the code). Use `deploy/vps/install.sh` for a fresh VPS and
+`deploy/vps/update.sh` for updates (backs up first, rolls back automatically on a failed health check).
+Restart the sandbox worker too (C++20 flags). See [DEPLOYMENT-HOSTINGER.md](DEPLOYMENT-HOSTINGER.md)
+and [LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md).
 
 ## 8. Launch blockers
 
-1. Production sandbox (Docker + gVisor) not verified on the target VPS (LAUNCH-CHECKLIST §2).
-2. HTTPS, firewall, backups + a tested restore, monitoring — not verifiable from this machine.
-3. Spec gap: one exercise per lesson instead of three graded practice problems.
-4. Real AI provider calls unverified (blocker only if AI is enabled at launch).
-5. Python course: one lesson's expected output depends on the Python version (separate task).
+1. Production sandbox (Docker + gVisor) not yet verified on the target VPS (LAUNCH-CHECKLIST §2).
+2. HTTPS, firewall, off-site backups, a tested restore and alerts — scripted, but must be run and
+   checked on the VPS.
+3. Real AI provider calls unverified (blocker only if AI is enabled at launch).
+4. Python course: one lesson's expected output depends on the Python version (separate task).

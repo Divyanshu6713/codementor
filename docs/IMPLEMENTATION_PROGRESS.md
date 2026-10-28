@@ -1,6 +1,6 @@
 # C++ platform — implementation progress
 
-Tracks the CodeMentor master prompts. **CodeMentor's C++ platform is not complete** — see "Remaining".
+Tracks the CodeMentor master prompts. The C++ course is complete (127 lessons); what is left is verification on the real server — see "Remaining".
 Exact lesson status: [CPP_CURRICULUM_MANIFEST.md](CPP_CURRICULUM_MANIFEST.md) (generated).
 Launch readiness: [CODE_MENTOR_LAUNCH_STATUS.md](CODE_MENTOR_LAUNCH_STATUS.md).
 
@@ -23,21 +23,34 @@ signed-in).
 - Sandbox headers added: stdexcept, exception, optional, string_view, cassert.
 - Security: dependency advisories fixed (0 production vulnerabilities).
 
+## Milestone 3 — everything the audit listed as missing ✅
+- **Practice question banks** for every C++ concept (adaptive engine: MCQ, predict output, find the
+  error, complete code, reorder, trace, write code, explain), each predict-output answer checked by
+  running the code.
+- **Three graded problems per lesson**: the lesson exercise (beginner) plus intermediate and challenge
+  practice problems — 381 judged exercises, each with a compiled reference solution and hidden tests.
+- **All 59 planned lessons written** — 127 lessons, 0 planned topics. Topics the sandbox can't run
+  (threads, CMake, Git, multi-file builds, `std::filesystem`) show the real code as reading and are
+  practised with deterministic simulations.
+- **C++20** in the sandbox (`-std=c++20`, C++20 library headers allowed).
+- **Practice Arena**: 60 judged problems (was 11); the Daily Challenge pool grows to 32 from
+  2026-10-29 without changing past days.
+- **"Complete the code"** mode for 362 of 381 exercises: up to three key lines blanked; answers are
+  judged by the real tests; 10 XP; doesn't complete the lesson.
+- **Visualisers**: 14 dry-run traces (arrays with index markers, call stacks), plus memory boxes,
+  a complexity growth chart and stack vs queue.
+- **Account recovery without email**: recovery codes, reset links from admins or linked parents,
+  change password; migration 0005.
+- **VPS launch kit**: `deploy/vps/install.sh`, release-based `update.sh` with backup and automatic
+  rollback, verified backups, restore tests, health alerts, cron.
+- **Local sandbox backend for macOS/Linux** development (ulimit + sandbox-exec / unshare).
+- UX: phone layout fixes (lesson footer, home cards).
+
 ## Remaining (not done)
-
-### Content
-- **Three graded practice problems per lesson** (beginner / intermediate / challenge): today one
-  exercise + one quiz question per lesson. Needs a `practice: Exercise[]` field, judge/API support for a
-  practice id, progress per practice item, and UI.
-- Planned topics still listed per module (e.g. operators in depth, ternary, merge/quick sort,
-  Dijkstra, knapsack/LIS, threads, CMake, Git, more projects).
-- C++20/23 lessons need the sandbox to compile those lessons with a newer `-std`.
-
-### Learning features
-- "Complete the code" mode for course lessons.
-- Link lesson concepts to adaptive mastery (revision suggestions per concept).
-- More visualisations (pointer/memory diagrams, grid walker, tree/graph animations).
-- Real-provider verification of the AI mentor (needs API keys on staging).
+- Real AI provider verification (needs API keys on staging).
+- Running the launch kit on the real VPS (Docker + gVisor sandbox tests, HTTPS, alerts).
+- A human review of lesson wording; correctness is compiler-verified but clarity isn't.
+- Link lesson concepts to adaptive mastery (revision suggestions per lesson concept).
 
 ## How to verify
 

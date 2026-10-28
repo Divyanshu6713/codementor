@@ -61,11 +61,11 @@ test("the first lesson of every one of the 17 modules opens by direct URL", asyn
 
 test("prev/next walks from Strings into the new modules without dead ends", async ({ page }) => {
   await startAsGuest(page);
-  await page.goto("/app/learn/string-problems");
+  await page.goto("/app/learn/c-strings");
   await page.getByRole("link", { name: /^Next: Addresses and pointers/ }).click();
   await expectRealLesson(page, "pointers-basics");
-  await page.getByRole("link", { name: /String problems/ }).click();
-  await expect(page).toHaveURL(/\/app\/learn\/string-problems$/);
+  await page.getByRole("link", { name: /C-style strings/ }).click();
+  await expect(page).toHaveURL(/\/app\/learn\/c-strings$/);
 });
 
 test("signed-in student: the same topics open, and an unknown lesson shows the not-found page", async ({ page }) => {

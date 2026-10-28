@@ -178,6 +178,7 @@ test("guests can keep their progress with a username and sign back in", async ({
   await page.waitForURL((url) => !url.pathname.startsWith("/app"));
   await page.goto("/login");
   await page.getByRole("link", { name: "Forgot your password?" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Forgot your password?" })).toBeVisible();
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Recovery code").fill(code.toLowerCase());
   await page.getByLabel("New password").fill("e2e-new-password-456");
