@@ -14,7 +14,7 @@ export const TRACKS: TrackDef[] = [
 export const CONCEPTS: ConceptDef[] = [
   {
     id: "cpp-basics", trackId: "cpp-foundations", status: "active",
-    courseLessons: ["what-is-programming", "how-programs-work", "program-structure", "hello-world", "input-output"],
+    courseLessons: ["what-is-programming", "how-programs-work", "program-structure", "hello-world", "input-output", "compiling-linking", "reading-compiler-errors", "portable-cpp"],
     title: "Program basics", summary: "Program structure, main(), printing with cout and reading with cin.",
     prerequisites: [],
     skills: [
@@ -25,7 +25,7 @@ export const CONCEPTS: ConceptDef[] = [
   },
   {
     id: "variables-types", trackId: "cpp-foundations", status: "active",
-    courseLessons: ["variables", "data-types"],
+    courseLessons: ["variables", "data-types", "constants-const", "escape-sizeof", "getline-input", "overflow-signed", "floating-point", "validating-input"],
     title: "Variables & data types", summary: "Storing values, assignment, int / double / char / bool / string.",
     prerequisites: [{ id: "cpp-basics", strength: "required" }],
     skills: [
@@ -35,7 +35,7 @@ export const CONCEPTS: ConceptDef[] = [
   },
   {
     id: "arithmetic-ops", trackId: "cpp-foundations", status: "active",
-    courseLessons: ["operators"],
+    courseLessons: ["operators", "precedence-associativity", "division-modulo-deep", "casting-promotion", "predict-output"],
     title: "Arithmetic operators", summary: "+ - * / %, integer division, ++ and --, and +=.",
     prerequisites: [{ id: "variables-types", strength: "required" }],
     skills: [
@@ -56,7 +56,7 @@ export const CONCEPTS: ConceptDef[] = [
   },
   {
     id: "conditions", trackId: "cpp-foundations", status: "active",
-    courseLessons: ["if-statements", "if-else", "else-if", "nested-conditions", "switch"],
+    courseLessons: ["if-statements", "if-else", "else-if", "nested-conditions", "switch", "ternary-operator", "eligibility-grading"],
     title: "Conditions (if / else)", summary: "Making decisions with if, else, else-if ladders and nesting.",
     prerequisites: [{ id: "comparison-ops", strength: "required" }],
     skills: [
@@ -67,7 +67,7 @@ export const CONCEPTS: ConceptDef[] = [
   },
   {
     id: "for-loops", trackId: "cpp-foundations", status: "active",
-    courseLessons: ["why-loops", "for-loops", "break-continue", "loop-patterns"],
+    courseLessons: ["why-loops", "for-loops", "break-continue", "loop-patterns", "debug-loop-missions"],
     title: "For loops", summary: "Counting loops: start, keep-going condition, update — and getting the boundaries right.",
     prerequisites: [
       { id: "comparison-ops", strength: "required" },
@@ -87,7 +87,7 @@ export const CONCEPTS: ConceptDef[] = [
   },
   {
     id: "while-loops", trackId: "cpp-foundations", status: "active",
-    courseLessons: ["while-loops", "do-while"],
+    courseLessons: ["while-loops", "do-while", "infinite-loops"],
     title: "While loops", summary: "Repeating while a condition stays true.",
     prerequisites: [{ id: "comparison-ops", strength: "required" }, { id: "arithmetic-ops", strength: "required" }, { id: "for-loops", strength: "recommended" }],
     skills: [
@@ -119,7 +119,7 @@ export const CONCEPTS: ConceptDef[] = [
   },
   {
     id: "arrays", trackId: "cpp-foundations", status: "active",
-    courseLessons: ["arrays-intro", "array-traversal", "array-search", "arrays-functions"],
+    courseLessons: ["arrays-intro", "array-traversal", "array-search", "arrays-functions", "prefix-sums"],
     title: "Arrays", summary: "Storing many values, indexing from 0, traversing with loops.",
     prerequisites: [{ id: "for-loops", strength: "required" }],
     skills: [
@@ -130,7 +130,7 @@ export const CONCEPTS: ConceptDef[] = [
   },
   {
     id: "strings", trackId: "cpp-foundations", status: "active",
-    courseLessons: ["strings-basics", "string-problems"],
+    courseLessons: ["strings-basics", "string-problems", "c-strings"],
     title: "Strings", summary: "std::string, characters, length and traversal.",
     prerequisites: [{ id: "arrays", strength: "required" }],
     skills: [
@@ -145,21 +145,21 @@ export const CONCEPTS: ConceptDef[] = [
       { id: "matrix_traversal", title: "Matrix traversal", description: "Nested loops over rows and columns; sums, diagonals, transposes." },
     ],
   },
-  { id: "pointers", trackId: "cpp-core", status: "active", courseLessons: ["pointers-basics", "pointers-arrays", "dynamic-memory"], title: "Pointers", summary: "Memory addresses, dereferencing, pointers with arrays and functions.", prerequisites: [{ id: "arrays", strength: "required" }, { id: "functions", strength: "required" }], 
+  { id: "pointers", trackId: "cpp-core", status: "active", courseLessons: ["pointers-basics", "pointers-arrays", "dynamic-memory", "references-depth", "pointer-to-pointer", "shared-weak-ptr"], title: "Pointers", summary: "Memory addresses, dereferencing, pointers with arrays and functions.", prerequisites: [{ id: "arrays", strength: "required" }, { id: "functions", strength: "required" }], 
     skills: [
       { id: "pointer_basics", title: "Addresses & dereferencing", description: "&x gives an address; *p reads or writes what p points to." },
       { id: "pointer_arithmetic", title: "Pointers & arrays", description: "Array names as pointers, p + 1, references vs pointers." },
       { id: "dynamic_memory", title: "Dynamic memory", description: "new / delete, leaks, dangling pointers and smart pointers." },
     ],
   },
-  { id: "oop", trackId: "cpp-core", status: "active", courseLessons: ["classes-objects", "constructors-destructors", "inheritance-polymorphism"], title: "Classes & objects", summary: "Constructors, encapsulation, inheritance, polymorphism.", prerequisites: [{ id: "functions", strength: "required" }], 
+  { id: "oop", trackId: "cpp-core", status: "active", courseLessons: ["classes-objects", "constructors-destructors", "inheritance-polymorphism", "static-members", "composition-aggregation", "operator-overloading", "friend-functions", "class-from-scratch"], title: "Classes & objects", summary: "Constructors, encapsulation, inheritance, polymorphism.", prerequisites: [{ id: "functions", strength: "required" }], 
     skills: [
       { id: "class_basics", title: "Classes & encapsulation", description: "Members, public/private, methods and objects." },
       { id: "constructors", title: "Constructors & destructors", description: "Initialising objects, initializer lists, when destructors run." },
       { id: "inheritance_poly", title: "Inheritance & polymorphism", description: "Base/derived classes, virtual functions, overriding." },
     ],
   },
-  { id: "stl", trackId: "cpp-core", status: "active", courseLessons: ["vector-algorithms", "map-set", "stack-queue"], title: "The standard library (STL)", summary: "vector, map, set, stack, queue, algorithms, iterators.", prerequisites: [{ id: "arrays", strength: "required" }, { id: "functions", strength: "required" }], 
+  { id: "stl", trackId: "cpp-core", status: "active", courseLessons: ["vector-algorithms", "map-set", "stack-queue", "pair-tuple", "multiset-multimap", "unordered-containers", "custom-comparators", "choosing-containers"], title: "The standard library (STL)", summary: "vector, map, set, stack, queue, algorithms, iterators.", prerequisites: [{ id: "arrays", strength: "required" }, { id: "functions", strength: "required" }], 
     skills: [
       { id: "vector_ops", title: "vector", description: "push_back, size, iteration, erase and common pitfalls." },
       { id: "map_set", title: "map & set", description: "Sorted unique keys, counting with maps, lookups." },
@@ -173,7 +173,7 @@ export const CONCEPTS: ConceptDef[] = [
       { id: "loop_complexity", title: "Analysing code", description: "Counting the work done by loops, nested loops and halving." },
     ],
   },
-  { id: "searching-sorting", trackId: "dsa-foundations", status: "active", courseLessons: ["array-search", "binary-search", "simple-sorts"], title: "Searching & sorting", summary: "Linear and binary search, simple sorts.", prerequisites: [{ id: "arrays", strength: "required" }, { id: "complexity", strength: "recommended" }], 
+  { id: "searching-sorting", trackId: "dsa-foundations", status: "active", courseLessons: ["array-search", "binary-search", "simple-sorts", "merge-sort", "quicksort", "counting-sort", "comparing-sorts"], title: "Searching & sorting", summary: "Linear and binary search, simple sorts.", prerequisites: [{ id: "arrays", strength: "required" }, { id: "complexity", strength: "recommended" }], 
     skills: [
       { id: "binary_search", title: "Binary search", description: "Halving a sorted range; mid, low and high." },
       { id: "sorting_algos", title: "Sorting algorithms", description: "Bubble, selection and insertion sort; std::sort and comparators." },
@@ -185,21 +185,21 @@ export const CONCEPTS: ConceptDef[] = [
       { id: "recursive_trace", title: "Tracing recursion", description: "Following the call stack and return values." },
     ],
   },
-  { id: "modern-cpp", trackId: "cpp-core", status: "active", courseLessons: ["auto-lambdas", "templates", "modern-features"], title: "Modern C++ & templates", summary: "auto, lambdas, templates, optional, string_view and enum class.", prerequisites: [{ id: "functions", strength: "required" }, { id: "stl", strength: "recommended" }], 
+  { id: "modern-cpp", trackId: "cpp-core", status: "active", courseLessons: ["auto-lambdas", "templates", "modern-features", "const-correctness", "function-pointers", "variadic-templates", "namespaces-headers"], title: "Modern C++ & templates", summary: "auto, lambdas, templates, optional, string_view and enum class.", prerequisites: [{ id: "functions", strength: "required" }, { id: "stl", strength: "recommended" }], 
     skills: [
       { id: "auto_lambda", title: "auto & lambdas", description: "Type deduction, range-for, lambdas and captures." },
       { id: "templates", title: "Templates", description: "Generic functions and classes." },
       { id: "modern_types", title: "optional, enum class, string_view", description: "Safer modern types and when to use them." },
     ],
   },
-  { id: "files-exceptions", trackId: "cpp-core", status: "active", courseLessons: ["streams-parsing", "exceptions", "debugging-testing"], title: "Streams, exceptions & debugging", summary: "File and string streams, try/catch, and finding bugs systematically.", prerequisites: [{ id: "oop", strength: "required" }], 
+  { id: "files-exceptions", trackId: "cpp-core", status: "active", courseLessons: ["streams-parsing", "exceptions", "debugging-testing", "paths-filesystem", "debugging-ide"], title: "Streams, exceptions & debugging", summary: "File and string streams, try/catch, and finding bugs systematically.", prerequisites: [{ id: "oop", strength: "required" }], 
     skills: [
       { id: "streams", title: "Streams & parsing", description: "stringstream, getline, reading until the end of input." },
       { id: "exceptions", title: "Exceptions", description: "throw, try/catch, and which handler runs." },
       { id: "debugging", title: "Debugging & testing", description: "Reading errors, finding bugs systematically, assert." },
     ],
   },
-  { id: "data-structures", trackId: "dsa-foundations", status: "active", courseLessons: ["linked-lists", "trees-bst", "hashing-heaps", "graphs-bfs-dfs"], title: "Data structures", summary: "Linked lists, binary search trees, hash tables, heaps and graphs.", prerequisites: [{ id: "pointers", strength: "required" }, { id: "recursion", strength: "required" }], 
+  { id: "data-structures", trackId: "dsa-foundations", status: "active", courseLessons: ["linked-lists", "trees-bst", "hashing-heaps", "graphs-bfs-dfs", "dynamic-arrays", "stacks-queues-scratch", "tries", "topological-sort", "disjoint-set-union", "dijkstra"], title: "Data structures", summary: "Linked lists, binary search trees, hash tables, heaps and graphs.", prerequisites: [{ id: "pointers", strength: "required" }, { id: "recursion", strength: "required" }], 
     skills: [
       { id: "linked_lists", title: "Linked lists", description: "Nodes, next pointers, traversal and insertion." },
       { id: "trees_bst", title: "Trees & BSTs", description: "Binary trees, BST ordering and traversals." },
@@ -207,7 +207,7 @@ export const CONCEPTS: ConceptDef[] = [
       { id: "graphs", title: "Graphs", description: "Adjacency lists, BFS and DFS." },
     ],
   },
-  { id: "algorithms", trackId: "dsa-foundations", status: "active", courseLessons: ["two-pointers-window", "greedy", "backtracking", "dynamic-programming", "bits-number-theory"], title: "Algorithms & problem solving", summary: "Two pointers, greedy, backtracking, dynamic programming, bits and primes.", prerequisites: [{ id: "recursion", strength: "required" }, { id: "complexity", strength: "required" }], 
+  { id: "algorithms", trackId: "dsa-foundations", status: "active", courseLessons: ["two-pointers-window", "greedy", "backtracking", "dynamic-programming", "bits-number-theory", "divide-and-conquer", "more-dp", "choosing-approach"], title: "Algorithms & problem solving", summary: "Two pointers, greedy, backtracking, dynamic programming, bits and primes.", prerequisites: [{ id: "recursion", strength: "required" }, { id: "complexity", strength: "required" }], 
     skills: [
       { id: "two_pointers", title: "Two pointers & windows", description: "Prefix sums, two pointers and sliding windows." },
       { id: "greedy", title: "Greedy", description: "Making the locally best choice — and when that's right." },
@@ -216,14 +216,14 @@ export const CONCEPTS: ConceptDef[] = [
       { id: "bits_math", title: "Bits & number theory", description: "Bitwise operators, gcd, primes and modular arithmetic." },
     ],
   },
-  { id: "advanced-cpp", trackId: "cpp-core", status: "active", courseLessons: ["raii-ownership", "move-semantics", "undefined-behaviour"], title: "Advanced C++ & safety", summary: "RAII, ownership, move semantics and avoiding undefined behaviour.", prerequisites: [{ id: "pointers", strength: "required" }, { id: "oop", strength: "required" }], 
+  { id: "advanced-cpp", trackId: "cpp-core", status: "active", courseLessons: ["raii-ownership", "move-semantics", "undefined-behaviour", "concurrency-races", "separate-compilation", "cmake-basics", "git-workflow"], title: "Advanced C++ & safety", summary: "RAII, ownership, move semantics and avoiding undefined behaviour.", prerequisites: [{ id: "pointers", strength: "required" }, { id: "oop", strength: "required" }], 
     skills: [
       { id: "raii", title: "RAII & ownership", description: "Resources tied to object lifetime; unique_ptr and shared_ptr." },
       { id: "move_semantics", title: "Copy & move", description: "Copy vs move, the rule of three/five." },
       { id: "undefined_behaviour", title: "Undefined behaviour", description: "Out-of-bounds, uninitialised values, overflow and dangling references." },
     ],
   },
-  { id: "projects", trackId: "problem-solving", status: "active", courseLessons: ["project-grade-manager", "project-bank-system", "capstone-library"], title: "Projects & capstone", summary: "Complete command-line programs that combine everything.", prerequisites: [{ id: "oop", strength: "required" }, { id: "stl", strength: "required" }], 
+  { id: "projects", trackId: "problem-solving", status: "active", courseLessons: ["project-calculator", "project-guessing-game", "project-contact-manager", "project-expense-tracker", "project-grade-manager", "project-bank-system", "capstone-library"], title: "Projects & capstone", summary: "Complete command-line programs that combine everything.", prerequisites: [{ id: "oop", strength: "required" }, { id: "stl", strength: "required" }], 
     skills: [
       { id: "program_design", title: "Program design", description: "Splitting a program into functions, classes and data." },
       { id: "input_handling", title: "Menus & input handling", description: "Command loops, validation and clear output." },

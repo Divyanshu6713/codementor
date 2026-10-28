@@ -19,6 +19,12 @@ import { PROJECT_LESSONS } from "./module17-projects";
 import { EXTRA_BASICS_LESSONS } from "./extra-basics";
 import { EXTRA_OPERATORS_LOGIC_LESSONS } from "./extra-operators-logic";
 import { EXTRA_POINTERS_OOP_LESSONS } from "./extra-pointers-oop";
+import { EXTRA_MODERN_STL_LESSONS } from "./extra-modern-stl";
+import { EXTRA_SORTING_LESSONS } from "./extra-sorting";
+import { EXTRA_DS_LESSONS } from "./extra-ds";
+import { EXTRA_ALGORITHMS_LESSONS } from "./extra-algorithms";
+import { EXTRA_ENGINEERING_LESSONS } from "./extra-engineering";
+import { EXTRA_PROJECT_LESSONS } from "./extra-projects";
 import type { CourseLesson, CourseLevel, CourseModule, Exercise, PracticeProblem } from "./types";
 import { PRACTICE_BY_LESSON } from "./practice";
 
@@ -36,12 +42,26 @@ const ALL_LESSONS: CourseLesson[] = [
   ...EXTRA_BASICS_LESSONS,
   ...EXTRA_OPERATORS_LOGIC_LESSONS,
   ...EXTRA_POINTERS_OOP_LESSONS,
+  ...EXTRA_MODERN_STL_LESSONS,
+  ...EXTRA_SORTING_LESSONS,
+  ...EXTRA_DS_LESSONS,
+  ...EXTRA_ALGORITHMS_LESSONS,
+  ...EXTRA_ENGINEERING_LESSONS,
+  ...EXTRA_PROJECT_LESSONS,
 ].map((l) => ({ ...l, practice: l.practice ?? PRACTICE_BY_LESSON[l.id] }));
 
 /** Lessons written later name the lesson they follow (`after`), so modules read in teaching order. */
+const START = "@start";
+
 function placeLessons(list: CourseLesson[]): CourseLesson[] {
   const out = list.filter((l) => !l.after);
-  let pending = list.filter((l) => l.after);
+  // `after: "@start"` opens its module (before the module's first anchored lesson).
+  for (const l of list.filter((x) => x.after === START)) {
+    const i = out.findIndex((x) => x.moduleId === l.moduleId);
+    if (i >= 0) out.splice(i, 0, l);
+    else out.push(l);
+  }
+  let pending = list.filter((l) => l.after && l.after !== START);
   while (pending.length) {
     const next: CourseLesson[] = [];
     for (const l of pending) {
@@ -106,42 +126,34 @@ const MODULE_DEFS: ModuleDef[] = [
   {
     id: "modern-cpp", level: "intermediate", title: "Modern C++ and advanced functions",
     summary: "auto, range-based for, lambdas, templates, namespaces, const correctness and newer standard features.",
-    planned: ["Namespaces and headers", "const correctness in depth", "Function pointers and std::function", "Variadic templates"],
   },
   {
     id: "stl", level: "intermediate", title: "The Standard Template Library",
     summary: "vector, pair, string, stack, queue, deque, priority_queue, set, map, unordered containers, iterators and algorithms.",
-    planned: ["pair and tuple", "multiset and multimap", "unordered_map and unordered_set in depth", "Custom comparators", "Choosing the right container"],
   },
   {
     id: "searching-sorting", level: "intermediate", title: "Searching and sorting",
     summary: "Time and space complexity, binary search, bubble, selection, insertion, merge and quick sort, and std::sort.",
-    planned: ["Merge sort", "Quicksort", "Counting sort", "Comparing algorithms by constraints"],
   },
   {
     id: "data-structures", level: "advanced", title: "Data structures",
     summary: "Linked lists, stacks, queues, hash tables, trees, BSTs, heaps, tries, graphs and union-find.",
-    planned: ["How vector grows (dynamic arrays)", "Stacks and queues from scratch", "Tries", "Topological sort", "Disjoint-set union", "Shortest paths: Dijkstra"],
   },
   {
     id: "algorithms", level: "advanced", title: "Algorithms and problem solving",
     summary: "Two pointers, sliding window, prefix sums, recursion, backtracking, greedy, divide and conquer, DP, bits and number theory.",
-    planned: ["Divide and conquer", "More DP: knapsack and longest increasing subsequence", "Choosing an approach from constraints"],
   },
   {
     id: "files-exceptions", level: "advanced", title: "Files, exceptions and debugging",
     summary: "File streams, exceptions, defensive programming, reading compiler warnings, debugging and basic testing.",
-    planned: ["std::filesystem", "Debugging with breakpoints in an IDE"],
   },
   {
     id: "advanced-cpp", level: "advanced", title: "Advanced C++ and engineering practice",
     summary: "RAII, ownership, move semantics, the rule of zero/three/five, undefined behaviour, concurrency basics and tooling.",
-    planned: ["Threads, mutexes and race conditions", "Separate compilation and header guards", "CMake fundamentals", "A basic Git workflow"],
   },
   {
     id: "projects", level: "advanced", title: "Projects and capstone",
     summary: "Guided projects that combine everything: from a calculator to a full command-line application.",
-    planned: ["Calculator", "Number guessing game", "Contact manager", "File-based expense tracker"],
   },
 ];
 
@@ -253,7 +265,7 @@ export function validateCourse(): string[] {
   // Checked over every written lesson, so one with a misspelt moduleId can't silently disappear.
   for (const l of ALL_LESSONS) {
     if (!moduleIds.has(l.moduleId)) problems.push(`${l.id}: unknown module ${l.moduleId}`);
-    if (l.after) {
+    if (l.after && l.after !== START) {
       const anchor = ALL_LESSONS.find((x) => x.id === l.after);
       if (!anchor) problems.push(`${l.id}: placed after unknown lesson ${l.after}`);
       else if (anchor.moduleId !== l.moduleId) problems.push(`${l.id}: placed after ${l.after}, which is in another module`);

@@ -3,7 +3,7 @@
 > Generated from `src/content/course` by `npm run content:manifest`. Do not edit by hand —
 > `tests/course-content.test.ts` fails when this file is out of date.
 
-**95 published lessons** in 17 of 17 modules · 404 exercise tests · 190 practice problems · 32 planned topics not yet written.
+**127 published lessons** in 17 of 17 modules · 519 exercise tests · 254 practice problems · 0 planned topics not yet written.
 
 Every published lesson has: goals, concept sections, common mistakes, a worked example whose output is
 checked against real g++, a quick check, a coding exercise with sample and hidden tests, four
@@ -26,14 +26,14 @@ Status key: **published** = written and compiler-verified · **planned** = liste
 | 7 | Arrays and strings (`arrays-strings`) | Beginner | 9 | 0 |
 | 8 | Pointers, references and dynamic memory (`pointers`) | Intermediate | 6 | 0 |
 | 9 | Object-oriented programming (`oop`) | Intermediate | 8 | 0 |
-| 10 | Modern C++ and advanced functions (`modern-cpp`) | Intermediate | 3 | 4 |
-| 11 | The Standard Template Library (`stl`) | Intermediate | 3 | 5 |
-| 12 | Searching and sorting (`searching-sorting`) | Intermediate | 3 | 4 |
-| 13 | Data structures (`data-structures`) | Advanced | 4 | 6 |
-| 14 | Algorithms and problem solving (`algorithms`) | Advanced | 5 | 3 |
-| 15 | Files, exceptions and debugging (`files-exceptions`) | Advanced | 3 | 2 |
-| 16 | Advanced C++ and engineering practice (`advanced-cpp`) | Advanced | 3 | 4 |
-| 17 | Projects and capstone (`projects`) | Advanced | 3 | 4 |
+| 10 | Modern C++ and advanced functions (`modern-cpp`) | Intermediate | 7 | 0 |
+| 11 | The Standard Template Library (`stl`) | Intermediate | 8 | 0 |
+| 12 | Searching and sorting (`searching-sorting`) | Intermediate | 7 | 0 |
+| 13 | Data structures (`data-structures`) | Advanced | 10 | 0 |
+| 14 | Algorithms and problem solving (`algorithms`) | Advanced | 8 | 0 |
+| 15 | Files, exceptions and debugging (`files-exceptions`) | Advanced | 5 | 0 |
+| 16 | Advanced C++ and engineering practice (`advanced-cpp`) | Advanced | 7 | 0 |
+| 17 | Projects and capstone (`projects`) | Advanced | 7 | 0 |
 
 ## 1. Introduction to C++
 
@@ -173,15 +173,12 @@ Status key: **published** = written and compiler-verified · **planned** = liste
 | Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Practice | Status |
 |---|---|---|---|---|---|---|---|
 | `auto-lambdas` | auto, range-for and lambdas | 25 | C++17 | auto, range-based for, lambda, capture, comparator, count_if | 1/3 | Sort words by length · Closest to k | published |
+| `const-correctness` | const correctness in depth | 15 | C++17 | const member function, pointer to const, mutable | 1/2 | Pointer to const, const pointer · A cached statistic | published |
+| `function-pointers` | Function pointers and std::function | 15 | C++17 | function pointer, std::function, callback, dispatch table | 1/3 | A pipeline of steps · Event callbacks with state | published |
 | `templates` | Function and class templates | 25 | C++17 | template, typename, type deduction, class template, generic programming | 1/2 | Largest of anything · A generic min-max tracker | published |
+| `variadic-templates` | Variadic templates | 15 | C++17 | parameter pack, fold expression, sizeof... | 1/2 | maxOf, the recursive way · Join anything | published |
 | `modern-features` | Modern C++17 tools: optional, string_view, enum class | 25 | C++17 | std::optional, std::string_view, enum class, structured bindings, constexpr, C++20 | 1/3 | Traffic lights with enum class · Parse key=value with optional | published |
-
-Still to write in this module:
-
-- Namespaces and headers — planned
-- const correctness in depth — planned
-- Function pointers and std::function — planned
-- Variadic templates — planned
+| `namespaces-headers` | Namespaces and headers | 15 | C++17 | namespace, using declaration, header file, include guard | 1/2 | Two libraries, one name · Helpers private to one file | published |
 
 ## 11. The Standard Template Library
 
@@ -190,16 +187,13 @@ Still to write in this module:
 | Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Practice | Status |
 |---|---|---|---|---|---|---|---|
 | `vector-algorithms` | vector, iterators and algorithms | 25 | C++17 | vector, iterator, begin/end, sort, find, count, accumulate, unique | 2/3 | Stats with algorithms · How many are at most x? | published |
+| `pair-tuple` | pair and tuple | 15 | C++17 | pair, tuple, structured bindings, tie, lexicographic order | 1/2 | Closest points first · Swap with tie | published |
 | `map-set` | set and map | 25 | C++17 | set, map, key-value, insert, count, find, unordered_map, ordered iteration | 1/3 | Phone book · Group anagrams | published |
+| `multiset-multimap` | multiset and multimap | 15 | C++17 | multiset, multimap, equal_range, erase one | 1/3 | Several numbers per name · How many rooms? | published |
+| `unordered-containers` | unordered_map and unordered_set in depth | 15 | C++17 | hash table, unordered_map, unordered_set, custom hash | 1/3 | Word counts, sorted output · Places visited on a walk | published |
+| `custom-comparators` | Custom comparators | 15 | C++17 | comparator, strict weak ordering, functor, priority_queue order | 1/2 | Case-insensitive unique words · Task queue | published |
+| `choosing-containers` | Choosing the right container | 20 | C++17 | container choice, deque, list, LRU cache, monotonic deque | 1/3 | Pick the container: undo/redo · LRU cache | published |
 | `stack-queue` | stack, queue and priority_queue | 25 | C++17 | stack, LIFO, queue, FIFO, deque, priority_queue | 1/3 | Undo · Counting-out game | published |
-
-Still to write in this module:
-
-- pair and tuple — planned
-- multiset and multimap — planned
-- unordered_map and unordered_set in depth — planned
-- Custom comparators — planned
-- Choosing the right container — planned
 
 ## 12. Searching and sorting
 
@@ -210,13 +204,10 @@ Still to write in this module:
 | `complexity` | Time and space complexity | 25 | C++17 | Big-O, time complexity, space complexity, O(1), O(log n), O(n), O(n log n), O(n^2), constraints | 2/5 | Pairs that add up — fast · Answer many range sums | published |
 | `binary-search` | Binary search | 25 | C++17 | binary search, sorted array, lower_bound, O(log n), invariant | 1/4 | Integer square root · Smallest truck capacity | published |
 | `simple-sorts` | Sorting: bubble, selection, insertion and std::sort | 30 | C++17 | bubble sort, selection sort, insertion sort, stability, std::sort, comparator | 1/4 | Selection sort, pass by pass · Bubble sort with an early exit | published |
-
-Still to write in this module:
-
-- Merge sort — planned
-- Quicksort — planned
-- Counting sort — planned
-- Comparing algorithms by constraints — planned
+| `merge-sort` | Merge sort | 20 | C++17 | divide and conquer, merge, O(n log n), stable sort | 1/3 | Merge two sorted lists · Count inversions | published |
+| `quicksort` | Quicksort | 20 | C++17 | partition, pivot, average O(n log n), worst case O(n²) | 1/3 | Partition around a value · Quickselect: the k-th smallest | published |
+| `counting-sort` | Counting sort | 15 | C++17 | counting sort, frequency array, O(n + k), non-comparison sort | 1/2 | Stable sort by grade · Radix sort | published |
+| `comparing-sorts` | Comparing algorithms by constraints | 15 | C++17 | constraints, operations budget, stability, std::stable_sort | 1/3 | Which complexity fits? · Median of a big list | published |
 
 ## 13. Data structures
 
@@ -225,18 +216,15 @@ Still to write in this module:
 | Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Practice | Status |
 |---|---|---|---|---|---|---|---|
 | `linked-lists` | Linked lists | 30 | C++17 | linked list, node, head, traversal, insertion, deletion, std::list | 1/3 | Middle of a linked list · Remove every x | published |
+| `dynamic-arrays` | How vector grows (dynamic arrays) | 20 | C++17 | capacity, size, reallocation, amortised O(1), iterator invalidation | 1/2 | Doubling versus +10 · Insert in the middle | published |
+| `stacks-queues-scratch` | Stacks and queues from scratch | 20 | C++17 | stack, queue, circular buffer, two-stack queue | 1/2 | Queue from two stacks · Stack with O(1) minimum | published |
 | `trees-bst` | Trees and binary search trees | 30 | C++17 | tree, binary tree, binary search tree, root, leaf, height, inorder traversal | 2/3 | Minimum, maximum and search in a BST · Level by level | published |
+| `tries` | Tries | 20 | C++17 | trie, prefix tree, end-of-word marker, autocomplete | 1/2 | Longest common prefix · Autocomplete | published |
 | `hashing-heaps` | Hash tables and heaps | 30 | C++17 | hash table, hash function, bucket, collision, load factor, heap, priority queue, top-k | 1/3 | First word that appears once · Running median | published |
 | `graphs-bfs-dfs` | Graphs: BFS and DFS | 35 | C++17 | graph, vertex, edge, adjacency list, BFS, DFS, shortest path, connected components | 1/3 | Count the islands of friends · Escape the maze | published |
-
-Still to write in this module:
-
-- How vector grows (dynamic arrays) — planned
-- Stacks and queues from scratch — planned
-- Tries — planned
-- Topological sort — planned
-- Disjoint-set union — planned
-- Shortest paths: Dijkstra — planned
+| `topological-sort` | Topological sort | 20 | C++17 | directed acyclic graph, in-degree, Kahn's algorithm, cycle detection | 1/3 | Can it be built? · Minimum semesters | published |
+| `disjoint-set-union` | Disjoint-set union | 20 | C++17 | union-find, path compression, union by size, connected components | 1/2 | Redundant cable · Cheapest road network (Kruskal) | published |
+| `dijkstra` | Shortest paths: Dijkstra | 25 | C++17 | weighted graph, Dijkstra's algorithm, priority queue, path reconstruction | 1/3 | Show the route · Cheapest walk across a grid | published |
 
 ## 14. Algorithms and problem solving
 
@@ -247,14 +235,11 @@ Still to write in this module:
 | `two-pointers-window` | Prefix sums, two pointers and sliding windows | 30 | C++17 | prefix sums, two pointers, sliding window, brute force to optimisation | 2/3 | Longest stretch without repeats · Subarrays that sum to K | published |
 | `greedy` | Greedy algorithms | 25 | C++17 | greedy, activity selection, exchange argument, counterexample | 1/4 | Hand out the sweets · Fewest arrows | published |
 | `backtracking` | Backtracking | 30 | C++17 | backtracking, recursion, search tree, permutations, combinations, pruning | 1/3 | All arrangements · N queens | published |
+| `divide-and-conquer` | Divide and conquer | 20 | C++17 | divide and conquer, recurrence, fast exponentiation, maximum subarray | 1/3 | Modular power · Fibonacci in O(log n) | published |
 | `dynamic-programming` | Dynamic programming | 35 | C++17 | dynamic programming, overlapping subproblems, memoization, tabulation, state, coin change | 2/4 | Longest common subsequence · Knapsack | published |
+| `more-dp` | More DP: knapsack and longest increasing subsequence | 25 | C++17 | 0/1 knapsack, 1D DP table, LIS, patience sorting, edit distance | 1/3 | LIS for big inputs · Edit distance | published |
 | `bits-number-theory` | Bit manipulation and number theory | 30 | C++17 | binary, bitwise operators, power of two, gcd, lcm, modular arithmetic, sieve of Eratosthenes | 2/3 | Fast power modulo m · Subsets with a given sum | published |
-
-Still to write in this module:
-
-- Divide and conquer — planned
-- More DP: knapsack and longest increasing subsequence — planned
-- Choosing an approach from constraints — planned
+| `choosing-approach` | Choosing an approach from constraints | 20 | C++17 | problem patterns, binary search on the answer, prefix sums with hashing, bitmask brute force | 1/3 | Count subarrays with sum k · Fair split (n ≤ 20) | published |
 
 ## 15. Files, exceptions and debugging
 
@@ -263,13 +248,10 @@ Still to write in this module:
 | Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Practice | Status |
 |---|---|---|---|---|---|---|---|
 | `streams-parsing` | Streams: files, string streams and parsing | 30 | C++17 | stream, ifstream, ofstream, stringstream, getline, delimiter, stream errors, istream& | 1/2 | Shopping list totals · A tiny word counter | published |
+| `paths-filesystem` | std::filesystem | 20 | C++17 | std::filesystem::path, directory iteration, path components, normalisation | 1/3 | Normalise a path · An in-memory file system | published |
 | `exceptions` | Exceptions: throw, try and catch | 30 | C++17 | exception, throw, try, catch, std::exception, invalid_argument, runtime_error, out_of_range, stack unwinding | 1/3 | Parse a positive number · A custom exception for stock | published |
 | `debugging-testing` | Debugging and testing your code | 25 | C++17 | compiler errors, warnings, assert, debug output, unit test, edge cases, minimal reproduction | 1/3 | Fix the average of positives · Fix the median | published |
-
-Still to write in this module:
-
-- std::filesystem — planned
-- Debugging with breakpoints in an IDE — planned
+| `debugging-ide` | Debugging with breakpoints in an IDE | 15 | C++17 | breakpoint, step over, step into, watch, call stack, conditional breakpoint | 1/3 | A trace like a watch window · Conditional breakpoint | published |
 
 ## 16. Advanced C++ and engineering practice
 
@@ -280,13 +262,10 @@ Still to write in this module:
 | `raii-ownership` | RAII and ownership | 30 | C++17 | RAII, ownership, unique_ptr, shared_ptr, use_count, deleted copy, scope guard | 1/2 | Who owns the resource? · Shared ownership | published |
 | `move-semantics` | Copy, move and the rule of five | 35 | C++17 | copy constructor, copy assignment, move constructor, rvalue reference, std::move, rule of three, rule of five, rule of zero | 1/2 | Deep copy · Move instead of copy | published |
 | `undefined-behaviour` | Undefined behaviour and writing safe code | 30 | C++17 | undefined behaviour, signed overflow, out of bounds, uninitialised variable, dangling reference, sanitizers, numeric_limits | 1/3 | Checked indexing · Overflow-safe multiplication | published |
-
-Still to write in this module:
-
-- Threads, mutexes and race conditions — planned
-- Separate compilation and header guards — planned
-- CMake fundamentals — planned
-- A basic Git workflow — planned
+| `concurrency-races` | Threads, mutexes and race conditions | 25 | C++17 | std::thread, data race, std::mutex, lock_guard, deadlock, atomic | 1/4 | Spot the deadlock risk · Bounded buffer (producer–consumer) | published |
+| `separate-compilation` | Separate compilation and header guards | 20 | C++17 | translation unit, declaration vs definition, linker, one definition rule, header guard | 1/2 | Who includes whom? · Play the linker | published |
+| `cmake-basics` | CMake fundamentals | 20 | C++17 | CMakeLists.txt, add_executable, add_library, target_link_libraries, build directory | 1/3 | Generate the compile commands · PUBLIC or PRIVATE? | published |
+| `git-workflow` | A basic Git workflow | 20 | C++17 | repository, staging area, commit, branch, merge, conflict | 1/2 | Branches as labels · Three-way merge | published |
 
 ## 17. Projects and capstone
 
@@ -294,13 +273,10 @@ Still to write in this module:
 
 | Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Practice | Status |
 |---|---|---|---|---|---|---|---|
+| `project-calculator` | Project: Calculator | 35 | C++17 | tokenising, operator precedence, recursive descent parsing, error handling | 1/3 | Add variables · Show the RPN | published |
+| `project-guessing-game` | Project: Number guessing game | 30 | C++17 | pseudo-random numbers, seeds, game loop, input validation, binary search | 1/3 | The computer guesses · Bulls and cows | published |
+| `project-contact-manager` | Project: Contact manager | 35 | C++17 | class design, std::map, validation, command loop, undo stack | 1/2 | Search by prefix · Undo | published |
+| `project-expense-tracker` | Project: File-based expense tracker | 40 | C++17 | CSV parsing, money as integers, load / save, reports, error recovery | 1/2 | Monthly report · Budgets and alerts | published |
 | `project-grade-manager` | Project: student grade manager | 45 | C++17 | project, command loop, map, sorting, functions, input validation | 1/3 | Class statistics · Report card with ranks | published |
 | `project-bank-system` | Project: bank account system | 50 | C++17 | project, classes, map, exceptions, invariants, atomic operation | 1/3 | Transfers ledger · Undo the last transaction | published |
 | `capstone-library` | Capstone: library management system | 60 | C++17 | capstone, design, classes, map, set, string parsing, case-insensitive search, business rules | 1/3 | Search the catalogue · Late fees | published |
-
-Still to write in this module:
-
-- Calculator — planned
-- Number guessing game — planned
-- Contact manager — planned
-- File-based expense tracker — planned

@@ -93,7 +93,7 @@ export interface PracticeProblem extends Exercise {
 export interface CourseLesson {
   id: string;
   moduleId: string;
-  /** Place this lesson right after another lesson of the same module (default: at the module's end). */
+  /** Place this lesson right after another lesson of the same module (default: at the module's end); "@start" opens the module. */
   after?: string;
   title: string;
   minutes: number;
