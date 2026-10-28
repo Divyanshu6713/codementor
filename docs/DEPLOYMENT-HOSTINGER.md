@@ -27,31 +27,77 @@ What Hostinger documents (checked 2026-10-09; confirm in hPanel, plans change):
 
 Suggested size for a pilot of a few hundred students: 2 vCPU / 8 GB RAM (each compile uses up to ~1 GB for a moment; `SANDBOX_CONCURRENCY` bounds how many run at once). Start with the **Ubuntu 24.04 + Docker** template.
 
-### 1. Base system
+### Quick start (scripted)
+
+1. In Hostinger's DNS zone editor, point an **A record** for your domain (e.g. `learn.example.com`) at the VPS's IP.
+2. Push this repository to a git host the VPS can clone (a private repo works with a deploy key or a token in the URL).
+3. On the VPS, as root:
+   ```bash
+   git clone <your repo> /tmp/codementor && cd /tmp/codementor
+   DOMAIN=learn.example.com REPO_URL=<your repo> ADMIN_EMAIL=you@example.com bash deploy/vps/install.sh
+   ```
+   `install.sh` is idempotent (safe to re-run). It installs Node 22, Docker, **gVisor**, Caddy, a firewall (only SSH/80/443), fail2ban and automatic security updates; creates the `codementor` (web) and `cmsandbox` (code runner) users; generates every secret once into `/etc/codementor/*.env` (mode 640/600); starts PostgreSQL on `127.0.0.1` only; installs the systemd services, the Caddyfile (automatic HTTPS) and the cron jobs; and deploys the first release with `update.sh`.
+4. Follow the steps it prints: create the admin account, run the sandbox tests **on the VPS**, then switch execution on, and test a restore.
+
+### Layout on the server
+
+| Path | What |
+|---|---|
+| `/srv/codementor/repo` | git clone used to fetch new versions |
+| `/srv/codementor/releases/<time>-<sha>` | one built release per deploy (the last 3 are kept) |
+| `/srv/codementor/current` | symlink to the live release — the services run from here |
+| `/srv/codementor/pgdata` | PostgreSQL data (Docker volume) |
+| `/srv/codementor/backups` | database dumps |
+| `/etc/codementor/web.env` | web app config + secrets (`root:codementor 640`) |
+| `/etc/codementor/sandbox.env` | code runner config: **only** `SANDBOX_TOKEN`, no DB/AI secrets (`root:cmsandbox 640`) |
+| `/etc/codementor/postgres.env`, `ops.env` | DB password; alert webhook / off-site backup settings (root only) |
+| `/etc/cron.d/codementor` | backups, restore test, health checks, guest cleanup |
+
+### Updating and rolling back
+
+```bash
+sudo bash /srv/codementor/current/deploy/vps/update.sh              # deploy the branch's latest commit
+sudo REF=v1.2.0 bash /srv/codementor/current/deploy/vps/update.sh   # deploy a tag or commit
+sudo bash /srv/codementor/current/deploy/vps/update.sh --rollback   # back to the previous release
+```
+An update builds the new release in its own folder while the old one keeps serving, **backs up the database**, runs migrations, switches the symlink, restarts and checks `/api/health`. If the check fails it switches back automatically. Migrations only ever add things, so rolling back the code is safe.
+
+### Backups, restore tests and monitoring (set up by install.sh)
+
+- **Nightly backup** at 02:30 (`backup-postgres.sh`): a `pg_dump` that is verified with `pg_restore --list` before it's kept; 14 days retained; also before every update. **Copy dumps off the VPS**: install and configure `rclone`, then set `RCLONE_REMOTE=` in `/etc/codementor/ops.env` (Backblaze B2, Google Drive, S3 …). Hostinger's weekly VPS snapshots are a second layer, not a replacement.
+- **Restore test** monthly (`restore-test.sh`): restores the newest dump into a throw-away database and checks it. Run it by hand once before launch.
+- **Health checks** every 5 minutes (`healthcheck.sh`): local and public `/api/health`, the code runner, disk (< 85 %), memory, and "a backup succeeded in the last 26 h". Problems go to `/var/log/codementor/health.log` and, if `ALERT_WEBHOOK_URL` is set in `ops.env`, to your phone — an [ntfy](https://ntfy.sh) topic URL, or a Slack/Discord incoming webhook. One alert per problem per hour, plus a "recovered" message.
+- Also add an external uptime monitor (e.g. UptimeRobot) on `https://<domain>/api/health` — it catches the case where the whole VPS is down and can't alert you itself.
+- Logs: `journalctl -u codementor-web -f`, `journalctl -u codementor-sandbox -f` (structured JSON; no student code or AI text), `/var/log/caddy/codementor.log`.
+
+> These scripts were checked with `bash -n`, and the backup, restore-test and health-check scripts were run against PostgreSQL 16 in Docker; the systemd/Caddy/gVisor parts can only be exercised on a real VPS — read the output of the first `install.sh` run.
+
+### Manual setup (what install.sh does, step by step)
+
+#### 1. Base system
 ```bash
 apt update && apt upgrade -y
-apt install -y git curl ufw caddy
+apt install -y git curl ufw caddy jq fail2ban unattended-upgrades
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt install -y nodejs   # Node 22 LTS
 ufw default deny incoming && ufw allow OpenSSH && ufw allow 80,443/tcp && ufw enable
 adduser --system --group --home /srv/codementor codementor          # runs the web app
 adduser --system --group --no-create-home cmsandbox                 # runs the code runner (docker group, no app secrets)
 usermod -aG docker cmsandbox
-mkdir -p /etc/codementor /srv/codementor && chown codementor:codementor /srv/codementor
+mkdir -p /etc/codementor /srv/codementor/{releases,backups,pgdata} && chown codementor:codementor /srv/codementor
 ```
 
-### 2. gVisor (strongly recommended isolation for untrusted code)
-Install `runsc` following gVisor's official instructions for Ubuntu, then register it with Docker (`runsc install` adds the `runsc` runtime to `/etc/docker/daemon.json`) and `systemctl restart docker`. Check: `docker run --rm --runtime=runsc hello-world`. Pull the compiler image once: `docker pull gcc:14` (pin its digest in `SANDBOX_DOCKER_IMAGE` for reproducibility).
+#### 2. gVisor (strongly recommended isolation for untrusted code)
+Install `runsc` from gVisor's apt repository, register it with Docker (`runsc install` adds the `runsc` runtime to `/etc/docker/daemon.json`) and `systemctl restart docker`. Check: `docker run --rm --runtime=runsc hello-world`. Pull the compiler image once: `docker pull gcc:14` (pin its digest in `SANDBOX_DOCKER_IMAGE` for reproducibility).
 
-### 3. PostgreSQL
+#### 3. PostgreSQL
 ```bash
 echo "POSTGRES_PASSWORD=$(openssl rand -base64 24)" > /etc/codementor/postgres.env && chmod 600 /etc/codementor/postgres.env
-sudo -u codementor git clone <your repo> /srv/codementor/app
-cd /srv/codementor/app/deploy/vps
-docker compose -f docker-compose.postgres.yml --env-file /etc/codementor/postgres.env up -d
+sudo -u codementor git clone <your repo> /srv/codementor/repo
+docker compose -p codementor -f /srv/codementor/repo/deploy/vps/docker-compose.postgres.yml --env-file /etc/codementor/postgres.env up -d
 ```
 It listens on `127.0.0.1:5432` only. Data lives in `/srv/codementor/pgdata`.
 
-### 4. Configuration
+#### 4. Configuration
 Create `/etc/codementor/web.env` (`chmod 640`, `chown root:codementor`) from `.env.example`:
 ```
 NODE_ENV=production
@@ -79,33 +125,27 @@ SANDBOX_CONCURRENCY=2
 SANDBOX_MAX_QUEUE=16
 ```
 
-### 5. Build, migrate, start
+#### 5. Build, migrate, start
 ```bash
-cd /srv/codementor/app
-sudo -u codementor npm ci
-sudo -u codementor env NEXT_STANDALONE=true npm run build
-sudo -u codementor cp -r .next/static .next/standalone/.next/static
-sudo -u codementor bash -c 'set -a; . /etc/codementor/web.env; npm run db:migrate'
 cp deploy/vps/codementor-web.service deploy/vps/codementor-sandbox.service /etc/systemd/system/
-systemctl daemon-reload && systemctl enable --now codementor-sandbox codementor-web
-cp deploy/vps/Caddyfile /etc/caddy/Caddyfile   # edit the domain first
+cp deploy/vps/codementor.cron /etc/cron.d/codementor
+sed "s/codementor.example.com/<your-domain>/; s/admin@example.com/<your-email>/" deploy/vps/Caddyfile > /etc/caddy/Caddyfile
+systemctl daemon-reload && systemctl enable codementor-sandbox codementor-web
+bash /srv/codementor/repo/deploy/vps/update.sh      # builds a release, migrates, switches /srv/codementor/current, starts
 systemctl reload caddy
 curl -s https://<your-domain>/api/health
 ```
-Point your domain's A record at the VPS (Hostinger DNS zone editor). Caddy obtains HTTPS automatically.
 
-### 6. Verify the sandbox on this host, then open execution
+#### 6. Verify the sandbox on this host, then open execution
 ```bash
-cd /srv/codementor/app && SANDBOX_DOCKER_RUNTIME=runsc npx vitest run tests/sandbox-docker.test.ts
+cd /srv/codementor/current && sudo -u cmsandbox env SANDBOX_DOCKER_RUNTIME=runsc npx vitest run tests/sandbox-docker.test.ts
 ```
-All 7 tests must **run and pass** (if they show as skipped, Docker wasn't reachable). Then set `EXECUTION_PUBLIC_ENABLED=true` in `web.env` and `systemctl restart codementor-web`.
+All tests must **run and pass** (if they show as skipped, Docker wasn't reachable). Then set `EXECUTION_PUBLIC_ENABLED=true` in `web.env` and `systemctl restart codementor-web`.
 
-### 7. Operations
-- Logs: `journalctl -u codementor-web -f`, `journalctl -u codementor-sandbox -f` (structured JSON; no student code or AI text).
-- Health: `GET /api/health` → `{ ok, db, execution, ai }`; point an uptime monitor at it.
-- Backups: `deploy/vps/backup-postgres.sh` nightly via cron, plus Hostinger VPS snapshots; copy dumps off the server. Test a restore (`pg_restore -d codementor_restore <dump>`) before launch.
-- Abandoned guest accounts: `npm run cleanup:guests` (dry run) → `npm run cleanup:guests -- --confirm`.
-- Updates: `git pull && npm ci && NEXT_STANDALONE=true npm run build && cp -r .next/static .next/standalone/.next/static && npm run db:migrate && systemctl restart codementor-web codementor-sandbox`.
+#### 7. Accounts and recovery
+- Admin: `cd /srv/codementor/current && sudo -u codementor bash -c 'set -a; . /etc/codementor/web.env; npm run admin:create'` — the password is written to `.data/admin-account.json` in the release folder; read it, sign in, change it under the console's *Password and recovery* card, make a recovery code, then delete the file.
+- Students and parents who forget a password use their **recovery code** at `/forgot`. If they lost that too, a linked parent (parent dashboard) or an admin (console → *Account recovery*) can create a one-time reset link valid for 24 hours. There is no email; nothing is sent anywhere.
+- Abandoned guest accounts are cleaned weekly by cron (`npm run cleanup:guests -- --confirm`); run it once without `--confirm` first to see what it would delete.
 
 ---
 

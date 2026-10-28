@@ -1,11 +1,26 @@
 #!/usr/bin/env bash
-# Nightly PostgreSQL backup (cron: 30 2 * * * /srv/codementor/app/deploy/vps/backup-postgres.sh)
-# Keeps 14 daily dumps. Copy them off the VPS too (Hostinger VPS snapshots, or another server).
+# PostgreSQL backup. Run nightly by /etc/cron.d/codementor, and by update.sh before every migration.
+#   backup-postgres.sh [label]     → /srv/codementor/backups/codementor-<date>-<label>.dump
+# Keeps BACKUP_KEEP_DAYS (default 14) days of dumps. If RCLONE_REMOTE is set in /etc/codementor/ops.env
+# (e.g. b2:codementor-backups), each dump is also copied off the server — do this: a VPS backup that
+# lives only on the VPS isn't a backup.
 set -euo pipefail
+ETC=/etc/codementor
+[ -f "$ETC/ops.env" ] && . "$ETC/ops.env"
 DEST=/srv/codementor/backups
+KEEP=${BACKUP_KEEP_DAYS:-14}
+LABEL=${1:-nightly}
+COMPOSE=(docker compose -p codementor -f /srv/codementor/current/deploy/vps/docker-compose.postgres.yml --env-file "$ETC/postgres.env")
 mkdir -p "$DEST"
-STAMP=$(date +%F)
-docker compose -f /srv/codementor/app/deploy/vps/docker-compose.postgres.yml exec -T postgres \
-  pg_dump -U codementor -d codementor --format=custom > "$DEST/codementor-$STAMP.dump"
-find "$DEST" -name 'codementor-*.dump' -mtime +14 -delete
-echo "backup ok: $DEST/codementor-$STAMP.dump"
+FILE="$DEST/codementor-$(date -u +%Y%m%d-%H%M%S)-$LABEL.dump"
+"${COMPOSE[@]}" exec -T postgres pg_dump -U codementor -d codementor --format=custom > "$FILE.partial"
+# A dump that pg_restore can't list is not a backup.
+"${COMPOSE[@]}" exec -T postgres pg_restore --list < "$FILE.partial" > /dev/null
+mv "$FILE.partial" "$FILE"
+chmod 640 "$FILE"
+if [ -n "${RCLONE_REMOTE:-}" ] && command -v rclone >/dev/null; then
+  rclone copy "$FILE" "$RCLONE_REMOTE" --quiet
+fi
+find "$DEST" -name 'codementor-*.dump' -mtime +"$KEEP" -delete
+date -u +%s > "$DEST/.last-success"
+echo "backup ok: $FILE ($(du -h "$FILE" | cut -f1))"

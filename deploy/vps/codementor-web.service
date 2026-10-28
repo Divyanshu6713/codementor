@@ -1,14 +1,14 @@
 # /etc/systemd/system/codementor-web.service — the Next.js app (production build, never `next dev`).
 [Unit]
 Description=CodeMentor web app
-After=network-online.target postgresql.service docker.service
+After=network-online.target docker.service codementor-sandbox.service
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=codementor
 Group=codementor
-WorkingDirectory=/srv/codementor/app/.next/standalone
+WorkingDirectory=/srv/codementor/current/.next/standalone
 EnvironmentFile=/etc/codementor/web.env
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
@@ -20,7 +20,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=-/srv/codementor/app/.next/standalone/.next/cache
+ReadWritePaths=-/srv/codementor/releases
 
 [Install]
 WantedBy=multi-user.target

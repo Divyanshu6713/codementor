@@ -1,13 +1,32 @@
 # /etc/caddy/Caddyfile — HTTPS (automatic Let's Encrypt) in front of the web app.
-# The sandbox worker (127.0.0.1:3410) and PostgreSQL (127.0.0.1:5432) are NOT exposed.
+# install.sh replaces the domain and email. The sandbox worker (127.0.0.1:3410) and PostgreSQL
+# (127.0.0.1:5432) are NOT exposed. Security headers are set by the app itself (next.config.ts).
+{
+	email admin@example.com
+}
+
 codementor.example.com {
 	encode zstd gzip
-	reverse_proxy 127.0.0.1:3000
 	request_body {
 		max_size 1MB
 	}
+	# Never serve the reset-link pages from caches.
+	@reset path /reset/*
+	header @reset Cache-Control "no-store"
+	reverse_proxy 127.0.0.1:3000 {
+		health_uri /api/health
+		health_interval 30s
+	}
 	log {
-		output file /var/log/caddy/codementor.log
+		output file /var/log/caddy/codementor.log {
+			roll_size 50MiB
+			roll_keep 10
+		}
 		format json
 	}
+}
+
+# Redirect www to the main domain (remove if you don't use www).
+www.codementor.example.com {
+	redir https://codementor.example.com{uri} permanent
 }

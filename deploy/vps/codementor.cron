@@ -1,0 +1,11 @@
+# /etc/cron.d/codementor — scheduled jobs for CodeMentor (installed by deploy/vps/install.sh).
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Nightly database backup (02:30 server time) and a monthly restore test.
+30 2 * * *   root  bash /srv/codementor/current/deploy/vps/backup-postgres.sh >> /var/log/codementor/backup.log 2>&1
+15 4 1 * *   root  bash /srv/codementor/current/deploy/vps/restore-test.sh >> /var/log/codementor/backup.log 2>&1
+# Health checks every 5 minutes (alerts go to ALERT_WEBHOOK_URL in /etc/codementor/ops.env).
+*/5 * * * *  root  bash /srv/codementor/current/deploy/vps/healthcheck.sh >/dev/null 2>&1
+# Weekly: delete abandoned guest accounts (still guests, no valid session left, older than 30 days).
+45 3 * * 0   codementor  cd /srv/codementor/current && set -a && . /etc/codementor/web.env && set +a && npm run --silent cleanup:guests -- --confirm >> /var/log/codementor/cleanup.log 2>&1
