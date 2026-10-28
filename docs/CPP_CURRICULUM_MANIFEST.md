@@ -3,7 +3,7 @@
 > Generated from `src/content/course` by `npm run content:manifest`. Do not edit by hand —
 > `tests/course-content.test.ts` fails when this file is out of date.
 
-**87 published lessons** in 17 of 17 modules · 374 exercise tests · 174 practice problems · 40 planned topics not yet written.
+**95 published lessons** in 17 of 17 modules · 404 exercise tests · 190 practice problems · 32 planned topics not yet written.
 
 Every published lesson has: goals, concept sections, common mistakes, a worked example whose output is
 checked against real g++, a quick check, a coding exercise with sample and hidden tests, four
@@ -24,8 +24,8 @@ Status key: **published** = written and compiler-verified · **planned** = liste
 | 5 | Loops (`loops`) | Beginner | 9 | 0 |
 | 6 | Functions and recursion (`functions`) | Beginner | 6 | 0 |
 | 7 | Arrays and strings (`arrays-strings`) | Beginner | 9 | 0 |
-| 8 | Pointers, references and dynamic memory (`pointers`) | Intermediate | 3 | 3 |
-| 9 | Object-oriented programming (`oop`) | Intermediate | 3 | 5 |
+| 8 | Pointers, references and dynamic memory (`pointers`) | Intermediate | 6 | 0 |
+| 9 | Object-oriented programming (`oop`) | Intermediate | 8 | 0 |
 | 10 | Modern C++ and advanced functions (`modern-cpp`) | Intermediate | 3 | 4 |
 | 11 | The Standard Template Library (`stl`) | Intermediate | 3 | 5 |
 | 12 | Searching and sorting (`searching-sorting`) | Intermediate | 3 | 4 |
@@ -145,14 +145,11 @@ Status key: **published** = written and compiler-verified · **planned** = liste
 | Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Practice | Status |
 |---|---|---|---|---|---|---|---|
 | `pointers-basics` | Addresses and pointers | 20 | C++17 | address, pointer, dereference, nullptr, address-of operator | 1/3 | Swap through pointers · Pointer to the maximum | published |
+| `references-depth` | References in depth | 15 | C++17 | reference, const reference, alias, range-for | 1/3 | Return the longer one · Row operations through references | published |
 | `pointers-arrays` | Pointers, arrays and functions | 20 | C++17 | pointer arithmetic, array decay, begin/end pointers, const pointer | 2/3 | Sum a range with pointers · Count words with a char pointer | published |
+| `pointer-to-pointer` | Pointers to pointers and arrays of pointers | 20 | C++17 | int**, array of pointers, dynamic 2D array, pointer to pointer | 1/3 | Sort pointers, not words · Linked list with Node** | published |
 | `dynamic-memory` | Dynamic memory: new, delete and smart pointers | 25 | C++17 | stack, heap, new, delete, memory leak, dangling pointer, unique_ptr | 2/2 | Reverse on the heap · A growable array by hand | published |
-
-Still to write in this module:
-
-- shared_ptr and weak_ptr — planned
-- Pointers to pointers and arrays of pointers — planned
-- References in depth — planned
+| `shared-weak-ptr` | shared_ptr and weak_ptr | 20 | C++17 | shared_ptr, weak_ptr, reference counting, cycles | 1/2 | A cache that doesn't keep things alive · Observers that may leave | published |
 
 ## 9. Object-oriented programming
 
@@ -162,15 +159,12 @@ Still to write in this module:
 |---|---|---|---|---|---|---|---|
 | `classes-objects` | Classes and objects | 25 | C++17 | class, object, member function, public, private, encapsulation, struct | 1/3 | A simple bank account · A 24-hour clock class | published |
 | `constructors-destructors` | Constructors and destructors | 25 | C++17 | constructor, initializer list, default constructor, destructor, object lifetime | 2/3 | Student with an initializer list · A fixed-capacity stack that cleans up | published |
+| `static-members` | Static members | 15 | C++17 | static data member, static member function, factory function | 1/2 | How many are alive? · Named constructors for temperatures | published |
 | `inheritance-polymorphism` | Inheritance and polymorphism | 30 | C++17 | inheritance, base class, derived class, virtual, override, abstract class, polymorphism | 1/3 | Shapes and their areas · Stacking discounts | published |
-
-Still to write in this module:
-
-- Static members — planned
-- Composition and aggregation — planned
-- Operator overloading — planned
-- Friend functions — planned
-- Mini project: a class from scratch — planned
+| `composition-aggregation` | Composition and aggregation | 15 | C++17 | composition, aggregation, has-a, member initialisation order | 1/3 | A course that refers to students · Fix the construction order | published |
+| `operator-overloading` | Operator overloading | 20 | C++17 | operator overloading, operator<<, operator==, operator+ | 1/3 | Fractions with operators · Matrix power for Fibonacci | published |
+| `friend-functions` | Friend functions | 12 | C++17 | friend, encapsulation, friend class | 1/3 | Equality and printing for a private time · An auditor class | published |
+| `class-from-scratch` | Mini project: a class from scratch | 30 | C++17 | class design, invariants, polynomial | 1/3 | Multiply and differentiate · Divide by (x − a) | published |
 
 ## 10. Modern C++ and advanced functions
 

@@ -18,6 +18,7 @@ import { ADVANCED_CPP_LESSONS } from "./module16-advanced-cpp";
 import { PROJECT_LESSONS } from "./module17-projects";
 import { EXTRA_BASICS_LESSONS } from "./extra-basics";
 import { EXTRA_OPERATORS_LOGIC_LESSONS } from "./extra-operators-logic";
+import { EXTRA_POINTERS_OOP_LESSONS } from "./extra-pointers-oop";
 import type { CourseLesson, CourseLevel, CourseModule, Exercise, PracticeProblem } from "./types";
 import { PRACTICE_BY_LESSON } from "./practice";
 
@@ -34,6 +35,7 @@ const ALL_LESSONS: CourseLesson[] = [
   ...PROJECT_LESSONS,
   ...EXTRA_BASICS_LESSONS,
   ...EXTRA_OPERATORS_LOGIC_LESSONS,
+  ...EXTRA_POINTERS_OOP_LESSONS,
 ].map((l) => ({ ...l, practice: l.practice ?? PRACTICE_BY_LESSON[l.id] }));
 
 /** Lessons written later name the lesson they follow (`after`), so modules read in teaching order. */
@@ -96,12 +98,10 @@ const MODULE_DEFS: ModuleDef[] = [
   {
     id: "pointers", level: "intermediate", title: "Pointers, references and dynamic memory",
     summary: "Addresses, pointers, dereferencing, pointer arithmetic, new/delete, leaks, dangling pointers and smart pointers.",
-    planned: ["shared_ptr and weak_ptr", "Pointers to pointers and arrays of pointers", "References in depth"],
   },
   {
     id: "oop", level: "intermediate", title: "Object-oriented programming",
     summary: "Classes and objects, encapsulation, constructors and destructors, inheritance and polymorphism.",
-    planned: ["Static members", "Composition and aggregation", "Operator overloading", "Friend functions", "Mini project: a class from scratch"],
   },
   {
     id: "modern-cpp", level: "intermediate", title: "Modern C++ and advanced functions",
