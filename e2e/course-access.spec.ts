@@ -75,6 +75,9 @@ test("signed-in student: the same topics open, and an unknown lesson shows the n
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").first().fill("e2e-password-123");
   await page.getByRole("button", { name: "Keep my progress" }).click();
+  await expect(page.getByTestId("recovery-code")).toBeVisible();
+  await page.getByLabel("I've saved my recovery code.").check();
+  await page.getByRole("button", { name: "Done" }).click();
   await expect(page.getByText(`Signed in as ${username}.`)).toBeVisible();
   for (const id of ["two-d-arrays", "dynamic-memory", "inheritance-polymorphism", "stack-queue", "complexity", "simple-sorts", "recursion"]) {
     await page.goto(`/app/learn/${id}`);

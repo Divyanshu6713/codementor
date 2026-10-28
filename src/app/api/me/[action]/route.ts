@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { clearSessionCookie } from "@/server/auth/current";
+import { clearSessionCookie, currentSessionToken } from "@/server/auth/current";
+import { changePassword, regenerateRecoveryCode, sessionHash } from "@/server/auth/recovery";
 import { rateLimit, readJson, withStudent, withUser } from "@/server/http";
 import { NotFoundError } from "@/server/errors";
 import { deleteAccount, exportData, updatePreferences } from "@/server/services/privacy";
@@ -9,6 +10,8 @@ import { setLeaderboardOptIn } from "@/server/services/arena";
 type Ctx = { params: Promise<{ action: string }> };
 
 const Prefs = z.object({ tutorRetentionDays: z.union([z.literal(0), z.literal(7), z.literal(30)]).optional(), askConfidence: z.boolean().optional() });
+const ChangePassword = z.object({ current: z.string().min(1).max(128), password: z.string().min(8, "At least 8 characters").max(128) });
+const Confirm = z.object({ password: z.string().min(1).max(128) });
 const Delete = z.object({ password: z.string().max(128).default(""), confirm: z.literal("DELETE") });
 
 /** GET /api/me/export — download all of your data as JSON. */
@@ -27,6 +30,17 @@ export const POST = withUser(async (req, user, ctx: Ctx) => {
     await deleteAccount(user.id, (await readJson(req, Delete)).password);
     await clearSessionCookie();
     return Response.json({ redirect: "/" });
+  }
+  if (action === "password") {
+    rateLimit(`password:${user.id}`, 5, 5);
+    const b = await readJson(req, ChangePassword, 4 * 1024);
+    const token = await currentSessionToken();
+    await changePassword(user.id, b.current, b.password, token ? sessionHash(token) : null);
+    return Response.json({ ok: true });
+  }
+  if (action === "recovery-code") {
+    rateLimit(`recovery-code:${user.id}`, 5, 5);
+    return Response.json({ recoveryCode: await regenerateRecoveryCode(user.id, (await readJson(req, Confirm, 4 * 1024)).password) });
   }
   // The remaining actions are student-only.
   return studentActions(req, ctx);

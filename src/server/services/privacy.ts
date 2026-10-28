@@ -7,7 +7,7 @@ import { AppError } from "@/server/errors";
 export async function exportData(userId: string) {
   const db = await getDb();
   const [user, profile, skills, misconceptions, mistakes, sessions, outcomes, explanations, achievements, revision, tutor, code] = await Promise.all([
-    db.query.users.findFirst({ where: eq(schema.users.id, userId), columns: { passwordHash: false } }),
+    db.query.users.findFirst({ where: eq(schema.users.id, userId), columns: { passwordHash: false, recoveryCodeHash: false } }),
     db.query.studentProfiles.findFirst({ where: eq(schema.studentProfiles.userId, userId) }),
     db.select().from(schema.studentSkills).where(eq(schema.studentSkills.studentId, userId)),
     db.select().from(schema.studentMisconceptions).where(eq(schema.studentMisconceptions.studentId, userId)),

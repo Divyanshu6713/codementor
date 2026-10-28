@@ -154,6 +154,12 @@ test("guests can keep their progress with a username and sign back in", async ({
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").first().fill("e2e-password-123");
   await page.getByRole("button", { name: "Keep my progress" }).click();
+  // The recovery code is shown once, and continuing needs a confirmation that it was saved.
+  const code = (await page.getByTestId("recovery-code").textContent())!.trim();
+  expect(code).toMatch(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/);
+  await expect(page.getByRole("button", { name: "Done" })).toBeDisabled();
+  await page.getByLabel("I've saved my recovery code.").check();
+  await page.getByRole("button", { name: "Done" }).click();
   await expect(page.getByText("Your progress is saved")).toBeVisible();
   await expect(page.getByText(`Signed in as ${username}.`)).toBeVisible();
   await page.getByRole("button", { name: "Sign out" }).click();
@@ -166,6 +172,22 @@ test("guests can keep their progress with a username and sign back in", async ({
   await expect(page).toHaveURL(/\/app/);
   await page.goto("/app/learn/what-is-programming");
   await expect(page.getByText("Completed · +25 XP")).toBeVisible();
+
+  // Forgot the password: the recovery code sets a new one and hands out a fresh code.
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.waitForURL((url) => !url.pathname.startsWith("/app"));
+  await page.goto("/login");
+  await page.getByRole("link", { name: "Forgot your password?" }).click();
+  await page.getByLabel("Username").fill(username);
+  await page.getByLabel("Recovery code").fill(code.toLowerCase());
+  await page.getByLabel("New password").fill("e2e-new-password-456");
+  await page.getByLabel("Type it again").fill("e2e-new-password-456");
+  await page.getByRole("button", { name: "Set new password" }).click();
+  await expect(page.getByText("Password changed")).toBeVisible();
+  await expect(page.getByTestId("recovery-code")).not.toHaveText(code);
+  await page.getByLabel("I've saved my recovery code.").check();
+  await page.getByRole("button", { name: "Continue to CodeMentor" }).click();
+  await expect(page).toHaveURL(/\/app/);
 });
 
 test("a failed request shows a clear message instead of a false success", async ({ page }) => {

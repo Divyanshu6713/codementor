@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api";
-import { Button, Callout, Field, inputClass } from "@/components/ui";
+import { Button, Field, inputClass } from "@/components/ui";
+import { RecoveryCodeCard } from "@/components/auth/RecoveryCodeCard";
 
 /** Optional: give a guest account a username and password so progress is kept for good. */
 export function ClaimAccount({ displayName }: { displayName: string }) {
@@ -13,9 +14,18 @@ export function ClaimAccount({ displayName }: { displayName: string }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
+  const [done, setDone] = useState<{ username: string; code: string } | null>(null);
 
-  if (done) return <Callout tone="success" title="Saved!">Your progress now belongs to <strong>{done}</strong>. Sign in with that username on any device.</Callout>;
+  if (done) {
+    return (
+      <RecoveryCodeCard
+        code={done.code}
+        username={done.username}
+        continueLabel="Done"
+        onContinue={() => { router.replace("/app/settings?claimed=1"); router.refresh(); }}
+      />
+    );
+  }
 
   return (
     <form
@@ -25,10 +35,8 @@ export function ClaimAccount({ displayName }: { displayName: string }) {
         setBusy(true);
         setError(null);
         try {
-          const r = await api<{ username: string }>("/api/auth/claim", { body: { username, password, displayName: name } });
-          setDone(r.username);
-          router.replace("/app/settings?claimed=1");
-          router.refresh();
+          const r = await api<{ username: string; recoveryCode: string }>("/api/auth/claim", { body: { username, password, displayName: name } });
+          setDone({ username: r.username, code: r.recoveryCode });
         } catch (err) {
           setError((err as Error).message);
         } finally {

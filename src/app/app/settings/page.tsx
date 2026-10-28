@@ -5,6 +5,8 @@ import { linkedParents } from "@/server/services/parents";
 import { PageHeader } from "@/components/ui";
 import { SettingsPanel } from "@/components/app/SettingsPanel";
 import { ClaimAccount } from "@/components/app/ClaimAccount";
+import { AccountSecurity } from "@/components/auth/AccountSecurity";
+import { hasRecoveryCode } from "@/server/auth/recovery";
 import { Callout, Card } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -12,7 +14,7 @@ export const metadata: Metadata = { title: "Settings" };
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ claimed?: string }> }) {
   const user = await requirePageUser(["STUDENT"]);
   const justClaimed = (await searchParams).claimed === "1" && !user.isGuest;
-  const [profile, parents] = await Promise.all([getProfile(user.id), linkedParents(user.id)]);
+  const [profile, parents, hasCode] = await Promise.all([getProfile(user.id), linkedParents(user.id), user.isGuest ? false : hasRecoveryCode(user.id)]);
   return (
     <div className="max-w-3xl">
       <PageHeader title="Settings" subtitle={user.isGuest ? "You're learning as a guest." : `Signed in as ${user.username}.`} />
@@ -26,6 +28,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           <ClaimAccount displayName={user.displayName} />
         </Card>
       )}
+      {!user.isGuest && <div className="mb-6"><AccountSecurity hasRecoveryCode={hasCode} /></div>}
       <SettingsPanel isGuest={user.isGuest} prefs={{ askConfidence: profile?.askConfidence ?? true, tutorRetentionDays: profile?.tutorRetentionDays ?? 0 }} parents={parents.map((p) => ({ id: p.id, displayName: p.displayName }))} />
     </div>
   );

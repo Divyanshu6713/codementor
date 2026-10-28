@@ -42,3 +42,9 @@ export async function clearSessionCookie() {
   const store = await cookies();
   store.delete(SESSION_COOKIE);
 }
+
+/** The current session cookie's token, if any (route handlers only — used to keep this session). */
+export async function currentSessionToken(): Promise<string | null> {
+  const store = await cookies();
+  return store.get(SESSION_COOKIE)?.value ?? null;
+}

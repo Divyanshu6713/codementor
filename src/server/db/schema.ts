@@ -44,6 +44,11 @@ export const users = pgTable("users", {
    * personal data, kept by its session cookie. They can claim it later with a username + password.
    */
   isGuest: boolean("is_guest").notNull().default(false),
+  /**
+   * sha256 of the one-time recovery code shown when the account got its password. With the
+   * username it lets the owner set a new password without email. Rotated on every use.
+   */
+  recoveryCodeHash: text("recovery_code_hash"),
   createdAt: createdAt(),
 });
 
@@ -87,6 +92,19 @@ export const parentStudentLinks = pgTable("parent_student_links", {
   studentId: uuid("student_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   createdAt: createdAt(),
 }, (t) => [primaryKey({ columns: [t.parentId, t.studentId] })]);
+
+/**
+ * One-time password reset links issued by an admin, or by a parent for a linked child.
+ * Only the sha256 of the token is stored; links expire and can be used once.
+ */
+export const passwordResets = pgTable("password_resets", {
+  tokenHash: text("token_hash").primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [index("password_resets_user_idx").on(t.userId)]);
 
 /** Short-lived codes a student shares with a parent to link accounts. Stored hashed. */
 export const linkCodes = pgTable("link_codes", {

@@ -6,6 +6,7 @@ import clsx from "clsx";
 import { GraduationCap, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button, Callout, Field, inputClass } from "@/components/ui";
+import { RecoveryCodeCard } from "./RecoveryCodeCard";
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
@@ -13,6 +14,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [role, setRole] = useState<"STUDENT" | "PARENT">(params.get("role") === "parent" ? "PARENT" : "STUDENT");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [issued, setIssued] = useState<{ code: string; username: string; go: string } | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -21,14 +23,23 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     const form = new FormData(e.currentTarget);
     const body = Object.fromEntries(form.entries()) as Record<string, string>;
     try {
-      const res = await api<{ redirect: string }>(`/api/auth/${mode}`, { body: mode === "signup" ? { ...body, role } : body });
+      const res = await api<{ redirect: string; recoveryCode?: string }>(`/api/auth/${mode}`, { body: mode === "signup" ? { ...body, role } : body });
       const next = params.get("next");
-      router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : res.redirect);
+      const go = next && next.startsWith("/") && !next.startsWith("//") ? next : res.redirect;
+      if (res.recoveryCode) {
+        setIssued({ code: res.recoveryCode, username: body.username ?? "", go });
+        return;
+      }
+      router.push(go);
       router.refresh();
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
     }
+  }
+
+  if (issued) {
+    return <RecoveryCodeCard code={issued.code} username={issued.username} onContinue={() => { router.push(issued.go); router.refresh(); }} />;
   }
 
   return (

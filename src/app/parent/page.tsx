@@ -6,12 +6,14 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Card, EmptyState, MasteryBar, PageHeader, pct } from "@/components/ui";
 import { LinkChildForm, LogoutButton } from "@/components/app/SimpleForms";
+import { AccountSecurity, ChildResetLinkButton } from "@/components/auth/AccountSecurity";
+import { hasRecoveryCode } from "@/server/auth/recovery";
 
 export const metadata: Metadata = { title: "Mentor dashboard" };
 
 export default async function ParentPage() {
   const user = await requirePageUser(["PARENT"]);
-  const kids = await parentOverview(user.id);
+  const [kids, hasCode] = await Promise.all([parentOverview(user.id), hasRecoveryCode(user.id)]);
   return (
     <div className="min-h-screen">
       <header className="flex items-center justify-between border-b border-line bg-surface px-4 py-3 sm:px-8">
@@ -68,12 +70,14 @@ export default async function ParentPage() {
                   {k.support && <p className="flex gap-2 rounded-xl border border-concept/30 bg-concept-soft px-4 py-3 text-sm text-ink"><Sparkles size={16} className="mt-0.5 shrink-0 text-concept" aria-hidden /> {k.support}</p>}
                 </>
               )}
+              <div className="border-t border-line pt-4"><ChildResetLinkButton studentId={k.studentId} name={k.name} /></div>
             </Card>
           ))}
           <Card className="p-6" as="section" aria-labelledby="link">
             <h2 id="link" className="mb-3 font-semibold">Link a student</h2>
             <LinkChildForm />
           </Card>
+          <AccountSecurity hasRecoveryCode={hasCode} />
         </div>
       </main>
     </div>

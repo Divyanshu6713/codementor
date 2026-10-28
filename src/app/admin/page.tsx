@@ -9,12 +9,14 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge, Card, PageHeader } from "@/components/ui";
 import { GenerateQuestionsForm, LogoutButton, QuestionToggle } from "@/components/app/SimpleForms";
+import { AccountSecurity, AdminResetLinkForm } from "@/components/auth/AccountSecurity";
+import { hasRecoveryCode } from "@/server/auth/recovery";
 
 export const metadata: Metadata = { title: "Curriculum console" };
 
 export default async function AdminPage() {
-  await requirePageUser(["ADMIN", "CONTENT_EDITOR"]);
-  const [stats, flags, usage, exec, execHealth, budget] = await Promise.all([questionStats(), contentFlags(), aiUsage(), executionStatus(), executionHealth(), budgetStatus()]);
+  const user = await requirePageUser(["ADMIN", "CONTENT_EDITOR"]);
+  const [stats, flags, usage, exec, execHealth, budget, hasCode] = await Promise.all([questionStats(), contentFlags(), aiUsage(), executionStatus(), executionHealth(), budgetStatus(), hasRecoveryCode(user.id)]);
   const ai = aiStatus();
   const flagged = stats.filter((s) => s.calibrationFlag);
   const pending = stats.filter((s) => s.status === "pending_review");
@@ -92,6 +94,15 @@ export default async function AdminPage() {
               <tbody>{usage.map((u, i) => <tr key={i} className="border-t border-line"><td className="py-1">{u.purpose}</td><td>{u.provider}</td><td>{u.status}</td><td>{u.calls}</td><td className="font-mono text-xs">{u.inputTokens}/{u.outputTokens}</td><td>{u.avgLatency} ms</td></tr>)}</tbody></table>
           ) : <p className="text-sm text-ink-2">No AI calls recorded.</p>}
         </Card>
+
+        {user.role === "ADMIN" && (
+          <Card className="p-6" as="section" aria-labelledby="accounts">
+            <h2 id="accounts" className="mb-1 font-semibold">Account recovery</h2>
+            <p className="mb-3 text-sm text-ink-2">For someone who lost both their password and their recovery code. The link works once, for 24 hours, and signs the account out everywhere when used. Every link is recorded in the audit log.</p>
+            <AdminResetLinkForm />
+          </Card>
+        )}
+        <AccountSecurity hasRecoveryCode={hasCode} />
       </main>
     </div>
   );
