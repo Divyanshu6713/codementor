@@ -17,6 +17,7 @@ import { FILES_EXCEPTIONS_LESSONS } from "./module15-files-exceptions";
 import { ADVANCED_CPP_LESSONS } from "./module16-advanced-cpp";
 import { PROJECT_LESSONS } from "./module17-projects";
 import { EXTRA_BASICS_LESSONS } from "./extra-basics";
+import { EXTRA_OPERATORS_LOGIC_LESSONS } from "./extra-operators-logic";
 import type { CourseLesson, CourseLevel, CourseModule, Exercise, PracticeProblem } from "./types";
 import { PRACTICE_BY_LESSON } from "./practice";
 
@@ -32,6 +33,7 @@ const ALL_LESSONS: CourseLesson[] = [
   ...DATA_STRUCTURES_LESSONS, ...ALGORITHMS_LESSONS, ...FILES_EXCEPTIONS_LESSONS, ...ADVANCED_CPP_LESSONS,
   ...PROJECT_LESSONS,
   ...EXTRA_BASICS_LESSONS,
+  ...EXTRA_OPERATORS_LOGIC_LESSONS,
 ].map((l) => ({ ...l, practice: l.practice ?? PRACTICE_BY_LESSON[l.id] }));
 
 /** Lessons written later name the lesson they follow (`after`), so modules read in teaching order. */
@@ -74,17 +76,14 @@ const MODULE_DEFS: ModuleDef[] = [
   {
     id: "operators", level: "beginner", title: "Operators and expressions",
     summary: "Arithmetic, assignment, increment, precedence, integer division, modulo and type conversion.",
-    planned: ["Precedence and associativity", "Integer division and modulo in depth", "Type promotion and casting", "Predict-the-output challenges"],
   },
   {
     id: "logic", level: "beginner", title: "Conditional statements",
     summary: "Comparisons, and/or/not, if, else, else-if ladders, nesting, switch and real eligibility rules.",
-    planned: ["The ternary operator", "Eligibility and grading problems"],
   },
   {
     id: "loops", level: "beginner", title: "Loops",
     summary: "for, while and do-while; nested loops, break/continue, tracing, off-by-one errors and patterns.",
-    planned: ["Infinite loops and how to spot them", "Debug-the-loop missions"],
   },
   {
     id: "functions", level: "beginner", title: "Functions and recursion",
@@ -93,7 +92,6 @@ const MODULE_DEFS: ModuleDef[] = [
   {
     id: "arrays-strings", level: "beginner", title: "Arrays and strings",
     summary: "Many values under one name, traversal, searching, 2D grids, std::string and a first look at std::vector.",
-    planned: ["C-style strings and character arrays in depth", "Prefix sums"],
   },
   {
     id: "pointers", level: "intermediate", title: "Pointers, references and dynamic memory",

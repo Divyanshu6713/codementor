@@ -3,7 +3,7 @@
 > Generated from `src/content/course` by `npm run content:manifest`. Do not edit by hand —
 > `tests/course-content.test.ts` fails when this file is out of date.
 
-**77 published lessons** in 17 of 17 modules · 329 exercise tests · 154 practice problems · 50 planned topics not yet written.
+**87 published lessons** in 17 of 17 modules · 374 exercise tests · 174 practice problems · 40 planned topics not yet written.
 
 Every published lesson has: goals, concept sections, common mistakes, a worked example whose output is
 checked against real g++, a quick check, a coding exercise with sample and hidden tests, four
@@ -19,11 +19,11 @@ Status key: **published** = written and compiler-verified · **planned** = liste
 |---|---|---|---|---|
 | 1 | Introduction to C++ (`foundations`) | Beginner | 7 | 0 |
 | 2 | Variables, data types and input/output (`variables-io`) | Beginner | 9 | 0 |
-| 3 | Operators and expressions (`operators`) | Beginner | 1 | 4 |
-| 4 | Conditional statements (`logic`) | Beginner | 7 | 2 |
-| 5 | Loops (`loops`) | Beginner | 7 | 2 |
+| 3 | Operators and expressions (`operators`) | Beginner | 5 | 0 |
+| 4 | Conditional statements (`logic`) | Beginner | 9 | 0 |
+| 5 | Loops (`loops`) | Beginner | 9 | 0 |
 | 6 | Functions and recursion (`functions`) | Beginner | 6 | 0 |
-| 7 | Arrays and strings (`arrays-strings`) | Beginner | 7 | 2 |
+| 7 | Arrays and strings (`arrays-strings`) | Beginner | 9 | 0 |
 | 8 | Pointers, references and dynamic memory (`pointers`) | Intermediate | 3 | 3 |
 | 9 | Object-oriented programming (`oop`) | Intermediate | 3 | 5 |
 | 10 | Modern C++ and advanced functions (`modern-cpp`) | Intermediate | 3 | 4 |
@@ -72,13 +72,10 @@ Status key: **published** = written and compiler-verified · **planned** = liste
 | Lesson id | Title | Min | Std | Concepts | Tests (sample/hidden) | Practice | Status |
 |---|---|---|---|---|---|---|---|
 | `operators` | Operators | 15 | C++17 | — | 2/3 | Digit sum of a 3-digit number · Seconds to a clock | published |
-
-Still to write in this module:
-
-- Precedence and associativity — planned
-- Integer division and modulo in depth — planned
-- Type promotion and casting — planned
-- Predict-the-output challenges — planned
+| `precedence-associativity` | Precedence and associativity | 15 | C++17 | precedence, associativity, parentheses | 1/3 | Celsius to Fahrenheit, in ints · Precedence versus left to right | published |
+| `division-modulo-deep` | Integer division and modulo in depth | 15 | C++17 | integer division, modulo, negative numbers, base conversion | 2/3 | Day of the week after k days · Any base from 2 to 16 | published |
+| `casting-promotion` | Type promotion and casting | 15 | C++17 | static_cast, implicit conversion, rounding, narrowing | 2/3 | Four ways to make it whole · The average letter | published |
+| `predict-output` | Predict-the-output challenges | 15 | C++17 | tracing, increment, integer division, char arithmetic | 1/3 | Swap without a temporary · Digital root | published |
 
 ## 4. Conditional statements
 
@@ -93,11 +90,8 @@ Still to write in this module:
 | `else-if` | else-if ladders | 15 | C++17 | — | 2/6 | Weather words · Electricity bill slabs | published |
 | `nested-conditions` | Nested conditions | 15 | C++17 | — | 2/4 | Which quadrant? · Cinema ticket | published |
 | `switch` | switch statements | 12 | C++17 | — | 2/5 | A tiny calculator · Days in a month | published |
-
-Still to write in this module:
-
-- The ternary operator — planned
-- Eligibility and grading problems — planned
+| `ternary-operator` | The ternary operator | 10 | C++17 | ternary, conditional expression | 1/3 | Clamp a value · Grade table | published |
+| `eligibility-grading` | Eligibility and grading problems | 20 | C++17 | compound conditions, rule tables, validation order | 2/4 | Loan eligibility with a reason · Income tax by slabs | published |
 
 ## 5. Loops
 
@@ -111,12 +105,9 @@ Still to write in this module:
 | `do-while` | do-while loops | 12 | C++17 | — | 2/3 | Keep asking for a positive number · Menu loop | published |
 | `nested-loops` | Nested loops | 18 | C++17 | — | 2/2 | Hollow square · Number pyramid | published |
 | `break-continue` | break and continue | 12 | C++17 | — | 2/3 | Sum until a negative · Positive sum with a stop code | published |
+| `infinite-loops` | Infinite loops and how to spot them | 15 | C++17 | infinite loop, loop variant, termination | 1/3 | Wrong direction · Tenths without drift | published |
+| `debug-loop-missions` | Debug-the-loop missions | 20 | C++17 | debugging, off-by-one, tracing, loop invariants | 1/3 | Mission 2: digit count · Mission 3: row totals | published |
 | `loop-patterns` | Number and pattern problems | 18 | C++17 | — | 1/3 | Upside-down triangle · Diamond | published |
-
-Still to write in this module:
-
-- Infinite loops and how to spot them — planned
-- Debug-the-loop missions — planned
 
 ## 6. Functions and recursion
 
@@ -139,16 +130,13 @@ Still to write in this module:
 |---|---|---|---|---|---|---|---|
 | `arrays-intro` | Arrays: many values, one name | 15 | C++17 | array, index, zero-based, out of bounds | 2/2 | Second largest · Merge two sorted lists | published |
 | `array-traversal` | Traversal: sum, max and counting | 20 | C++17 | traversal, accumulator, running maximum, average | 2/3 | Maximum and where it is · Longest rising run | published |
+| `prefix-sums` | Prefix sums | 15 | C++17 | prefix sums, range queries, precomputation | 1/3 | Even numbers in a range · Rectangle sums in a grid | published |
 | `array-search` | Searching and frequency counting | 20 | C++17 | linear search, sentinel -1, frequency array, counting | 2/2 | Count and last position · Most frequent value | published |
 | `arrays-functions` | Arrays in functions, and std::vector | 20 | C++17 | array parameter, size parameter, std::vector, push_back, size() | 2/3 | Keep the evens · Remove duplicates in place | published |
 | `two-d-arrays` | 2D arrays: grids and tables | 20 | C++17 | 2D array, row, column, nested loops, matrix | 1/3 | Row with the biggest sum · Spiral order | published |
 | `strings-basics` | Strings: working with text | 20 | C++17 | std::string, getline, length, char, concatenation | 2/2 | Title Case · Run-length encoding | published |
 | `string-problems` | String problems: palindromes and C-strings | 20 | C++17 | two pointers, palindrome, isalpha, C-style string, null terminator | 2/4 | Anagrams · Caesar cipher | published |
-
-Still to write in this module:
-
-- C-style strings and character arrays in depth — planned
-- Prefix sums — planned
+| `c-strings` | C-style strings and character arrays in depth | 20 | C++17 | char array, null terminator, strlen, strcmp, buffer overflow | 2/3 | Write your own strcmp · A bounded join | published |
 
 ## 8. Pointers, references and dynamic memory
 
