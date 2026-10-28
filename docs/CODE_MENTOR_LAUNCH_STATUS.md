@@ -43,7 +43,7 @@ Honest limits of the content:
   (beginner/intermediate/challenge)" per lesson is **not met** yet.
 - Topics the sandbox cannot run are kept as *planned* (threads, CMake, Git, `std::filesystem`, multi-file
   builds). File streams are taught in text; runnable examples use string streams (same interface).
-- C++20/23 features are described, not executed (sandbox compiles C++17).
+- The sandbox compiles C++20 (since 2026-10-28). C++23 features are described, not executed.
 - Remaining planned topics per module are listed in the manifest.
 
 ## 3. Sandbox header policy changes

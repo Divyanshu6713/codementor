@@ -11,7 +11,7 @@
 import type { TestCaseDef, VisualId } from "../types";
 
 export type CourseLevel = "beginner" | "intermediate" | "advanced";
-/** Language standard a lesson needs. The sandbox compiles with -std=c++17. */
+/** Language standard a lesson needs. The sandbox compiles with -std=c++20. */
 export type CppStandard = "C++11" | "C++17" | "C++20" | "C++23";
 
 export interface CourseModule {
@@ -95,7 +95,7 @@ export interface CourseLesson {
   moduleId: string;
   title: string;
   minutes: number;
-  /** Defaults to C++17 (the sandbox's standard). Set only when a lesson needs something newer. */
+  /** Defaults to C++17 (works on any compiler). Set "C++20" when a lesson needs it; the sandbox compiles C++20. */
   standard?: CppStandard;
   /** Short concept tags used by search and the mentor (e.g. "recursion", "base case"). */
   concepts?: string[];

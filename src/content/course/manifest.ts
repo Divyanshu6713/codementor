@@ -22,7 +22,7 @@ export function renderManifest(): string {
     "checked against real g++, a quick check, a coding exercise with sample and hidden tests, four",
     "progressive hints, a reference solution (server-only), an explain-again text and a summary — plus two",
     "graded practice problems (intermediate and challenge), each verified the same way.",
-    "Baseline standard: C++17 (the sandbox compiles with `-std=c++17`).",
+    "Baseline standard: C++20 (the sandbox compiles with `-std=c++20`); lessons marked C++17 use nothing newer.",
     "",
     "Status key: **published** = written and compiler-verified · **planned** = listed in the roadmap, no lesson page yet.",
     "",

@@ -174,7 +174,7 @@ export function createWindowsJobBackend(): SandboxBackend {
       const env = { PATH: `${toolDir};${systemRoot}\\System32`, SystemRoot: systemRoot, TEMP: dir, TMP: dir };
       const res = await runCaptured(LAUNCHER, [
         "--mem", "1024", "--cpu", "20000", "--wall", "30000", "--procs", "8", "--report", report, "--",
-        gxx!, "-std=c++17", "-O2", "-static", "-pipe", "-fno-asm", "-fmax-errors=5", "-fdiagnostics-color=never",
+        gxx!, "-std=c++20", "-O2", "-static", "-pipe", "-fno-asm", "-fmax-errors=5", "-fdiagnostics-color=never",
         "-o", "main.exe", "main.cpp",
       ], { input: "", env, cwd: dir, maxStdout: 16 * 1024, maxStderr: 16 * 1024, guardMs: 35_000 });
       const r = readReport(report);

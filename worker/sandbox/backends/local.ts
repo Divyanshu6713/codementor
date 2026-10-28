@@ -258,8 +258,8 @@ export function createLocalBackend(): SandboxBackend {
 
     async compile(dir: string): Promise<CompileResult> {
       const flags = isClang
-        ? ["-std=c++17", "-O2", "-pipe", "-ferror-limit=5", "-fno-color-diagnostics"]
-        : ["-std=c++17", "-O2", "-pipe", "-fno-asm", "-fmax-errors=5", "-fdiagnostics-color=never"];
+        ? ["-std=c++20", "-O2", "-pipe", "-ferror-limit=5", "-fno-color-diagnostics"]
+        : ["-std=c++20", "-O2", "-pipe", "-fno-asm", "-fmax-errors=5", "-fdiagnostics-color=never"];
       const env = { PATH: process.env.PATH ?? "/usr/bin:/bin", TMPDIR: dir, HOME: dir, LANG: "C" };
       const res = await runCaptured(gxx!, [...flags, "-o", "main", "main.cpp"], {
         input: "", env, cwd: dir, maxStdout: 16 * 1024, maxStderr: 16 * 1024, guardMs: 30_000,

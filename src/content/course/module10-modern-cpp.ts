@@ -251,7 +251,13 @@ For classes you usually write the type in angle brackets (C++17 can often deduce
       },
       {
         title: "Templates and C++20 concepts",
-        body: `Template errors can be long, because the compiler only discovers a missing operation deep inside the body. **C++20 concepts** let you state requirements up front — \`template <std::totally_ordered T>\` — giving clear errors. CodeMentor's sandbox compiles C++17, so concepts appear here as reading material only.`,
+        body: `Template errors can be long, because the compiler only discovers a missing operation deep inside the body. **C++20 concepts** let you state requirements up front — \`template <std::totally_ordered T>\` — giving clear errors. CodeMentor's sandbox compiles C++20, so you can try concepts in the Playground:
+
+\`\`\`cpp
+#include <concepts>
+template <std::totally_ordered T>
+T biggest(T a, T b) { return a > b ? a : b; }
+\`\`\``,
       },
     ],
     mistakes: [
@@ -469,7 +475,7 @@ Level l = Level::Advanced;     // must be qualified
         title: "Structured bindings, constexpr — and what C++20 adds",
         body: `\`for (const auto& [name, level] : m)\` unpacks pairs (C++17). \`constexpr int maxScore = 100;\` is a constant known at compile time.
 
-**C++20 (reading only — the sandbox compiles C++17):** \`std::span\` (a view over contiguous elements), **concepts** (named template requirements), **ranges** (\`views::filter\`, \`views::transform\` pipelines), \`std::format\`, and the \`<=>\` "spaceship" comparison operator. **C++23** adds \`std::print\`, \`std::expected\` and more.`,
+**C++20 (the sandbox compiles C++20, so try these in the Playground):** \`std::span\` (a view over contiguous elements), **concepts** (named template requirements), **ranges** (\`views::filter\`, \`views::transform\` pipelines), \`std::format\`, and the \`<=>\` "spaceship" comparison operator. **C++23** adds \`std::print\`, \`std::expected\` and more.`,
       },
     ],
     mistakes: [

@@ -96,7 +96,7 @@ export function createDockerBackend(): SandboxBackend {
       const res = await runCaptured("docker", [
         "run", "--rm", "--name", name, ...HARDENING, "--memory", "1g", "--memory-swap", "1g", "--pids-limit", "64",
         "--tmpfs", "/tmp:rw,exec,size=128m", "-v", `${dir}:/box`, "-w", "/box", IMAGE,
-        "timeout", "-s", "KILL", "30", "g++", "-std=c++17", "-O2", "-pipe", "-fno-asm", "-fmax-errors=5",
+        "timeout", "-s", "KILL", "30", "g++", "-std=c++20", "-O2", "-pipe", "-fno-asm", "-fmax-errors=5",
         "-fdiagnostics-color=never", "-o", "main", "main.cpp",
       ], { input: "", env: process.env, cwd: dir, maxStdout: 16 * 1024, maxStderr: 16 * 1024, guardMs: 40_000, onTimeout: () => dockerKill(name) });
       return { ok: res.code === 0 && fs.existsSync(`${dir}/main`), output: `${res.stdout}${res.stderr}` };

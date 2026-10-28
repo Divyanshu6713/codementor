@@ -15,6 +15,8 @@ export const ALLOWED_HEADERS = new Set([
   "memory",
   // Exceptions, optional/string_view (C++17) and assert: language/library only, no OS access.
   "stdexcept", "exception", "optional", "string_view", "cassert",
+  // C++20 library headers taught in the course: no OS access.
+  "concepts", "ranges", "span", "compare", "variant", "any", "chrono", "random", "bit", "numbers", "format",
 ]);
 
 /** Identifiers that reach the OS, files, processes or the environment. */
