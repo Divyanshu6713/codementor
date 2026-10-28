@@ -130,8 +130,6 @@ export default async function LessonPage({ params }: Params) {
         </Step>
 
         <Step id="practise" n={4} title={`Practise: ${pub.exercise.title}`}>
-          <ExercisePanel exercise={{ title: pub.exercise.title, prompt: pub.exercise.prompt, samples: pub.exercise.samples, hiddenCount: pub.exercise.hiddenCount }} />
-          <HelpPanel exerciseTitle={pub.exercise.title} />
           <PracticeLadder
             lessonId={lesson.id} current={null}
             items={[
@@ -139,6 +137,8 @@ export default async function LessonPage({ params }: Params) {
               ...pub.practice.map((p) => ({ id: p.id, level: p.level, title: p.title, passed: progress.lessonState(exerciseKey(lesson.id, p.id)).passed })),
             ]}
           />
+          <ExercisePanel exercise={{ title: pub.exercise.title, prompt: pub.exercise.prompt, samples: pub.exercise.samples, hiddenCount: pub.exercise.hiddenCount }} />
+          <HelpPanel exerciseTitle={pub.exercise.title} />
         </Step>
 
         <Step id="continue" n={5} title="Key points and next step">

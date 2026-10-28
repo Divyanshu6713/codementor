@@ -265,7 +265,7 @@ export function validateCourse(): string[] {
     if (l.mistakes.length < 2) problems.push(`${l.id}: needs at least 2 common mistakes`);
     if (l.quickCheck && !l.quickCheck.options.some((o) => o.id === l.quickCheck!.correct)) problems.push(`${l.id}: quick check answer missing`);
     const practice = l.practice ?? [];
-    if (practice.length && practice.map((p) => p.id).join(",") !== "p2,p3") problems.push(`${l.id}: practice must be [p2 intermediate, p3 challenge]`);
+    if (practice.map((p) => p.id).join(",") !== "p2,p3") problems.push(`${l.id}: needs two practice problems [p2 intermediate, p3 challenge]`);
     for (const p of practice) {
       if (p.level !== (p.id === "p2" ? "intermediate" : "challenge")) problems.push(`${l.id}~${p.id}: wrong level ${p.level}`);
       if (!p.tests.some((t) => t.visibility === "sample")) problems.push(`${l.id}~${p.id}: needs a sample test`);

@@ -207,3 +207,32 @@ test("admin pages and APIs refuse anyone who isn't an admin", async ({ page, req
   const asGuest = await page.request.post("/api/admin/question-status", { data: { questionId: "x", status: "disabled" }, headers: { origin: "http://localhost:3400" } });
   expect(asGuest.status()).toBe(403);
 });
+
+test("practice problems: the ladder links the lesson's three levels, and a solved problem earns XP", async ({ page }) => {
+  await startAsGuest(page);
+  await page.goto("/app/learn/for-loops");
+  const ladder = page.getByRole("navigation", { name: "Practice problems" });
+  await expect(ladder.getByText("0/3 solved")).toBeVisible();
+  await ladder.getByRole("link", { name: /Intermediate · 20 XP/ }).click();
+  await expect(page).toHaveURL(/\/app\/learn\/for-loops\/practice\/p2$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Sum of squares" })).toBeVisible();
+
+  await writeCode(page, `#include <iostream>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    long long s = 0;
+    for (int i = 1; i <= n; i++) s += (long long)i * i;
+    cout << s << endl;
+    return 0;
+}`);
+  await page.getByRole("button", { name: "Check answer" }).click();
+  await expect(page.getByText(/Problem solved — all \d+ tests passed/)).toBeVisible();
+  await expect(page.getByText("+20 XP", { exact: true })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByText("Solved · +20 XP")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Practice problems" }).getByText("1/3 solved")).toBeVisible();
+});
