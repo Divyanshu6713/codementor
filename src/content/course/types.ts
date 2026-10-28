@@ -93,6 +93,8 @@ export interface PracticeProblem extends Exercise {
 export interface CourseLesson {
   id: string;
   moduleId: string;
+  /** Place this lesson right after another lesson of the same module (default: at the module's end). */
+  after?: string;
   title: string;
   minutes: number;
   /** Defaults to C++17 (works on any compiler). Set "C++20" when a lesson needs it; the sandbox compiles C++20. */

@@ -16,6 +16,7 @@ import { ALGORITHMS_LESSONS } from "./module14-algorithms";
 import { FILES_EXCEPTIONS_LESSONS } from "./module15-files-exceptions";
 import { ADVANCED_CPP_LESSONS } from "./module16-advanced-cpp";
 import { PROJECT_LESSONS } from "./module17-projects";
+import { EXTRA_BASICS_LESSONS } from "./extra-basics";
 import type { CourseLesson, CourseLevel, CourseModule, Exercise, PracticeProblem } from "./types";
 import { PRACTICE_BY_LESSON } from "./practice";
 
@@ -30,7 +31,28 @@ const ALL_LESSONS: CourseLesson[] = [
   ...POINTERS_LESSONS, ...OOP_LESSONS, ...MODERN_CPP_LESSONS, ...STL_LESSONS, ...SEARCH_SORT_LESSONS,
   ...DATA_STRUCTURES_LESSONS, ...ALGORITHMS_LESSONS, ...FILES_EXCEPTIONS_LESSONS, ...ADVANCED_CPP_LESSONS,
   ...PROJECT_LESSONS,
+  ...EXTRA_BASICS_LESSONS,
 ].map((l) => ({ ...l, practice: l.practice ?? PRACTICE_BY_LESSON[l.id] }));
+
+/** Lessons written later name the lesson they follow (`after`), so modules read in teaching order. */
+function placeLessons(list: CourseLesson[]): CourseLesson[] {
+  const out = list.filter((l) => !l.after);
+  let pending = list.filter((l) => l.after);
+  while (pending.length) {
+    const next: CourseLesson[] = [];
+    for (const l of pending) {
+      const i = out.findIndex((x) => x.id === l.after);
+      if (i >= 0) out.splice(i + 1 + out.slice(i + 1).filter((x) => x.after === l.after).length, 0, l);
+      else next.push(l);
+    }
+    if (next.length === pending.length) {
+      out.push(...next); // unknown anchors: reported by validateCourse
+      break;
+    }
+    pending = next;
+  }
+  return out;
+}
 
 type ModuleDef = Omit<CourseModule, "lessons" | "number">;
 
@@ -44,12 +66,10 @@ const MODULE_DEFS: ModuleDef[] = [
   {
     id: "foundations", level: "beginner", title: "Introduction to C++",
     summary: "What programming is, how a program is built and run, the structure of a C++ program and your first output.",
-    planned: ["Source files, compiling and linking", "Reading your first compiler errors", "Writing portable C++"],
   },
   {
     id: "variables-io", level: "beginner", title: "Variables, data types and input/output",
     summary: "Storing values, choosing types, reading input with cin and getline, and printing with cout.",
-    planned: ["Constants and const", "getline and whole-line input", "Escape sequences and sizeof", "Integer overflow and signed/unsigned", "Floating-point precision", "Validating input"],
   },
   {
     id: "operators", level: "beginner", title: "Operators and expressions",
@@ -127,10 +147,12 @@ const MODULE_DEFS: ModuleDef[] = [
   },
 ];
 
+const ORDERED_LESSONS = placeLessons(ALL_LESSONS);
+
 export const COURSE_MODULES: CourseModule[] = MODULE_DEFS.map((m, i) => ({
   ...m,
   number: i + 1,
-  lessons: ALL_LESSONS.filter((l) => l.moduleId === m.id).map((l) => l.id),
+  lessons: ORDERED_LESSONS.filter((l) => l.moduleId === m.id).map((l) => l.id),
 }));
 
 /** Teaching order: module by module (so "next" always continues into the following module). */
@@ -233,6 +255,11 @@ export function validateCourse(): string[] {
   // Checked over every written lesson, so one with a misspelt moduleId can't silently disappear.
   for (const l of ALL_LESSONS) {
     if (!moduleIds.has(l.moduleId)) problems.push(`${l.id}: unknown module ${l.moduleId}`);
+    if (l.after) {
+      const anchor = ALL_LESSONS.find((x) => x.id === l.after);
+      if (!anchor) problems.push(`${l.id}: placed after unknown lesson ${l.after}`);
+      else if (anchor.moduleId !== l.moduleId) problems.push(`${l.id}: placed after ${l.after}, which is in another module`);
+    }
   }
   for (const id of Object.keys(PRACTICE_BY_LESSON)) if (!ALL_LESSONS.some((l) => l.id === id)) problems.push(`practice: unknown lesson ${id}`);
   // The concept map links to lessons by id: a typo would turn into a dead "Open lesson" link.

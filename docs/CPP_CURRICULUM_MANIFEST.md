@@ -3,7 +3,7 @@
 > Generated from `src/content/course` by `npm run content:manifest`. Do not edit by hand —
 > `tests/course-content.test.ts` fails when this file is out of date.
 
-**68 published lessons** in 17 of 17 modules · 293 exercise tests · 136 practice problems · 59 planned topics not yet written.
+**77 published lessons** in 17 of 17 modules · 329 exercise tests · 154 practice problems · 50 planned topics not yet written.
 
 Every published lesson has: goals, concept sections, common mistakes, a worked example whose output is
 checked against real g++, a quick check, a coding exercise with sample and hidden tests, four
@@ -17,8 +17,8 @@ Status key: **published** = written and compiler-verified · **planned** = liste
 
 | # | Module | Level | Published | Planned |
 |---|---|---|---|---|
-| 1 | Introduction to C++ (`foundations`) | Beginner | 4 | 3 |
-| 2 | Variables, data types and input/output (`variables-io`) | Beginner | 3 | 6 |
+| 1 | Introduction to C++ (`foundations`) | Beginner | 7 | 0 |
+| 2 | Variables, data types and input/output (`variables-io`) | Beginner | 9 | 0 |
 | 3 | Operators and expressions (`operators`) | Beginner | 1 | 4 |
 | 4 | Conditional statements (`logic`) | Beginner | 7 | 2 |
 | 5 | Loops (`loops`) | Beginner | 7 | 2 |
@@ -45,12 +45,9 @@ Status key: **published** = written and compiler-verified · **planned** = liste
 | `how-programs-work` | How programs work | 12 | C++17 | — | 1/0 | Fix two compile errors · Fix three compile errors | published |
 | `program-structure` | Structure of a C++ program | 12 | C++17 | — | 1/0 | Two lines from scratch · A boxed title | published |
 | `hello-world` | Hello World and printing | 12 | C++17 | — | 1/0 | Quotes inside text · A file path and a table | published |
-
-Still to write in this module:
-
-- Source files, compiling and linking — planned
-- Reading your first compiler errors — planned
-- Writing portable C++ — planned
+| `compiling-linking` | Source files, compiling and linking | 15 | C++17 | compiler, linker, declaration, definition, prototype | 1/3 | Declare before use · Functions that call each other | published |
+| `reading-compiler-errors` | Reading compiler errors | 15 | C++17 | compiler errors, warnings, debugging | 1/2 | Arrows and braces · Errors and a warning | published |
+| `portable-cpp` | Writing portable C++ | 15 | C++17 | portability, standard C++, fixed-width integers, cstdint | 2/2 | A wrapping checksum · Bytes, most significant first | published |
 
 ## 2. Variables, data types and input/output
 
@@ -61,15 +58,12 @@ Still to write in this module:
 | `input-output` | Input and output | 15 | C++17 | — | 2/3 | Sum, difference, product · Greeting with next year's age | published |
 | `variables` | Variables | 15 | C++17 | — | 1/3 | Rotate three values · Running total | published |
 | `data-types` | Data types | 15 | C++17 | — | 2/3 | Next letter and its code · Bill with a discount | published |
-
-Still to write in this module:
-
-- Constants and const — planned
-- getline and whole-line input — planned
-- Escape sequences and sizeof — planned
-- Integer overflow and signed/unsigned — planned
-- Floating-point precision — planned
-- Validating input — planned
+| `constants-const` | Constants and const | 12 | C++17 | const, constexpr, magic numbers | 1/3 | Seconds in a span of years · Length converter | published |
+| `escape-sizeof` | Escape sequences and sizeof | 12 | C++17 | escape sequences, sizeof, char codes | 1/3 | Count with sizeof · A JSON line | published |
+| `getline-input` | getline and whole-line input | 15 | C++17 | getline, cin.ignore, whitespace | 1/2 | Number the lines · Longest line until END | published |
+| `overflow-signed` | Integer overflow, signed and unsigned | 15 | C++17 | overflow, INT_MAX, unsigned, size_t | 2/3 | The countdown that never ends · How far can factorial go? | published |
+| `floating-point` | Floating-point precision | 15 | C++17 | double, precision, epsilon, setprecision | 2/2 | Exact money in paise · Roots of a quadratic | published |
+| `validating-input` | Validating input | 15 | C++17 | cin.fail, cin.clear, input validation | 1/4 | Strict integers only · Is this a real date? | published |
 
 ## 3. Operators and expressions
 
