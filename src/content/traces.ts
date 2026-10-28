@@ -6,7 +6,9 @@
  * and checks the final output matches the trace, so the visualizer can't drift from C++ semantics.
  */
 
-export type TracePhase = "declare" | "init" | "check" | "body" | "update" | "after" | "call" | "return";
+import { EXTRA_TRACES } from "./traces-extra";
+
+export type TracePhase = "declare" | "init" | "check" | "body" | "update" | "after" | "call" | "return" | "compare" | "swap";
 
 export interface TraceStep {
   /** 1-based line in `code` to highlight. */
@@ -19,6 +21,16 @@ export interface TraceStep {
   condition?: { text: string; value: boolean };
   /** Pending function calls, outermost first (recursion traces only). */
   stack?: string[];
+  /** Arrays shown as rows of cells; null = not filled yet. `marks` puts index labels (lo, mid, i …) under cells. */
+  arrays?: TraceArray[];
+}
+
+export interface TraceArray {
+  name: string;
+  values: (number | null)[];
+  marks?: Record<string, number>;
+  /** Cells to emphasise in this step (e.g. the two being compared). */
+  focus?: number[];
 }
 
 export interface TraceDef {
@@ -157,7 +169,7 @@ int main() {
   return { id: "factorial-3", title: "factorial(3) on the call stack", code, steps };
 }
 
-export const TRACES: TraceDef[] = [sumTrace(), countDownTrace(), nestedTrace(), factorialTrace()];
+export const TRACES: TraceDef[] = [sumTrace(), countDownTrace(), nestedTrace(), factorialTrace(), ...EXTRA_TRACES];
 
 export function getTrace(id: string): TraceDef | undefined {
   return TRACES.find((t) => t.id === id);

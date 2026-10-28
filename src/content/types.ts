@@ -171,7 +171,7 @@ export type QuestionDef =
 
 // ── Lessons ─────────────────────────────────────────────────────────────────
 
-export type VisualId = "loop-anatomy" | "boundary-explorer" | "loop-flow" | "nested-grid" | "comparison-number-line";
+export type VisualId = "loop-anatomy" | "boundary-explorer" | "loop-flow" | "nested-grid" | "comparison-number-line" | "memory-boxes" | "growth-chart" | "stack-queue";
 
 export type LessonStepDef =
   | { key: string; kind: "concept"; title: string; body: string }

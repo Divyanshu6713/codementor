@@ -14,6 +14,7 @@ export interface TraceStepView {
   note: string;
   condition?: { text: string; value: boolean };
   stack?: string[];
+  arrays?: { name: string; values: (number | null)[]; marks?: Record<string, number>; focus?: number[] }[];
 }
 
 const PHASE: Record<string, { label: string; cls: string }> = {
@@ -25,7 +26,38 @@ const PHASE: Record<string, { label: string; cls: string }> = {
   after: { label: "After the loop", cls: "bg-sunken text-ink-2" },
   call: { label: "Call", cls: "bg-concept-soft text-concept" },
   return: { label: "Return", cls: "bg-success-soft text-success" },
+  compare: { label: "Compare", cls: "bg-accent-soft text-accent-ink" },
+  swap: { label: "Swap", cls: "bg-pink-soft text-pink" },
 };
+
+/** One array as a row of cells, with index labels (i, lo, mid …) under the cells they point at. */
+function ArrayRow({ a, prev }: { a: NonNullable<TraceStepView["arrays"]>[number]; prev?: (number | null)[] }) {
+  const labels = new Map<number, string[]>();
+  for (const [name, idx] of Object.entries(a.marks ?? {})) if (idx >= 0 && idx < a.values.length) labels.set(idx, [...(labels.get(idx) ?? []), name]);
+  return (
+    <div>
+      <p className="mb-1 font-mono text-xs text-ink-3">{a.name}</p>
+      <ol className="flex flex-wrap gap-1" aria-label={`array ${a.name}`}>
+        {a.values.map((v, k) => (
+          <li key={k} className="flex w-11 flex-col items-center">
+            <span
+              className={clsx(
+                "grid h-10 w-11 place-items-center rounded-lg border font-mono text-sm font-bold transition-colors",
+                a.focus?.includes(k) ? "border-accent bg-accent-soft text-accent-ink" : v === null ? "border-dashed border-line text-ink-3" : "border-line bg-surface",
+                prev && prev[k] !== v && v !== null && "ring-2 ring-hint",
+              )}
+              aria-label={`${a.name}[${k}] = ${v === null ? "not set" : v}`}
+            >
+              {v === null ? "?" : v}
+            </span>
+            <span className="font-mono text-[10px] text-ink-3">{k}</span>
+            {labels.has(k) && <span className="font-mono text-[11px] font-semibold text-concept">{labels.get(k)!.join(" ")}</span>}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
 
 /**
  * Step-through visualizer for a controlled lesson example. The steps come from a fixed trace that
@@ -55,6 +87,11 @@ export function DryRun({ code, steps }: { code: string; steps: TraceStepView[] }
           <p className={clsx("rounded-lg px-3 py-2 font-mono text-sm font-semibold", s.condition.value ? "bg-success-soft text-success" : "bg-danger-soft text-danger")}>
             {s.condition.text} → {String(s.condition.value)}
           </p>
+        )}
+        {s.arrays && s.arrays.length > 0 && (
+          <div className="space-y-3 rounded-xl border border-line p-3">
+            {s.arrays.map((a, k) => <ArrayRow key={a.name} a={a} prev={i > 0 ? steps[i - 1].arrays?.[k]?.values : undefined} />)}
+          </div>
         )}
         {s.stack && (
           <div className="rounded-xl border border-line">

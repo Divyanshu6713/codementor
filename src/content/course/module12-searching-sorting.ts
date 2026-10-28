@@ -37,6 +37,7 @@ Big-O keeps only the **fastest-growing** part and drops constants: \`3n + 10\` i
       },
       {
         title: "The common classes",
+        visual: "growth-chart",
         body: `| Big-O | name | example | n = 1 000 000 |
 |---|---|---|---|
 | O(1) | constant | read \`a[i]\` | 1 |
@@ -206,6 +207,7 @@ int main() {
     sections: [
       {
         title: "The algorithm",
+        traceId: "binary-search-38",
         body: `\`\`\`cpp
 int lo = 0, hi = n - 1;
 while (lo <= hi) {
@@ -402,6 +404,7 @@ int main() {
     sections: [
       {
         title: "Bubble sort",
+        traceId: "bubble-sort-4",
         body: `Sweep through the array swapping **neighbours** that are in the wrong order. After pass 1 the largest value has "bubbled" to the end; after pass 2 the second largest is in place, and so on. If a pass makes no swaps, the array is sorted and you can stop early.`,
       },
       {

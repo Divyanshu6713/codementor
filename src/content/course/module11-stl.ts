@@ -366,6 +366,7 @@ Stacks match nested structure: brackets, undo, function calls (the call stack fr
       },
       {
         title: "queue and deque: first in, first out",
+        visual: "stack-queue",
         body: `\`\`\`cpp
 #include <queue>
 

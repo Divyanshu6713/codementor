@@ -377,6 +377,7 @@ int main() {
       },
       {
         title: "Pass by reference: the function gets the original",
+        traceId: "swap-by-reference",
         body: `Add \`&\` after the type and the parameter becomes a **reference** — another name for the caller's variable:
 
 \`\`\`cpp

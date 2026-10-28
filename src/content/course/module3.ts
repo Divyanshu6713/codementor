@@ -236,6 +236,7 @@ A \`for\` loop is really a \`while\` loop with the start and update written in t
       },
       {
         title: "Taking a number apart",
+        traceId: "digit-sum-while",
         body: `A classic while loop removes the last digit of a number until nothing is left:
 
 \`\`\`cpp

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import clsx from "clsx";
+import { GrowthChart, MemoryBoxes, StackQueue } from "./VisualsMore";
 
 /* ── Loop anatomy: click each part of the header ───────────────────────── */
 
@@ -196,6 +197,9 @@ export function Visual({ id }: { id: string }) {
     case "loop-flow": return <LoopFlow />;
     case "nested-grid": return <NestedGrid />;
     case "comparison-number-line": return <ComparisonNumberLine />;
+    case "memory-boxes": return <MemoryBoxes />;
+    case "growth-chart": return <GrowthChart />;
+    case "stack-queue": return <StackQueue />;
     default: return null;
   }
 }

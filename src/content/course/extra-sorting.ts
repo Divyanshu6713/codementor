@@ -32,6 +32,7 @@ export const EXTRA_SORTING_LESSONS: CourseLesson[] = [
       },
       {
         title: "The merge step",
+        traceId: "merge-step",
         body: `\`\`\`cpp
 // a[lo..mid) and a[mid..hi) are sorted
 vector<int> tmp;

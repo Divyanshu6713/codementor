@@ -1749,6 +1749,7 @@ int main() {
     sections: [
       {
         title: "The idea",
+        traceId: "prefix-sums",
         body: `\`pre[k]\` = the sum of the first k elements (\`pre[0] = 0\`):
 
 | i | 0 | 1 | 2 | 3 | 4 |

@@ -28,6 +28,7 @@ for (int i = 0; i < n; i++) pre[i + 1] = pre[i] + a[i];
       },
       {
         title: "Two pointers",
+        traceId: "two-pointer-reverse",
         body: `On a **sorted** array, find two values that add up to \`target\`: start one pointer at each end. If the sum is too small, the left value must grow → move \`lo\` right; too big → move \`hi\` left. Each step discards a value for good, so it's O(n).`,
       },
       {
@@ -538,6 +539,7 @@ Same recursion, plus a table. Each \`fib(k)\` is computed once: O(n).`,
       },
       {
         title: "Tabulation: fill a table bottom-up",
+        traceId: "fibonacci-dp",
         body: `Instead of recursing from the top, fill the table from the smallest subproblem upwards:
 
 \`\`\`cpp
@@ -721,6 +723,7 @@ Tricks: \`x & (x - 1)\` clears the lowest set bit, so \`x > 0 && (x & (x - 1)) =
       },
       {
         title: "GCD, LCM and modular arithmetic",
+        traceId: "gcd-48-18",
         body: `**Euclid:** \`gcd(a, b) = gcd(b, a % b)\`, and \`gcd(a, 0) = a\` — O(log) steps. Then \`lcm(a, b) = a / gcd(a, b) * b\` (divide first to avoid overflow). C++17 has \`std::gcd\` and \`std::lcm\` in \`<numeric>\`.
 
 Answers are often asked "modulo 1 000 000 007" to keep numbers small. \`(a + b) % m\` and \`(a * b) % m\` can be reduced at every step. **Fast power** squares the base and halves the exponent: \`aᵇ mod m\` in O(log b).`,

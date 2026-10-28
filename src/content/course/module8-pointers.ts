@@ -32,6 +32,7 @@ cout << &score;     // some address, e.g. 0x7ffd...
       },
       {
         title: "Pointer variables and dereferencing: *",
+        visual: "memory-boxes",
         body: `\`\`\`cpp
 int score = 40;
 int* p = &score;    // p holds the address of score

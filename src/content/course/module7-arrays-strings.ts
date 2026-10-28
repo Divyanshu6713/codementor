@@ -182,6 +182,7 @@ Cast to \`double\` before dividing, or integer division throws the fraction away
       },
       {
         title: "Best so far",
+        traceId: "array-max",
         body: `To find the maximum, start with the **first element** (not with 0 — all values might be negative) and update whenever something bigger appears:
 
 \`\`\`cpp
