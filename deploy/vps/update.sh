@@ -20,7 +20,8 @@ as_app() { sudo -u codementor -H bash -c "$1"; }
 
 health() {
   for _ in $(seq 1 30); do
-    if curl -fsS --max-time 5 http://127.0.0.1:3000/api/health | jq -e '.ok == true' >/dev/null 2>&1; then return 0; fi
+    # -s without -S: "connection refused" while the app is still starting is expected, not an error.
+    if curl -fs --max-time 5 http://127.0.0.1:3000/api/health | jq -e '.ok == true' >/dev/null 2>&1; then return 0; fi
     sleep 2
   done
   return 1
