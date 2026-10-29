@@ -138,7 +138,7 @@ curl -s https://<your-domain>/api/health
 
 #### 6. Verify the sandbox on this host, then open execution
 ```bash
-cd /srv/codementor/current && sudo -u cmsandbox env SANDBOX_DOCKER_RUNTIME=runsc npx vitest run tests/sandbox-docker.test.ts
+cd /srv/codementor/current && sudo -u cmsandbox env HOME=/tmp SANDBOX_DOCKER_RUNTIME=runsc npx vitest run tests/sandbox-docker.test.ts
 ```
 All tests must **run and pass** (if they show as skipped, Docker wasn't reachable). Then set `EXECUTION_PUBLIC_ENABLED=true` in `web.env` and `systemctl restart codementor-web`.
 

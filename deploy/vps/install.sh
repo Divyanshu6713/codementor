@@ -79,6 +79,9 @@ usermod -aG docker cmsandbox
 mkdir -p "$ROOT"/{releases,backups,pgdata} "$ETC" /var/log/codementor
 chown codementor:codementor "$ROOT" "$ROOT/releases" "$ROOT/backups"
 chmod 750 "$ROOT/backups"
+# Ubuntu 24.04 creates system home folders as 750; the sandbox user (cmsandbox) must be able to
+# pass through to the code in releases/, but not list the folder or read backups/.
+chmod 751 "$ROOT"
 
 log "Source code"
 if [ ! -d "$ROOT/repo/.git" ]; then
@@ -167,7 +170,7 @@ Next steps (in this order):
  1. Create your admin account:
       cd ${ROOT}/current && sudo -u codementor bash -c 'set -a; . ${ETC}/web.env; npm run admin:create'
  2. Verify the sandbox ON THIS MACHINE (all tests must run and pass, not be skipped):
-      cd ${ROOT}/current && sudo -u cmsandbox env SANDBOX_DOCKER_RUNTIME=runsc npx vitest run tests/sandbox-docker.test.ts
+      cd ${ROOT}/current && sudo -u cmsandbox env HOME=/tmp SANDBOX_DOCKER_RUNTIME=runsc npx vitest run tests/sandbox-docker.test.ts
  3. Then switch code execution on:
       sudo sed -i 's/^EXECUTION_PUBLIC_ENABLED=false/EXECUTION_PUBLIC_ENABLED=true/' ${ETC}/web.env
       sudo systemctl restart codementor-web
