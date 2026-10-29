@@ -18,9 +18,11 @@ async function main() {
     .onConflictDoUpdate({ target: schema.users.username, set: { passwordHash: await bcrypt.hash(password, 12), role: "ADMIN" } });
   await db.insert(schema.auditLog).values({ action: "admin.created", targetType: "user", details: { username } });
   const out = path.join(process.cwd(), ".data", "admin-account.json");
-  fs.mkdirSync(path.dirname(out), { recursive: true });
-  fs.writeFileSync(out, JSON.stringify({ username, password, createdAt: new Date().toISOString() }, null, 2));
-  console.log(`Admin "${username}" ready. Credentials written to ${out}`);
+  fs.mkdirSync(path.dirname(out), { recursive: true, mode: 0o700 });
+  // Owner-only: on a shared server other accounts must not be able to read the password.
+  fs.writeFileSync(out, JSON.stringify({ username, password, createdAt: new Date().toISOString() }, null, 2), { mode: 0o600 });
+  fs.chmodSync(out, 0o600);
+  console.log(`Admin "${username}" ready. Credentials written to ${out} (owner-only). Sign in, change the password in Settings, then delete this file.`);
   process.exit(0);
 }
 
