@@ -36,6 +36,16 @@ const HARDENING = [
   "--ulimit", "nofile=64:64", "--ulimit", "fsize=1048576", "--ulimit", "core=0",
 ];
 
+/**
+ * Process limit per container. Under gVisor the host pids cgroup also counts gVisor's own sentry
+ * threads, which need more than a handful: with a limit of 8 the sandbox can't even start
+ * ("fork/exec gvisor-sentry-prewarmer: resource temporarily unavailable", verified on Ubuntu 24.04).
+ * Student programs never run as host processes there, so fork bombs stay bounded by the memory
+ * and time limits (tests/sandbox-docker.test.ts checks this on the server).
+ */
+const RUNSC_MIN_PIDS = 64;
+const pids = (n: number) => String(RUNTIME === "runsc" ? Math.max(n, RUNSC_MIN_PIDS) : n);
+
 function dockerKill(name: string) {
   execFile("docker", ["kill", name], () => undefined);
 }
@@ -94,7 +104,7 @@ export function createDockerBackend(): SandboxBackend {
       fs.chmodSync(dir, 0o777);
       const name = `cmk-c-${crypto.randomBytes(6).toString("hex")}`;
       const res = await runCaptured("docker", [
-        "run", "--rm", "--name", name, ...HARDENING, "--memory", "1g", "--memory-swap", "1g", "--pids-limit", "64",
+        "run", "--rm", "--name", name, ...HARDENING, "--memory", "1g", "--memory-swap", "1g", "--pids-limit", pids(64),
         "--tmpfs", "/tmp:rw,exec,size=128m", "-v", `${dir}:/box`, "-w", "/box", IMAGE,
         "timeout", "-s", "KILL", "30", "g++", "-std=c++20", "-O2", "-pipe", "-fno-asm", "-fmax-errors=5",
         "-fdiagnostics-color=never", "-o", "main", "main.cpp",
@@ -107,7 +117,7 @@ export function createDockerBackend(): SandboxBackend {
       const seconds = Math.max(1, Math.ceil(limits.timeMs / 1000));
       const res = await runCaptured("docker", [
         "run", "--rm", "-i", "--name", name, ...HARDENING, "--memory", `${limits.memoryMb}m`, "--memory-swap", `${limits.memoryMb}m`,
-        "--pids-limit", "8", "-v", `${dir}:/box:ro`, "-w", "/box", IMAGE, "timeout", "-s", "KILL", String(seconds), "/box/main",
+        "--pids-limit", pids(8), "-v", `${dir}:/box:ro`, "-w", "/box", IMAGE, "timeout", "-s", "KILL", String(seconds), "/box/main",
       ], {
         input, env: process.env, cwd: dir, maxStdout: limits.maxOutputBytes, maxStderr: limits.maxStderrBytes,
         guardMs: limits.timeMs + 10_000, onTimeout: () => dockerKill(name),
@@ -120,7 +130,7 @@ export function createDockerBackend(): SandboxBackend {
       fs.chmodSync(dir, 0o755);
       const name = `cmk-p-${crypto.randomBytes(6).toString("hex")}`;
       const res = await runCaptured("docker", [
-        "run", "--rm", "--name", name, ...HARDENING, "--memory", "256m", "--memory-swap", "256m", "--pids-limit", "16",
+        "run", "--rm", "--name", name, ...HARDENING, "--memory", "256m", "--memory-swap", "256m", "--pids-limit", pids(16),
         "-v", `${dir}:/box:ro`, "--tmpfs", "/work:rw,size=4m,mode=1777", "-w", "/work", PY_IMAGE,
         "timeout", "-s", "KILL", "10", ...python, "check", "/box",
       ], { input: "", env: process.env, cwd: dir, maxStdout: 16 * 1024, maxStderr: 16 * 1024, guardMs: 30_000, onTimeout: () => dockerKill(name) });
@@ -135,7 +145,7 @@ export function createDockerBackend(): SandboxBackend {
       const res = await runCaptured("docker", [
         "run", "--rm", "-i", "--name", name, ...HARDENING, "--memory", `${limits.memoryMb}m`, "--memory-swap", `${limits.memoryMb}m`,
         // Threads count against the pids limit on Linux; concurrency lessons start a few.
-        "--pids-limit", "32", "-e", "PYTHONHASHSEED=0", "-v", `${dir}:/box:ro`, "--tmpfs", "/work:rw,size=16m,mode=1777", "-w", "/work",
+        "--pids-limit", pids(32), "-e", "PYTHONHASHSEED=0", "-v", `${dir}:/box:ro`, "--tmpfs", "/work:rw,size=16m,mode=1777", "-w", "/work",
         PY_IMAGE, "timeout", "-s", "KILL", String(seconds), ...python, mode, "/box",
       ], {
         input, env: process.env, cwd: dir, maxStdout: mode === "trace" ? EXECUTION_LIMITS.maxTraceBytes : limits.maxOutputBytes,
