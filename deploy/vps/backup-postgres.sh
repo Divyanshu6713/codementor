@@ -13,9 +13,16 @@ LABEL=${1:-nightly}
 COMPOSE=(docker compose -p codementor -f /srv/codementor/current/deploy/vps/docker-compose.postgres.yml --env-file "$ETC/postgres.env")
 mkdir -p "$DEST"
 FILE="$DEST/codementor-$(date -u +%Y%m%d-%H%M%S)-$LABEL.dump"
-"${COMPOSE[@]}" exec -T postgres pg_dump -U codementor -d codementor --format=custom > "$FILE.partial"
-# A dump that pg_restore can't list is not a backup.
-"${COMPOSE[@]}" exec -T postgres pg_restore --list < "$FILE.partial" > /dev/null
+# PG_MODE=host (set by shared/install-shared.sh): the server's own PostgreSQL service.
+if [ "${PG_MODE:-docker}" = "host" ]; then
+  runuser -u postgres -- pg_dump -d codementor --format=custom > "$FILE.partial"
+  # A dump that pg_restore can't list is not a backup.
+  pg_restore --list < "$FILE.partial" > /dev/null
+else
+  "${COMPOSE[@]}" exec -T postgres pg_dump -U codementor -d codementor --format=custom > "$FILE.partial"
+  # A dump that pg_restore can't list is not a backup.
+  "${COMPOSE[@]}" exec -T postgres pg_restore --list < "$FILE.partial" > /dev/null
+fi
 mv "$FILE.partial" "$FILE"
 chmod 640 "$FILE"
 if [ -n "${RCLONE_REMOTE:-}" ] && command -v rclone >/dev/null; then

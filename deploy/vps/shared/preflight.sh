@@ -38,7 +38,7 @@ for s in nginx caddy apache2 httpd; do
 done
 if have nginx; then
   echo "nginx sites (server_name):"
-  grep -rhoE 'server_name[^;]+' /etc/nginx/sites-enabled /etc/nginx/conf.d 2>/dev/null | sort -u | sed 's/^/  /'
+  grep -RhoE 'server_name[^;]+' /etc/nginx/sites-enabled /etc/nginx/conf.d 2>/dev/null | sort -u | sed 's/^/  /'
 fi
 if [ -f /etc/caddy/Caddyfile ]; then
   echo "Caddyfile site labels:"
